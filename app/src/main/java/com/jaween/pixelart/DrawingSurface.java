@@ -2,27 +2,33 @@ package com.jaween.pixelart;
 
 import android.content.Context;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
-import android.graphics.Matrix;
 import android.graphics.Paint;
+import android.graphics.PointF;
+import android.graphics.Rect;
+import android.graphics.RectF;
+import android.graphics.Shader;
+import android.graphics.drawable.BitmapDrawable;
+import android.graphics.drawable.Drawable;
 import android.view.MotionEvent;
+import android.view.ScaleGestureDetector;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
-import android.widget.Toast;
 
-import com.jaween.pixelart.tools.FloodFill;
-import com.jaween.pixelart.tools.Pen;
 import com.jaween.pixelart.tools.Tool;
+import com.jaween.pixelart.util.ScaleListener;
 
 import java.util.ArrayList;
+import java.util.Random;
 
 /**
  * Created by ween on 9/28/14.
  */
 public class DrawingSurface extends SurfaceView implements SurfaceHolder.Callback, Runnable {
 
-    // Android View and threading vairables
+    // Android View and threading variables
     private Context context;
     private SurfaceHolder holder;
     private Thread thread;
@@ -30,43 +36,44 @@ public class DrawingSurface extends SurfaceView implements SurfaceHolder.Callbac
     private boolean surfaceCreated = false;
 
     // Canvas transformation
-    private static final int MIN_SCALE = 1;
-    private static final int MAX_SCALE = 16;
-    private static final int DEFAULT_SCALE = 4;
-    private float scale = DEFAULT_SCALE;
-    private Matrix canvasTransformation;
+    private static final float MIN_SCALE = 1;
+    private static final float MAX_SCALE = 48;
+    private static final float INITIAL_SCALE = 4;
+    private float scale = INITIAL_SCALE;
+    private Rect displayRect = new Rect();
+    private Rect viewportRect = new Rect();
+    private ScaleGestureDetector scaleGestureDetector;
+    private ScaleListener scaleListener;
+    private Thumbnail thumbnail;
 
     // Tool and drawing variables
     private Tool tool;
     private Tool.Attributes toolAttributes;
     private Paint toolPaint;
     private Paint bitmapPaint;
-    private Paint thumbnailBorderPaint;
-    private Point touchEvent = new Point();
+    private PointF touch = new PointF();
     private Canvas drawOperationsCanvas;
+    private float dp;
 
     // Layers
     private ArrayList<Bitmap> layers;
     private int currentLayer = 0;
+    private int layerWidth;
+    private int layerHeight;
 
     // Temporary UI variables
-    private long downTime = 0;
-    private Pen pen;
-    private FloodFill floodFill;
     private Paint tempTextPaint;
+    private Random random;
 
 
     public DrawingSurface(Context context, Tool tool) {
         super(context);
 
+        // Screen density info
+        dp = context.getResources().getDisplayMetrics().density;
+
         holder = getHolder();
         holder.addCallback(this);
-
-        // Temporary tools
-        pen = new Pen(context);
-        floodFill = new FloodFill(context);
-        canvasTransformation = new Matrix();
-        canvasTransformation.postScale(scale, scale);
 
         initialisePaints();
 
@@ -74,6 +81,9 @@ public class DrawingSurface extends SurfaceView implements SurfaceHolder.Callbac
         int strokeWidth = 2;
         toolAttributes = new Tool.Attributes(toolPaint, strokeWidth);
         toolAttributes.paint = toolPaint;
+
+        // Temporary variables
+        random = new Random();
 
         this.context = context;
         this.tool = tool;
@@ -91,12 +101,6 @@ public class DrawingSurface extends SurfaceView implements SurfaceHolder.Callbac
         bitmapPaint = new Paint();
         bitmapPaint.setAntiAlias(false);
 
-        thumbnailBorderPaint = new Paint();
-        thumbnailBorderPaint.setColor(Color.LTGRAY);
-        thumbnailBorderPaint.setStrokeWidth(0);
-        thumbnailBorderPaint.setAntiAlias(false);
-        thumbnailBorderPaint.setStyle(Paint.Style.STROKE);
-
         // Temporary UI text
         tempTextPaint = new Paint();
         tempTextPaint.setTextSize(30);
@@ -108,11 +112,28 @@ public class DrawingSurface extends SurfaceView implements SurfaceHolder.Callbac
     public void surfaceCreated(SurfaceHolder holder) {
         // Initialises layers
         layers = new ArrayList<Bitmap>();
-        layers.add(Bitmap.createBitmap((int) (getWidth() / scale), (int) (getHeight() / scale), Bitmap.Config.ARGB_8888));
+        layerWidth = (int) (getWidth() / INITIAL_SCALE);
+        layerHeight = (int) (getHeight() / INITIAL_SCALE);
+        layers.add(Bitmap.createBitmap(
+                layerWidth,
+                layerHeight,
+                Bitmap.Config.ARGB_8888));
 
         // Attaches a canvas to a layer
         drawOperationsCanvas = new Canvas(layers.get(0));
         drawOperationsCanvas.drawColor(Color.WHITE);
+
+        // Thumbnail
+        float thumbnailLeft = getWidth() - layerWidth
+                - getResources().getDimension(R.dimen.activity_horizontal_margin);
+        float thumbnailTop = getHeight() - layerHeight
+                - getResources().getDimension(R.dimen.activity_vertical_margin);
+        thumbnail = new Thumbnail(thumbnailLeft, thumbnailTop, layerWidth, layerHeight, dp);
+
+        // Multi-touch zoom and pan
+        scaleListener = new ScaleListener(context, MIN_SCALE, MAX_SCALE, INITIAL_SCALE, getWidth(), getHeight());
+        scaleGestureDetector = new ScaleGestureDetector(context, scaleListener);
+        displayRect.set(0, 0, getWidth(), getHeight());
 
         surfaceCreated = true;
     }
@@ -143,6 +164,12 @@ public class DrawingSurface extends SurfaceView implements SurfaceHolder.Callbac
                     draw(canvas);
                 }
             } finally {
+                // TODO Fix IllegalArgumentException at the unlockCanvasAndPost line on app startup
+                //E/IMGSRV﹕ :0: gralloc_unregister_buffer: Cannot unregister a locked buffer (ID=27812)
+                //W/GraphicBufferMapper﹕ unregisterBuffer(0x417f7360) failed -22 (Invalid argument)
+                //E/Surface﹕ Surface::unlockAndPost failed, no locked buffer
+                //W/dalvikvm﹕ threadid=11: thread exiting with uncaught exception (group=0x41900700)
+                //E/AndroidRuntime﹕ FATAL EXCEPTION: Thread-65118
                 if (canvas != null)
                     holder.unlockCanvasAndPost(canvas);
             }
@@ -178,69 +205,82 @@ public class DrawingSurface extends SurfaceView implements SurfaceHolder.Callbac
 
     @Override
     public boolean onTouchEvent(MotionEvent event) {
-        synchronized (holder) {
-            touchEvent.x = event.getX() / scale;
-            touchEvent.y = event.getY() / scale;
-            switch (event.getAction()) {
-                case MotionEvent.ACTION_DOWN:
-                    // Temporary UI (tool switching) TODO Proper tool switching
-                    long currentTime = System.currentTimeMillis();
-                    if (currentTime - downTime < 200) {
-                        tool = tool instanceof Pen ? floodFill : pen;
-                        Toast.makeText(context, "Switched to " + tool.getName(), Toast.LENGTH_SHORT).show();
-                    } else {
-                        tool.beginAction(drawOperationsCanvas, layers.get(currentLayer), touchEvent, toolAttributes);
-                    }
-                    downTime = currentTime;
 
+        synchronized (holder) {
+            scaleGestureDetector.onTouchEvent(event);
+            scaleListener.getGestureDetector().onTouchEvent(event);
+
+            // Stops if we're performing a gesture
+            if (scaleGestureDetector.isInProgress()) {
+                return false;
+            }
+
+            int action = event.getActionMasked();
+            int index = event.getActionIndex();
+
+            RectF viewport = scaleListener.getViewport();
+            touch.x = viewport.left + event.getX(index)/getWidth()*viewport.width();
+            touch.y = viewport.top + event.getY(index)/getHeight()*viewport.height();
+
+            // Single-touch event
+            switch (action) {
+                case MotionEvent.ACTION_DOWN:
+                    // Replace-colour for the flood fill tool
+                    if (isInBounds(layers.get(currentLayer), touch)){
+                        toolAttributes.tempTouchedColour = layers.get(currentLayer).getPixel((int) touch.x, (int) touch.y);
+                    }
+
+                    // A temporary random colour for the tool
+                    toolAttributes.paint.setColor(Color.rgb(random.nextInt(255) + 15, random.nextInt(230) + 15, random.nextInt(230) + 15));
+                    tool.beginAction(drawOperationsCanvas, layers.get(currentLayer), touch, toolAttributes);
                     break;
                 case MotionEvent.ACTION_MOVE:
-                    tool.beginAction(drawOperationsCanvas, null, touchEvent, toolAttributes);
+                    tool.beginAction(drawOperationsCanvas, null, touch, toolAttributes);
                     break;
                 case MotionEvent.ACTION_UP:
                 case MotionEvent.ACTION_CANCEL:
-                    tool.endAction(touchEvent);
+                    tool.endAction(touch);
+
+                    // TODO: Undo/redo system
+                    //undoRedoTracker.bitmapModified(layers.get(currentLayer));
                     break;
                 default:
                     return false;
             }
             return true;
-        }
+            }
     }
 
     @Override
     public void draw(Canvas canvas) {
         if (surfaceCreated) {
+            // Draws the user's image
             canvas.drawColor(Color.LTGRAY);
-            canvas.drawBitmap(layers.get(currentLayer), canvasTransformation, bitmapPaint);
 
-            canvas.drawText("Double Tap: Tool Switch", 50, 50, tempTextPaint);
-            canvas.drawText("Volume Buttons: Zoom", 50, 100, tempTextPaint);
+            RectF floatViewport = scaleListener.getViewport();
+            floatViewport.round(viewportRect);
+            canvas.drawBitmap(layers.get(currentLayer), viewportRect, displayRect, bitmapPaint);
 
-            // Thumbnail
-            if (scale >= DEFAULT_SCALE || scale >= DEFAULT_SCALE) {
-                float left = getWidth() - getWidth() / DEFAULT_SCALE - getResources().getDimension(R.dimen.activity_horizontal_margin);
-                float top = getHeight() - getHeight() / DEFAULT_SCALE - getResources().getDimension(R.dimen.activity_vertical_margin);
-                canvas.drawBitmap(layers.get(currentLayer), left, top, bitmapPaint);
-                canvas.drawRect(left, top, left + getWidth() / DEFAULT_SCALE, top + getHeight() / DEFAULT_SCALE, thumbnailBorderPaint);
+            // Draws the thumbnail
+            if (thumbnail.isEnabled()) {
+                float scale = scaleListener.getScale();
+                //if (scale >= INITIAL_SCALE || scale >= INITIAL_SCALE) {
+                    thumbnail.draw(canvas, layers.get(currentLayer), scaleListener.getViewport());
+                //}
             }
-
         }
+    }
+
+    private boolean isInBounds(Bitmap bitmap, PointF point) {
+        if (point.x >= 0 && point.x < bitmap.getWidth()) {
+            if (point.y >= 0 && point.y < bitmap.getHeight()) {
+                return true;
+            }
+        }
+        return false;
     }
 
     public void setTool(Tool tool) {
         this.tool = tool;
     }
-
-    public void setScale(float scale) {
-        if (scale >= MIN_SCALE && scale <= MAX_SCALE) {
-            canvasTransformation.setScale(scale, scale);
-            this.scale = scale;
-        }
-    }
-
-    public float getScale() {
-        return scale;
-    }
-
 }

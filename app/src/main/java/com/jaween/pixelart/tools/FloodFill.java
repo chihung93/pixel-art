@@ -3,11 +3,10 @@ package com.jaween.pixelart.tools;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
-import android.graphics.Color;
 import android.graphics.Paint;
+import android.graphics.PointF;
 import android.util.Log;
 
-import com.jaween.pixelart.Point;
 import com.jaween.pixelart.R;
 
 import java.util.Stack;
@@ -19,7 +18,7 @@ public class FloodFill extends Tool {
 
     private static Paint floodPaint = new Paint();
     private final String name;
-    private Stack<Point> pixels = new Stack<Point>();
+    private Stack<PointF> pixels = new Stack<PointF>();
 
     public FloodFill(Context context) {
         super(context);
@@ -33,12 +32,12 @@ public class FloodFill extends Tool {
 
     // Top to bottom scanline flood fill using a stack TODO Fix long operation when filling large areas
     @Override
-    public void beginAction(Canvas canvas, Bitmap bitmap, Point event, Attributes attributes) {
+    public void beginAction(Canvas canvas, Bitmap bitmap, PointF event, Attributes attributes) {
         long startTime = System.currentTimeMillis();
 
         floodPaint.setColor(attributes.paint.getColor());
 
-        int oldColour = Color.WHITE;
+        int oldColour = attributes.tempTouchedColour;
         int newColour = attributes.paint.getColor();
 
         // No bitmap
@@ -61,7 +60,7 @@ public class FloodFill extends Tool {
         pixels.push(event);
 
         while (!pixels.isEmpty()) {
-            Point pixel = pixels.pop();
+            PointF pixel = pixels.pop();
             float x = pixel.x;
             float y1 = pixel.y;
 
@@ -76,14 +75,14 @@ public class FloodFill extends Tool {
                 canvas.drawPoint((int) x, (int) y1, floodPaint);
 
                 if (!spanLeft && x > 0 && colour(bitmap, x - 1, y1) == oldColour) {
-                    pixels.push(new Point(x - 1, y1));
+                    pixels.push(new PointF(x - 1, y1));
                     spanLeft = true;
                 } else if (spanLeft && x > 0 && colour(bitmap, x - 1, y1) != oldColour) {
                     spanLeft = false;
                 }
 
                 if (!spanRight && x < bitmap.getWidth() - 1 && colour(bitmap, x + 1, y1) == oldColour) {
-                    pixels.push(new Point(x + 1, y1));
+                    pixels.push(new PointF(x + 1, y1));
                     spanRight = true;
                 } else if (spanRight && x < bitmap.getWidth() - 1 && colour(bitmap, x + 1, y1) != oldColour) {
                     spanRight = false;
@@ -100,7 +99,7 @@ public class FloodFill extends Tool {
     }
 
     @Override
-    public void endAction(Point event) {
+    public void endAction(PointF event) {
         // No implementation
     }
 

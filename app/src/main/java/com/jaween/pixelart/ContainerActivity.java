@@ -24,23 +24,6 @@ public class ContainerActivity extends Activity {
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-        getMenuInflater().inflate(R.menu.drawing_menu, menu);
-        return true;
-    }
-
-    // Temporary zooming UI TODO Proper zooming UI
-    @Override
-    public boolean onKeyDown(int keyCode, KeyEvent event) {
-        switch (keyCode) {
-            case KeyEvent.KEYCODE_VOLUME_UP:
-                drawingFragment.zoom(1f);
-                break;
-            case KeyEvent.KEYCODE_VOLUME_DOWN:
-                drawingFragment.zoom(-1f);
-                break;
-            default:
-                return false;
-        }
-        return true;
+        return super.onCreateOptionsMenu(menu);
     }
 }

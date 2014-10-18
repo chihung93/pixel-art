@@ -3,8 +3,8 @@ package com.jaween.pixelart.tools;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
+import android.graphics.PointF;
 
-import com.jaween.pixelart.Point;
 import com.jaween.pixelart.R;
 
 /**
@@ -15,7 +15,7 @@ public class Pen extends Tool {
 
     private final String name;
 
-    private Point previous = new Point(0, 0);
+    private PointF previous = new PointF(0, 0);
     private boolean hasPrevious = false;
 
     public Pen(Context context) {
@@ -25,7 +25,7 @@ public class Pen extends Tool {
     }
 
     @Override
-    public void beginAction(Canvas canvas, Bitmap bitmap, Point event, Attributes attributes) {
+    public void beginAction(Canvas canvas, Bitmap bitmap, PointF event, Attributes attributes) {
         if (hasPrevious == false) {
             previous.x = event.x;
             previous.y = event.y;
@@ -38,7 +38,7 @@ public class Pen extends Tool {
     }
 
     @Override
-    public void endAction(Point event) {
+    public void endAction(PointF event) {
         hasPrevious = false;
     }
 

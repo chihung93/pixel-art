@@ -1,6 +1,17 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     tools:context=".MyActivity" >
+
+    <item android:id="@+id/action_tool_pen"
+        android:title="@string/tool_pen"
+        android:orderInCategory="30"
+        android:showAsAction="never" />
+
+    <item android:id="@+id/action_tool_flood_fill"
+        android:title="@string/tool_flood_fill"
+        android:orderInCategory="31"
+        android:showAsAction="never" />
+
     <item android:id="@+id/action_settings"
         android:title="@string/action_settings"
         android:orderInCategory="100"

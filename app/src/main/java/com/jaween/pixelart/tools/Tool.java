@@ -4,8 +4,7 @@ import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Paint;
-
-import com.jaween.pixelart.Point;
+import android.graphics.PointF;
 
 /**
  * Created by ween on 9/28/14.
@@ -19,15 +18,16 @@ abstract public class Tool {
     }
 
     // TODO Some tools use data from the image (e.g. flood fill), so this a muddled interface
-    abstract public void beginAction(Canvas canvas, Bitmap bitmap, Point event, Attributes attributes);
+    abstract public void beginAction(Canvas canvas, Bitmap bitmap, PointF event, Attributes attributes);
 
-    abstract public void endAction(Point event);
+    abstract public void endAction(PointF event);
 
     public abstract String getName();
 
-    // TODO Fleshout attributes
+    // TODO Fleshout and improve attributes
     public static class Attributes {
         public Paint paint;
+        public int tempTouchedColour  = 0;
         public int radius;
 
         public Attributes(Paint paint, int radius) {
