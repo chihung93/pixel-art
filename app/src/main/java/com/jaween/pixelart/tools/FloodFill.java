@@ -1,13 +1,9 @@
 package com.jaween.pixelart.tools;
 
-import android.content.Context;
 import android.graphics.Bitmap;
-import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.PointF;
 import android.util.Log;
-
-import com.jaween.pixelart.R;
 
 import java.util.Stack;
 
@@ -17,22 +13,19 @@ import java.util.Stack;
 public class FloodFill extends Tool {
 
     private static Paint floodPaint = new Paint();
-    private final String name;
     private Stack<PointF> pixels = new Stack<PointF>();
 
-    public FloodFill(Context context) {
-        super(context);
+    public FloodFill(String name) {
+        super(name);
 
         // Attributes required for flooding (must only touch a single pixel at a time)
         floodPaint.setStrokeWidth(0);
         floodPaint.setAntiAlias(false);
-
-        name = context.getString(R.string.tool_flood_fill);
     }
 
     // Top to bottom scanline flood fill using a stack TODO Fix long operation when filling large areas
     @Override
-    public void beginAction(Canvas canvas, Bitmap bitmap, PointF event, Attributes attributes) {
+    public void start(Bitmap bitmap, PointF event, Attributes attributes) {
         long startTime = System.currentTimeMillis();
 
         floodPaint.setColor(attributes.paint.getColor());
@@ -72,7 +65,7 @@ public class FloodFill extends Tool {
             boolean spanRight = false;
 
             while (y1 < bitmap.getHeight() && colour(bitmap, x, y1) == oldColour) {
-                canvas.drawPoint((int) x, (int) y1, floodPaint);
+                bitmap.setPixel((int) x, (int) y1, floodPaint.getColor());
 
                 if (!spanLeft && x > 0 && colour(bitmap, x - 1, y1) == oldColour) {
                     pixels.push(new PointF(x - 1, y1));
@@ -94,17 +87,17 @@ public class FloodFill extends Tool {
         Log.d("FloodFill", "Flooding took " + (System.currentTimeMillis() - startTime) + "ms");
     }
 
-    private int colour(Bitmap bitmap, float x, float y) {
-        return bitmap.getPixel((int) x, (int) y);
-    }
-
     @Override
-    public void endAction(PointF event) {
+    public void move(Bitmap bitmap, PointF event, Attributes attributes) {
         // No implementation
     }
 
     @Override
-    public String getName() {
-        return name;
+    public void end(Bitmap bitmap, PointF event, Attributes attributes) {
+        // No implementation
+    }
+
+    private int colour(Bitmap bitmap, float x, float y) {
+        return bitmap.getPixel((int) x, (int) y);
     }
 }

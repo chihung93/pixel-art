@@ -31,9 +31,9 @@ public class DrawingFragment extends Fragment {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        pen = new Pen(getActivity());
-        floodFill = new FloodFill(getActivity());
-        oval = new Oval(getActivity());
+        pen = new Pen(getString(R.string.tool_pen));
+        floodFill = new FloodFill(getString(R.string.tool_flood_fill));
+        oval = new Oval(getString(R.string.tool_oval));
         tool = pen;
 
         setHasOptionsMenu(true);
