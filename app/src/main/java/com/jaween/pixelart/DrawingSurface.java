@@ -5,6 +5,7 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
+import android.graphics.Matrix;
 import android.graphics.Paint;
 import android.graphics.PointF;
 import android.graphics.Rect;
@@ -12,6 +13,7 @@ import android.graphics.RectF;
 import android.graphics.Shader;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
+import android.util.Log;
 import android.view.MotionEvent;
 import android.view.ScaleGestureDetector;
 import android.view.SurfaceHolder;
@@ -43,7 +45,7 @@ public class DrawingSurface extends SurfaceView implements SurfaceHolder.Callbac
     private static final float INITIAL_SCALE = 4;
     private float scale = INITIAL_SCALE;
     private Rect displayRect = new Rect();
-    private Rect viewportRect = new Rect();
+    private Matrix transformation = new Matrix();
     private ScaleGestureDetector scaleGestureDetector;
     private ScaleListener scaleListener;
     private Thumbnail thumbnail;
@@ -145,7 +147,8 @@ public class DrawingSurface extends SurfaceView implements SurfaceHolder.Callbac
         // UI Controls
         int maxUndos = 5;
         undoRedoTracker = new UndoRedoTracker(layers.get(currentLayer), maxUndos);
-        pixelGrid = new PixelGrid(dp);
+        int majorPixelSpacing = 8;
+        pixelGrid = new PixelGrid(dp, layerWidth, layerHeight, majorPixelSpacing);
 
         surfaceCreated = true;
     }
@@ -262,7 +265,7 @@ public class DrawingSurface extends SurfaceView implements SurfaceHolder.Callbac
                     break;
                 case MotionEvent.ACTION_UP:
                 case MotionEvent.ACTION_CANCEL:
-                    tool.endAction(drawOperationsCanvas, layers.get(currentLayer), touch, toolAttributes);
+                    //tool.endAction(drawOperationsCanvas, layers.get(currentLayer), touch, toolAttributes);
 
                     startTouch.set(-1, -1);
                     currentTouch.set(-1, -1);
@@ -282,14 +285,15 @@ public class DrawingSurface extends SurfaceView implements SurfaceHolder.Callbac
             // Background
             canvas.drawColor(Color.LTGRAY);
 
-            // User image
-            RectF floatViewport = scaleListener.getViewport();
-            floatViewport.round(viewportRect);
-            canvas.drawBitmap(layers.get(currentLayer), viewportRect, displayRect, bitmapPaint);
+            // Zoomed and panned drawing
+            RectF viewport = scaleListener.getViewport();
+            transformation.setTranslate(-viewport.left, -viewport.top);
+            transformation.postScale(scaleListener.getScale(), scaleListener.getScale());
+            canvas.drawBitmap(layers.get(currentLayer), transformation, bitmapPaint);
 
             // Gridlines
             if (pixelGrid.isEnabled()) {
-                pixelGrid.draw(canvas, layerWidth, layerHeight, viewportRect, scaleListener.getScale(), 12);
+                pixelGrid.draw(canvas, viewport, scaleListener.getScale());
             }
 
             // Draws the thumbnail
