@@ -17,7 +17,9 @@ import android.view.ScaleGestureDetector;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 
+import com.jaween.pixelart.tools.ShapeTool;
 import com.jaween.pixelart.tools.Tool;
+import com.jaween.pixelart.ui.PixelGrid;
 import com.jaween.pixelart.util.ScaleListener;
 
 import java.util.ArrayList;
@@ -55,6 +57,10 @@ public class DrawingSurface extends SurfaceView implements SurfaceHolder.Callbac
     private Canvas drawOperationsCanvas;
     private float dp;
 
+    // UI Controls
+    private UndoRedoTracker undoRedoTracker;
+    private PixelGrid pixelGrid;
+
     // Layers
     private ArrayList<Bitmap> layers;
     private int currentLayer = 0;
@@ -64,7 +70,8 @@ public class DrawingSurface extends SurfaceView implements SurfaceHolder.Callbac
     // Temporary UI variables
     private Paint tempTextPaint;
     private Random random;
-
+    private PointF startTouch = new PointF();
+    private PointF currentTouch = new PointF();
 
     public DrawingSurface(Context context, Tool tool) {
         super(context);
@@ -134,6 +141,11 @@ public class DrawingSurface extends SurfaceView implements SurfaceHolder.Callbac
         scaleListener = new ScaleListener(context, MIN_SCALE, MAX_SCALE, INITIAL_SCALE, getWidth(), getHeight());
         scaleGestureDetector = new ScaleGestureDetector(context, scaleListener);
         displayRect.set(0, 0, getWidth(), getHeight());
+
+        // UI Controls
+        int maxUndos = 5;
+        undoRedoTracker = new UndoRedoTracker(layers.get(currentLayer), maxUndos);
+        pixelGrid = new PixelGrid(dp);
 
         surfaceCreated = true;
     }
@@ -232,15 +244,28 @@ public class DrawingSurface extends SurfaceView implements SurfaceHolder.Callbac
 
                     // A temporary random colour for the tool
                     toolAttributes.paint.setColor(Color.rgb(random.nextInt(255) + 15, random.nextInt(230) + 15, random.nextInt(230) + 15));
-                    tool.beginAction(drawOperationsCanvas, layers.get(currentLayer), touch, toolAttributes);
+
+                    if (tool instanceof ShapeTool) {
+                        startTouch.set(touch.x * scale, touch.y * scale);
+                        currentTouch.set(touch.x * scale, touch.y * scale);
+                        tool.beginAction(drawOperationsCanvas, layers.get(currentLayer), startTouch, toolAttributes);
+                    } else {
+                        tool.beginAction(drawOperationsCanvas, layers.get(currentLayer), touch, toolAttributes);
+                    }
                     break;
                 case MotionEvent.ACTION_MOVE:
-                    tool.beginAction(drawOperationsCanvas, null, touch, toolAttributes);
+                    if (tool instanceof ShapeTool) {
+                        currentTouch.set(touch.x * scale, touch.y * scale);
+                    } else {
+                        tool.beginAction(drawOperationsCanvas, null, touch, toolAttributes);
+                    }
                     break;
                 case MotionEvent.ACTION_UP:
                 case MotionEvent.ACTION_CANCEL:
-                    tool.endAction(touch);
+                    tool.endAction(drawOperationsCanvas, layers.get(currentLayer), touch, toolAttributes);
 
+                    startTouch.set(-1, -1);
+                    currentTouch.set(-1, -1);
                     // TODO: Undo/redo system
                     //undoRedoTracker.bitmapModified(layers.get(currentLayer));
                     break;
@@ -254,19 +279,25 @@ public class DrawingSurface extends SurfaceView implements SurfaceHolder.Callbac
     @Override
     public void draw(Canvas canvas) {
         if (surfaceCreated) {
-            // Draws the user's image
+            // Background
             canvas.drawColor(Color.LTGRAY);
 
+            // User image
             RectF floatViewport = scaleListener.getViewport();
             floatViewport.round(viewportRect);
             canvas.drawBitmap(layers.get(currentLayer), viewportRect, displayRect, bitmapPaint);
 
+            // Gridlines
+            if (pixelGrid.isEnabled()) {
+                pixelGrid.draw(canvas, layerWidth, layerHeight, viewportRect, scaleListener.getScale(), 12);
+            }
+
             // Draws the thumbnail
             if (thumbnail.isEnabled()) {
                 float scale = scaleListener.getScale();
-                //if (scale >= INITIAL_SCALE || scale >= INITIAL_SCALE) {
+                if (scale >= INITIAL_SCALE || scale >= INITIAL_SCALE) {
                     thumbnail.draw(canvas, layers.get(currentLayer), scaleListener.getViewport());
-                //}
+                }
             }
         }
     }
@@ -282,5 +313,17 @@ public class DrawingSurface extends SurfaceView implements SurfaceHolder.Callbac
 
     public void setTool(Tool tool) {
         this.tool = tool;
+    }
+
+    public void undo() {
+        undoRedoTracker.undo(layers.get(currentLayer));
+    }
+
+    public void redo() {
+        undoRedoTracker.redo(layers.get(currentLayer));
+    }
+
+    public void toggleGrid() {
+        pixelGrid.setEnabled(!pixelGrid.isEnabled());
     }
 }

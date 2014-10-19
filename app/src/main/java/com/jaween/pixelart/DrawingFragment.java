@@ -12,6 +12,7 @@ import android.view.ViewGroup;
 import android.widget.Toast;
 
 import com.jaween.pixelart.tools.FloodFill;
+import com.jaween.pixelart.tools.Oval;
 import com.jaween.pixelart.tools.Pen;
 import com.jaween.pixelart.tools.Tool;
 
@@ -21,6 +22,7 @@ public class DrawingFragment extends Fragment {
     private Tool tool;
     private Pen pen;
     private FloodFill floodFill;
+    private Oval oval;
 
     public DrawingFragment() {
         // Required empty public constructor
@@ -31,6 +33,7 @@ public class DrawingFragment extends Fragment {
         super.onCreate(savedInstanceState);
         pen = new Pen(getActivity());
         floodFill = new FloodFill(getActivity());
+        oval = new Oval(getActivity());
         tool = pen;
 
         setHasOptionsMenu(true);
@@ -44,6 +47,15 @@ public class DrawingFragment extends Fragment {
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
+            case R.id.action_undo:
+                surface.undo();
+                break;
+            case R.id.action_redo:
+                surface.redo();
+                break;
+            case R.id.action_grid:
+                surface.toggleGrid();
+                break;
             case R.id.action_tool_pen:
                 // TODO: Proper tool switching
                 surface.setTool(pen);
@@ -52,6 +64,10 @@ public class DrawingFragment extends Fragment {
             case R.id.action_tool_flood_fill:
                 surface.setTool(floodFill);
                 Toast.makeText(getActivity(), "Switched to Flood Fill", Toast.LENGTH_SHORT).show();
+                break;
+            case R.id.action_tool_oval:
+                surface.setTool(oval);
+                Toast.makeText(getActivity(), "Switched to Oval", Toast.LENGTH_SHORT).show();
                 break;
             default:
                 return false;
