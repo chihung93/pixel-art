@@ -10,16 +10,11 @@ import android.graphics.Paint;
 import android.graphics.PointF;
 import android.graphics.Rect;
 import android.graphics.RectF;
-import android.graphics.Shader;
-import android.graphics.drawable.BitmapDrawable;
-import android.graphics.drawable.Drawable;
-import android.util.Log;
 import android.view.MotionEvent;
 import android.view.ScaleGestureDetector;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 
-import com.jaween.pixelart.tools.ShapeTool;
 import com.jaween.pixelart.tools.Tool;
 import com.jaween.pixelart.ui.PixelGrid;
 import com.jaween.pixelart.util.ScaleListener;
@@ -55,7 +50,7 @@ public class DrawingSurface extends SurfaceView implements SurfaceHolder.Callbac
     private Tool.Attributes toolAttributes;
     private Paint toolPaint;
     private Paint bitmapPaint;
-    private PointF touch = new PointF();
+    private PointF displayTouch = new PointF();
     private Canvas drawOperationsCanvas;
     private float dp;
 
@@ -72,8 +67,7 @@ public class DrawingSurface extends SurfaceView implements SurfaceHolder.Callbac
     // Temporary UI variables
     private Paint tempTextPaint;
     private Random random;
-    private PointF startTouch = new PointF();
-    private PointF currentTouch = new PointF();
+    private PointF pixelTouch = new PointF();
 
     public DrawingSurface(Context context, Tool tool) {
         super(context);
@@ -234,41 +228,29 @@ public class DrawingSurface extends SurfaceView implements SurfaceHolder.Callbac
             int index = event.getActionIndex();
 
             RectF viewport = scaleListener.getViewport();
-            touch.x = viewport.left + event.getX(index)/getWidth()*viewport.width();
-            touch.y = viewport.top + event.getY(index)/getHeight()*viewport.height();
+            displayTouch.set(event.getX(), event.getY());
+            pixelTouch.set(viewport.left + displayTouch.x/getWidth()*viewport.width(), viewport.top + displayTouch.y/getHeight()*viewport.height());
 
             // Single-touch event
             switch (action) {
                 case MotionEvent.ACTION_DOWN:
                     // Replace-colour for the flood fill tool
-                    if (isInBounds(layers.get(currentLayer), touch)){
-                        toolAttributes.tempTouchedColour = layers.get(currentLayer).getPixel((int) touch.x, (int) touch.y);
+                    if (isInBounds(layers.get(currentLayer), pixelTouch)){
+                        toolAttributes.tempTouchedColour = layers.get(currentLayer).getPixel((int) pixelTouch.x, (int) pixelTouch.y);
                     }
 
                     // A temporary random colour for the tool
                     toolAttributes.paint.setColor(Color.rgb(random.nextInt(255) + 15, random.nextInt(230) + 15, random.nextInt(230) + 15));
 
-                    if (tool instanceof ShapeTool) {
-                        startTouch.set(touch.x * scale, touch.y * scale);
-                        currentTouch.set(touch.x * scale, touch.y * scale);
-                        tool.beginAction(drawOperationsCanvas, layers.get(currentLayer), startTouch, toolAttributes);
-                    } else {
-                        tool.beginAction(drawOperationsCanvas, layers.get(currentLayer), touch, toolAttributes);
-                    }
+                    tool.start(layers.get(currentLayer), pixelTouch, toolAttributes);
                     break;
                 case MotionEvent.ACTION_MOVE:
-                    if (tool instanceof ShapeTool) {
-                        currentTouch.set(touch.x * scale, touch.y * scale);
-                    } else {
-                        tool.beginAction(drawOperationsCanvas, null, touch, toolAttributes);
-                    }
+                    tool.move(layers.get(currentLayer), pixelTouch, toolAttributes);
                     break;
                 case MotionEvent.ACTION_UP:
                 case MotionEvent.ACTION_CANCEL:
-                    //tool.endAction(drawOperationsCanvas, layers.get(currentLayer), touch, toolAttributes);
+                    tool.end(layers.get(currentLayer), pixelTouch, toolAttributes);
 
-                    startTouch.set(-1, -1);
-                    currentTouch.set(-1, -1);
                     // TODO: Undo/redo system
                     //undoRedoTracker.bitmapModified(layers.get(currentLayer));
                     break;
@@ -291,6 +273,9 @@ public class DrawingSurface extends SurfaceView implements SurfaceHolder.Callbac
             transformation.postScale(scaleListener.getScale(), scaleListener.getScale());
             canvas.drawBitmap(layers.get(currentLayer), transformation, bitmapPaint);
 
+            //pixelTouch.set(displayTouch.x, displayTouch.y);
+            //tool.move(canvas, null, displayTouch, toolAttributes);
+            
             // Gridlines
             if (pixelGrid.isEnabled()) {
                 pixelGrid.draw(canvas, viewport, scaleListener.getScale());

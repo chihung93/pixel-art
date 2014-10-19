@@ -1,11 +1,8 @@
 package com.jaween.pixelart.tools;
 
-import android.content.Context;
 import android.graphics.Bitmap;
-import android.graphics.Canvas;
+import android.graphics.Path;
 import android.graphics.PointF;
-
-import com.jaween.pixelart.R;
 
 /**
  * Created by ween on 9/28/14.
@@ -13,37 +10,28 @@ import com.jaween.pixelart.R;
 // This is a pen
 public class Pen extends Tool {
 
-    private final String name;
+    private PointF previous = new PointF();
+    private Path path = new Path();
 
-    private PointF previous = new PointF(0, 0);
-    private boolean hasPrevious = false;
-
-    public Pen(Context context) {
-        super(context);
-
-        name = context.getString(R.string.tool_pen);
+    public Pen(String name) {
+        super(name);
     }
 
     @Override
-    public void beginAction(Canvas canvas, Bitmap bitmap, PointF event, Attributes attributes) {
-        if (hasPrevious == false) {
-            previous.x = event.x;
-            previous.y = event.y;
-            hasPrevious = true;
-        }
-
-        canvas.drawLine(previous.x, previous.y, event.x, event.y, attributes.paint);
-        previous.x = event.x;
-        previous.y = event.y;
+    public void start(Bitmap bitmap, PointF event, Attributes attributes) {
+        path.moveTo(event.x, event.y);
     }
 
     @Override
-    public void endAction(PointF event) {
-        hasPrevious = false;
+    public void move(Bitmap bitmap, PointF event, Attributes attributes) {
+        path.lineTo(event.x, event.y);
+
+        canvas.setBitmap(bitmap);
+        canvas.drawPath(path, attributes.paint);
     }
 
     @Override
-    public String getName() {
-        return name;
+    public void end(Bitmap bitmap, PointF event, Attributes attributes) {
+        path.reset();
     }
 }

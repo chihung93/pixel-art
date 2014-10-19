@@ -1,28 +1,23 @@
 package com.jaween.pixelart.tools;
 
-import android.content.Context;
-import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Paint;
-import android.graphics.PointF;
 
 /**
  * Created by ween on 9/28/14.
  */
-abstract public class Tool {
+abstract public class Tool implements Command {
 
-    protected Context context;
+    protected Canvas canvas = new Canvas();
+    protected final String name;
 
-    public Tool(Context context) {
-        this.context = context;
+    public Tool(String name) {
+        this.name = name;
     }
 
-    // TODO Some tools use data from the image (e.g. flood fill), so this a muddled interface
-    abstract public void beginAction(Canvas canvas, Bitmap bitmap, PointF event, Attributes attributes);
-
-    abstract public void endAction(PointF event);
-
-    public abstract String getName();
+    public String getName() {
+        return name;
+    }
 
     // TODO Fleshout and improve attributes
     public static class Attributes {
