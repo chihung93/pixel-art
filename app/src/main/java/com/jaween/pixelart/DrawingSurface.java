@@ -2,7 +2,6 @@ package com.jaween.pixelart;
 
 import android.content.Context;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Matrix;
@@ -51,7 +50,8 @@ public class DrawingSurface extends SurfaceView implements SurfaceHolder.Callbac
     private Paint toolPaint;
     private Paint bitmapPaint;
     private PointF displayTouch = new PointF();
-    private Canvas drawOperationsCanvas;
+    private Canvas ongoingOperationCanvas;
+    private Bitmap ongoingOperationBitmap;
     private float dp;
 
     // UI Controls
@@ -122,9 +122,17 @@ public class DrawingSurface extends SurfaceView implements SurfaceHolder.Callbac
                 layerHeight,
                 Bitmap.Config.ARGB_8888));
 
+        // Bitmap that is used to temporarily store ongoing drawing operations
+        // (e.g. dragging out an oval shape is an ongoing operation that draws many temporary ovals)
+        ongoingOperationBitmap = Bitmap.createBitmap(
+                layerWidth,
+                layerHeight,
+                Bitmap.Config.ARGB_8888);
+
         // Attaches a canvas to a layer
-        drawOperationsCanvas = new Canvas(layers.get(0));
-        drawOperationsCanvas.drawColor(Color.WHITE);
+        ongoingOperationCanvas = new Canvas(layers.get(0));
+        ongoingOperationCanvas.drawColor(Color.WHITE);
+        resetOngoingBitmap();
 
         // Thumbnail
         float thumbnailLeft = getWidth() - layerWidth
@@ -242,14 +250,16 @@ public class DrawingSurface extends SurfaceView implements SurfaceHolder.Callbac
                     // A temporary random colour for the tool
                     toolAttributes.paint.setColor(Color.rgb(random.nextInt(255) + 15, random.nextInt(230) + 15, random.nextInt(230) + 15));
 
-                    tool.start(layers.get(currentLayer), pixelTouch, toolAttributes);
+                    tool.start(ongoingOperationBitmap, pixelTouch, toolAttributes);
                     break;
                 case MotionEvent.ACTION_MOVE:
-                    tool.move(layers.get(currentLayer), pixelTouch, toolAttributes);
+                    resetOngoingBitmap();
+                    tool.move(ongoingOperationBitmap, pixelTouch, toolAttributes);
                     break;
                 case MotionEvent.ACTION_UP:
                 case MotionEvent.ACTION_CANCEL:
-                    tool.end(layers.get(currentLayer), pixelTouch, toolAttributes);
+                    tool.end(ongoingOperationBitmap, pixelTouch, toolAttributes);
+                    commitOngoingOperation();
 
                     // TODO: Undo/redo system
                     //undoRedoTracker.bitmapModified(layers.get(currentLayer));
@@ -271,7 +281,7 @@ public class DrawingSurface extends SurfaceView implements SurfaceHolder.Callbac
             RectF viewport = scaleListener.getViewport();
             transformation.setTranslate(-viewport.left, -viewport.top);
             transformation.postScale(scaleListener.getScale(), scaleListener.getScale());
-            canvas.drawBitmap(layers.get(currentLayer), transformation, bitmapPaint);
+            canvas.drawBitmap(ongoingOperationBitmap, transformation, bitmapPaint);
 
             //pixelTouch.set(displayTouch.x, displayTouch.y);
             //tool.move(canvas, null, displayTouch, toolAttributes);
@@ -285,10 +295,20 @@ public class DrawingSurface extends SurfaceView implements SurfaceHolder.Callbac
             if (thumbnail.isEnabled()) {
                 float scale = scaleListener.getScale();
                 if (scale >= INITIAL_SCALE || scale >= INITIAL_SCALE) {
-                    thumbnail.draw(canvas, layers.get(currentLayer), scaleListener.getViewport());
+                    thumbnail.draw(canvas, ongoingOperationBitmap, scaleListener.getViewport());
                 }
             }
         }
+    }
+
+    private void resetOngoingBitmap() {
+        ongoingOperationCanvas.setBitmap(ongoingOperationBitmap);
+        ongoingOperationCanvas.drawBitmap(layers.get(currentLayer), 0, 0, bitmapPaint);
+    }
+
+    private void commitOngoingOperation() {
+        ongoingOperationCanvas.setBitmap(layers.get(currentLayer));
+        ongoingOperationCanvas.drawBitmap(ongoingOperationBitmap, 0, 0, bitmapPaint);
     }
 
     private boolean isInBounds(Bitmap bitmap, PointF point) {

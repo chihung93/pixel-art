@@ -24,14 +24,19 @@ public class Pen extends Tool {
 
     @Override
     public void move(Bitmap bitmap, PointF event, Attributes attributes) {
-        path.lineTo(event.x, event.y);
-
-        canvas.setBitmap(bitmap);
-        canvas.drawPath(path, attributes.paint);
+        draw(bitmap, event, attributes);
     }
 
     @Override
     public void end(Bitmap bitmap, PointF event, Attributes attributes) {
+        draw(bitmap, event, attributes);
         path.reset();
+    }
+
+    private void draw(Bitmap bitmap, PointF event, Attributes attributes) {
+        path.lineTo(event.x, event.y);
+
+        canvas.setBitmap(bitmap);
+        canvas.drawPath(path, attributes.paint);
     }
 }

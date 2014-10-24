@@ -1,6 +1,5 @@
 package com.jaween.pixelart.tools;
 
-import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Paint;
@@ -24,20 +23,21 @@ public class Oval extends Tool {
         start.x = event.x;
         start.y = event.y;
 
-        drawOval(canvas, bitmap, event, attributes.paint);
+        draw(canvas, bitmap, event, attributes.paint);
     }
 
     @Override
     public void move(Bitmap bitmap, PointF event, Attributes attributes) {
-        drawOval(canvas, bitmap, event, attributes.paint);
+        draw(canvas, bitmap, event, attributes.paint);
     }
 
     @Override
     public void end(Bitmap bitmap, PointF event, Attributes attributes) {
-        drawOval(canvas, bitmap, event, attributes.paint);
+        draw(canvas, bitmap, event, attributes.paint);
     }
 
-    private void drawOval(Canvas canvas, Bitmap bitmap, PointF event, Paint paint) {
+    // TODO: Allow the coordinates of oval to go less than 0 in both x and y
+    private void draw(Canvas canvas, Bitmap bitmap, PointF event, Paint paint) {
         ovalBounds.set(start.x, start.y, event.x, event.y);
 
         canvas.setBitmap(bitmap);

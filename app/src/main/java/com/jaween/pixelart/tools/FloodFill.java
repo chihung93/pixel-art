@@ -23,9 +23,21 @@ public class FloodFill extends Tool {
         floodPaint.setAntiAlias(false);
     }
 
-    // Top to bottom scanline flood fill using a stack TODO Fix long operation when filling large areas
     @Override
     public void start(Bitmap bitmap, PointF event, Attributes attributes) {
+        // No implementation
+    }
+
+    @Override
+    public void move(Bitmap bitmap, PointF event, Attributes attributes) {
+        // No implementation
+    }
+
+    // Top to bottom scanline flood fill using a stack
+    // TODO: Fix long operation when filling large areas
+    // TODO: Fix occasionally doesn't fill when touching, dragging then lifting
+    @Override
+    public void end(Bitmap bitmap, PointF event, Attributes attributes) {
         long startTime = System.currentTimeMillis();
 
         floodPaint.setColor(attributes.paint.getColor());
@@ -57,8 +69,9 @@ public class FloodFill extends Tool {
             float x = pixel.x;
             float y1 = pixel.y;
 
-            while (y1 >= 0 && colour(bitmap, x, y1) == oldColour)
+            while (y1 >= 0 && colour(bitmap, x, y1) == oldColour) {
                 y1--;
+            }
             y1++;
 
             boolean spanLeft = false;
@@ -85,16 +98,6 @@ public class FloodFill extends Tool {
         }
 
         Log.d("FloodFill", "Flooding took " + (System.currentTimeMillis() - startTime) + "ms");
-    }
-
-    @Override
-    public void move(Bitmap bitmap, PointF event, Attributes attributes) {
-        // No implementation
-    }
-
-    @Override
-    public void end(Bitmap bitmap, PointF event, Attributes attributes) {
-        // No implementation
     }
 
     private int colour(Bitmap bitmap, float x, float y) {
