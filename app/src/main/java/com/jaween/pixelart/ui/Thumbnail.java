@@ -1,4 +1,4 @@
-package com.jaween.pixelart;
+package com.jaween.pixelart.ui;
 
 import android.graphics.Bitmap;
 import android.graphics.Canvas;

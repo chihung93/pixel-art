@@ -16,6 +16,7 @@ import android.view.SurfaceView;
 
 import com.jaween.pixelart.tools.Tool;
 import com.jaween.pixelart.ui.PixelGrid;
+import com.jaween.pixelart.ui.Thumbnail;
 import com.jaween.pixelart.util.ScaleListener;
 
 import java.util.ArrayList;
