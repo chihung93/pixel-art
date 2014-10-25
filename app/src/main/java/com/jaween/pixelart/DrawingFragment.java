@@ -2,6 +2,11 @@ package com.jaween.pixelart;
 
 import android.app.Activity;
 import android.app.Fragment;
+import android.graphics.Color;
+import android.graphics.PorterDuff;
+import android.graphics.drawable.ColorDrawable;
+import android.graphics.drawable.Drawable;
+import android.os.Build;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -16,13 +21,15 @@ import com.jaween.pixelart.tools.Oval;
 import com.jaween.pixelart.tools.Pen;
 import com.jaween.pixelart.tools.Tool;
 
-public class DrawingFragment extends Fragment {
+public class DrawingFragment extends Fragment implements DrawingSurface.OnClearPanelsListener {
 
     private DrawingSurface surface;
     private Tool tool;
     private Pen pen;
     private FloodFill floodFill;
     private Oval oval;
+
+    private OnClearPanelsListener onClearPanelsListener = null;
 
     public DrawingFragment() {
         // Required empty public constructor
@@ -37,6 +44,14 @@ public class DrawingFragment extends Fragment {
         tool = pen;
 
         setHasOptionsMenu(true);
+    }
+
+    public void setColour(int colour) {
+        surface.setColour(colour);
+    }
+
+    public int getColour() {
+        return surface.getColour();
     }
 
     @Override
@@ -78,6 +93,7 @@ public class DrawingFragment extends Fragment {
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         surface = new DrawingSurface(getActivity(), tool);
+        surface.setOnClearPanelsListener(this);
         return surface;
     }
 
@@ -101,5 +117,20 @@ public class DrawingFragment extends Fragment {
     public void onPause() {
         super.onPause();
         surface.onPause();
+    }
+
+    public void setOnClearPanelsListener(OnClearPanelsListener onClearPanelsListener) {
+        this.onClearPanelsListener = onClearPanelsListener;
+    }
+
+    @Override
+    public void onClearPanels() {
+        if (onClearPanelsListener != null) {
+            onClearPanelsListener.onClearPanels();
+        }
+    }
+
+    public interface OnClearPanelsListener {
+        public boolean onClearPanels();
     }
 }

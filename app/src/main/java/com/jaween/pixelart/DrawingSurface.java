@@ -69,6 +69,7 @@ public class DrawingSurface extends SurfaceView implements SurfaceHolder.Callbac
     private Paint tempTextPaint;
     private Random random;
     private PointF pixelTouch = new PointF();
+    private OnClearPanelsListener onClearPanelsListener = null;
 
     public DrawingSurface(Context context, Tool tool) {
         super(context);
@@ -243,13 +244,14 @@ public class DrawingSurface extends SurfaceView implements SurfaceHolder.Callbac
             // Single-touch event
             switch (action) {
                 case MotionEvent.ACTION_DOWN:
+                    if (onClearPanelsListener != null) {
+                        onClearPanelsListener.onClearPanels();
+                    }
+
                     // Replace-colour for the flood fill tool
                     if (isInBounds(layers.get(currentLayer), pixelTouch)){
                         toolAttributes.tempTouchedColour = layers.get(currentLayer).getPixel((int) pixelTouch.x, (int) pixelTouch.y);
                     }
-
-                    // A temporary random colour for the tool
-                    toolAttributes.paint.setColor(Color.rgb(random.nextInt(255) + 15, random.nextInt(230) + 15, random.nextInt(230) + 15));
 
                     tool.start(ongoingOperationBitmap, pixelTouch, toolAttributes);
                     break;
@@ -321,6 +323,14 @@ public class DrawingSurface extends SurfaceView implements SurfaceHolder.Callbac
         return false;
     }
 
+    public void setColour(int colour) {
+        toolAttributes.paint.setColor(colour);
+    }
+
+    public int getColour() {
+        return toolAttributes.paint.getColor();
+    }
+
     public void setTool(Tool tool) {
         this.tool = tool;
     }
@@ -335,5 +345,13 @@ public class DrawingSurface extends SurfaceView implements SurfaceHolder.Callbac
 
     public void toggleGrid() {
         pixelGrid.setEnabled(!pixelGrid.isEnabled());
+    }
+
+    public void setOnClearPanelsListener(OnClearPanelsListener onClearPanelsListener) {
+        this.onClearPanelsListener = onClearPanelsListener;
+    }
+
+    public interface OnClearPanelsListener {
+        public void onClearPanels();
     }
 }

@@ -1,0 +1,46 @@
+<com.jaween.pixelart.util.SlidingLinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="fill_parent"
+    android:layout_height="wrap_content"
+    android:background="@android:color/white"
+    android:orientation="vertical">
+
+    <GridLayout xmlns:tools="http://schemas.android.com/tools"
+        android:id="@+id/gl_palette_grid"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_margin="@dimen/palette_outer_margin"
+        tools:context="com.jaween.pixelart.ui.PaletteFragment" />
+
+    <LinearLayout
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
+
+        <Button
+            android:id="@+id/bt_customise_palette"
+            style="?android:borderlessButtonStyle"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/gridLayout"
+            android:layout_weight="2"
+            android:text="@string/button_customise_palette" />
+
+        <View
+            android:layout_width="1dp"
+            android:layout_height="match_parent"
+            android:layout_marginBottom="8dp"
+            android:layout_marginTop="8dp"
+            android:background="?android:attr/dividerVertical" />
+
+        <Button
+            android:id="@+id/bt_next_palette"
+            style="?android:borderlessButtonStyle"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/gridLayout"
+            android:layout_weight="2"
+            android:text="@string/button_next_palette" />
+
+    </LinearLayout>
+
+</com.jaween.pixelart.util.SlidingLinearLayout>

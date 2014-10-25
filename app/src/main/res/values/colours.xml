@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <integer-array name="default_palette">
+        <item>0xFFFF3030</item>
+        <item>0xFFFF7C30</item>
+        <item>0xFFFFDD30</item>
+        <item>0xFFAAFF30</item>
+        <item>0xFF33F5F7</item>
+        <item>0xFF3072FF</item>
+        <item>0xFFB630FF</item>
+        <item>0xFF000000</item>
+        <item>0xFFFF8585</item>
+        <item>0xFFFFBF72</item>
+        <item>0xFFF7FF72</item>
+        <item>0xFFC0FF80</item>
+        <item>0xFF96F3F4</item>
+        <item>0xFF7293FF</item>
+        <item>0xFFCD72FF</item>
+        <item>0xFF96F3F4</item>
+    </integer-array>
+
+</resources>
