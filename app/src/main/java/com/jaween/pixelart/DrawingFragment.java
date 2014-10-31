@@ -2,6 +2,7 @@ package com.jaween.pixelart;
 
 import android.app.Activity;
 import android.app.Fragment;
+import android.graphics.Bitmap;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -16,7 +17,7 @@ import com.jaween.pixelart.tools.Oval;
 import com.jaween.pixelart.tools.Pen;
 import com.jaween.pixelart.tools.Tool;
 
-public class DrawingFragment extends Fragment {
+public class DrawingFragment extends Fragment implements DrawingSurface.OnDimensionsCalculatedListener {
 
     private DrawingSurface surface;
     private Tool tool;
@@ -78,6 +79,7 @@ public class DrawingFragment extends Fragment {
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         surface = new DrawingSurface(getActivity(), tool);
+        surface.setOnDimensionsCalculatedListener(this);
         return surface;
     }
 
@@ -101,5 +103,10 @@ public class DrawingFragment extends Fragment {
     public void onPause() {
         super.onPause();
         surface.onPause();
+    }
+
+    @Override
+    public void onDimensionsCalculated(int width, int height) {
+        floodFill.setBitmapConfiguration(width, height, Bitmap.Config.ARGB_8888);
     }
 }

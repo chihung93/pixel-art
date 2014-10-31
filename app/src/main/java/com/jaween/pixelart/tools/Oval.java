@@ -20,6 +20,8 @@ public class Oval extends Tool {
 
     @Override
     public void start(Bitmap bitmap, PointF event, Attributes attributes) {
+        cancelled = false;
+
         start.x = event.x;
         start.y = event.y;
 
@@ -28,12 +30,16 @@ public class Oval extends Tool {
 
     @Override
     public void move(Bitmap bitmap, PointF event, Attributes attributes) {
-        draw(canvas, bitmap, event, attributes.paint);
+        if (cancelled == false) {
+            draw(canvas, bitmap, event, attributes.paint);
+        }
     }
 
     @Override
     public void end(Bitmap bitmap, PointF event, Attributes attributes) {
-        draw(canvas, bitmap, event, attributes.paint);
+        if (cancelled == false) {
+            draw(canvas, bitmap, event, attributes.paint);
+        }
     }
 
     // TODO: Allow the coordinates of oval to go less than 0 in both x and y
