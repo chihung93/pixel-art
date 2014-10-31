@@ -68,29 +68,47 @@ public class ContainerActivity extends Activity implements PaletteFragment.OnCol
     }
 
     @Override
-    public void onColourSelected(int colour) {
+    public void onColourSelected(int colour, boolean done) {
         drawingFragment.setColour(colour);
         invalidateOptionsMenu();
+
+        if (done) {
+            hidePaletteFragment();
+        }
     }
 
     private void togglePaletteFragment() {
-        FragmentTransaction fragmentTransaction = getFragmentManager().beginTransaction();
-
-        fragmentTransaction.setCustomAnimations(R.animator.slide_down, R.animator.slide_up, R.animator.slide_down, R.animator.slide_up);
         if (paletteFragment.isHidden()) {
-            fragmentTransaction.show(paletteFragment);
+            showPaletteFragment();
         } else {
-            fragmentTransaction.hide(paletteFragment);
+            hidePaletteFragment();
         }
-        fragmentTransaction.commit();
+    }
+
+    private boolean showPaletteFragment() {
+        if (paletteFragment.isHidden()) {
+            FragmentTransaction fragmentTransaction = getFragmentManager().beginTransaction();
+            fragmentTransaction.setCustomAnimations(R.animator.slide_down, R.animator.slide_up, R.animator.slide_down, R.animator.slide_up);
+            fragmentTransaction.show(paletteFragment);
+            fragmentTransaction.commit();
+            return true;
+        }
+        return false;
+    }
+
+    private boolean hidePaletteFragment() {
+        if (!paletteFragment.isHidden()) {
+            FragmentTransaction fragmentTransaction = getFragmentManager().beginTransaction();
+            fragmentTransaction.setCustomAnimations(R.animator.slide_down, R.animator.slide_up, R.animator.slide_down, R.animator.slide_up);
+            fragmentTransaction.hide(paletteFragment);
+            fragmentTransaction.commit();
+            return true;
+        }
+        return false;
     }
 
     @Override
     public boolean onClearPanels() {
-        if (!paletteFragment.isHidden()) {
-            togglePaletteFragment();
-            return true;
-        }
-        return false;
+        return hidePaletteFragment();
     }
 }

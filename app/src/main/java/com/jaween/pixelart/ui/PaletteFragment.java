@@ -70,13 +70,18 @@ public class PaletteFragment extends Fragment implements
     @Override
     public void onClick(View view) {
         if (view instanceof ColourButton) {
-            ColourButton colourButton = (ColourButton) view;
-            colourSelectedCallback.onColourSelected(colourButton.getColour());
+            ColourButton pressedColourButton = (ColourButton) view;
+
+            // User tapped the selected colour again, hides the panel if possible
+            if (selectedColourButton == pressedColourButton) {
+                colourSelectedCallback.onColourSelected(pressedColourButton.getColour(), true);
+            }
 
             selectedColourButton.setSelected(false);
             selectedColourButton.invalidate();
-            selectedColourButton = colourButton;
+            selectedColourButton = pressedColourButton;
             selectedColourButton.setSelected(true);
+            colourSelectedCallback.onColourSelected(pressedColourButton.getColour(), false);
         }
 
         switch (view.getId()) {
@@ -130,7 +135,7 @@ public class PaletteFragment extends Fragment implements
                 if (selectedColourButton == null) {
                     selectedColourButton = colourButton;
                     selectedColourButton.setSelected(true);
-                    colourSelectedCallback.onColourSelected(selectedColourButton.getColour());
+                    colourSelectedCallback.onColourSelected(selectedColourButton.getColour(), false);
 
                     ViewGroup.LayoutParams params = new ViewGroup.LayoutParams(selectedColourButton.getWidth(), selectedColourButton.getHeight());
                     colourSelector = new ColourSelector(getActivity());
@@ -150,6 +155,6 @@ public class PaletteFragment extends Fragment implements
     }
 
     public interface OnColourSelectedListener {
-        public void onColourSelected(int colour);
+        public void onColourSelected(int colour, boolean done);
     }
 }
