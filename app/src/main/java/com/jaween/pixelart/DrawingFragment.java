@@ -2,11 +2,7 @@ package com.jaween.pixelart;
 
 import android.app.Activity;
 import android.app.Fragment;
-import android.graphics.Color;
-import android.graphics.PorterDuff;
-import android.graphics.drawable.ColorDrawable;
-import android.graphics.drawable.Drawable;
-import android.os.Build;
+import android.graphics.Bitmap;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -21,7 +17,9 @@ import com.jaween.pixelart.tools.Oval;
 import com.jaween.pixelart.tools.Pen;
 import com.jaween.pixelart.tools.Tool;
 
-public class DrawingFragment extends Fragment implements DrawingSurface.OnClearPanelsListener {
+public class DrawingFragment extends Fragment implements
+        DrawingSurface.OnClearPanelsListener,
+        DrawingSurface.OnDimensionsCalculatedListener {
 
     private DrawingSurface surface;
     private Tool tool;
@@ -94,6 +92,7 @@ public class DrawingFragment extends Fragment implements DrawingSurface.OnClearP
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         surface = new DrawingSurface(getActivity(), tool);
         surface.setOnClearPanelsListener(this);
+        surface.setOnDimensionsCalculatedListener(this);
         return surface;
     }
 
@@ -128,6 +127,11 @@ public class DrawingFragment extends Fragment implements DrawingSurface.OnClearP
         if (onClearPanelsListener != null) {
             onClearPanelsListener.onClearPanels();
         }
+    }
+
+    @Override
+    public void onDimensionsCalculated(int width, int height) {
+        floodFill.setBitmapConfiguration(width, height, Bitmap.Config.ARGB_8888);
     }
 
     public interface OnClearPanelsListener {

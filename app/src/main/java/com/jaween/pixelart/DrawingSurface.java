@@ -53,6 +53,7 @@ public class DrawingSurface extends SurfaceView implements SurfaceHolder.Callbac
     private PointF displayTouch = new PointF();
     private Canvas ongoingOperationCanvas;
     private Bitmap ongoingOperationBitmap;
+    private OnDimensionsCalculatedListener onDimensionsCalculatedListener = null;
     private float dp;
 
     // UI Controls
@@ -70,6 +71,10 @@ public class DrawingSurface extends SurfaceView implements SurfaceHolder.Callbac
     private Random random;
     private PointF pixelTouch = new PointF();
     private OnClearPanelsListener onClearPanelsListener = null;
+    private long touchDownTime = 0;
+    private static final long CANCEL_DRAWING_MILLIS = 300;
+    private static final int NULL_POINTER_ID = -1;
+    private int currentPointerId = NULL_POINTER_ID;
 
     public DrawingSurface(Context context, Tool tool) {
         super(context);
@@ -144,7 +149,8 @@ public class DrawingSurface extends SurfaceView implements SurfaceHolder.Callbac
         thumbnail = new Thumbnail(thumbnailLeft, thumbnailTop, layerWidth, layerHeight, dp);
 
         // Multi-touch zoom and pan
-        scaleListener = new ScaleListener(context, MIN_SCALE, MAX_SCALE, INITIAL_SCALE, getWidth(), getHeight());
+        scaleListener = new ScaleListener(context, MIN_SCALE, MAX_SCALE, INITIAL_SCALE,
+                getWidth(), getHeight());
         scaleGestureDetector = new ScaleGestureDetector(context, scaleListener);
         displayRect.set(0, 0, getWidth(), getHeight());
 
@@ -153,6 +159,11 @@ public class DrawingSurface extends SurfaceView implements SurfaceHolder.Callbac
         undoRedoTracker = new UndoRedoTracker(layers.get(currentLayer), maxUndos);
         int majorPixelSpacing = 8;
         pixelGrid = new PixelGrid(dp, layerWidth, layerHeight, majorPixelSpacing);
+
+        // Notifies the owner fragment that the size has been calculated
+        if (onDimensionsCalculatedListener != null) {
+            onDimensionsCalculatedListener.onDimensionsCalculated(layerWidth, layerHeight);
+        }
 
         surfaceCreated = true;
     }
@@ -229,29 +240,46 @@ public class DrawingSurface extends SurfaceView implements SurfaceHolder.Callbac
             scaleGestureDetector.onTouchEvent(event);
             scaleListener.getGestureDetector().onTouchEvent(event);
 
-            // Stops if we're performing a gesture
-            if (scaleGestureDetector.isInProgress()) {
-                return false;
-            }
-
             int action = event.getActionMasked();
             int index = event.getActionIndex();
 
+            // Ignores drawing operations that change pointer halfway through
+            if (currentPointerId == NULL_POINTER_ID) {
+                currentPointerId = event.getPointerId(index);
+            }
+
+            // Adjusts the viewport and gets the coordinates of the touch on the drawing
             RectF viewport = scaleListener.getViewport();
             displayTouch.set(event.getX(), event.getY());
-            pixelTouch.set(viewport.left + displayTouch.x/getWidth()*viewport.width(), viewport.top + displayTouch.y/getHeight()*viewport.height());
+            pixelTouch.set(
+                    viewport.left + displayTouch.x/getWidth()*viewport.width(),
+                    viewport.top + displayTouch.y/getHeight()*viewport.height());
+
+            // Stops drawing if we're performing a gesture
+            if (scaleGestureDetector.isInProgress()) {
+                if (System.currentTimeMillis() - touchDownTime < CANCEL_DRAWING_MILLIS) {
+                    // Scaling began soon after the initial touch, cancels the drawing operation
+                    tool.cancel();
+                    resetOngoingBitmap();
+                } else {
+                    // Scaling begun long after the initial touch, commits the drawing operation
+                    // up until this point, but cancels further drawing
+                    tool.end(ongoingOperationBitmap, pixelTouch, toolAttributes);
+                    tool.cancel();
+                    commitOngoingOperation();
+                }
+                return true;
+            }
 
             // Single-touch event
             switch (action) {
                 case MotionEvent.ACTION_DOWN:
+
                     if (onClearPanelsListener != null) {
                         onClearPanelsListener.onClearPanels();
                     }
 
-                    // Replace-colour for the flood fill tool
-                    if (isInBounds(layers.get(currentLayer), pixelTouch)){
-                        toolAttributes.tempTouchedColour = layers.get(currentLayer).getPixel((int) pixelTouch.x, (int) pixelTouch.y);
-                    }
+                    touchDownTime = System.currentTimeMillis();
 
                     tool.start(ongoingOperationBitmap, pixelTouch, toolAttributes);
                     break;
@@ -260,12 +288,26 @@ public class DrawingSurface extends SurfaceView implements SurfaceHolder.Callbac
                     tool.move(ongoingOperationBitmap, pixelTouch, toolAttributes);
                     break;
                 case MotionEvent.ACTION_UP:
-                case MotionEvent.ACTION_CANCEL:
+                    currentPointerId = NULL_POINTER_ID;
                     tool.end(ongoingOperationBitmap, pixelTouch, toolAttributes);
                     commitOngoingOperation();
 
                     // TODO: Undo/redo system
                     //undoRedoTracker.bitmapModified(layers.get(currentLayer));
+                    break;
+                case MotionEvent.ACTION_CANCEL:
+                    currentPointerId = NULL_POINTER_ID;
+                    tool.cancel();
+                    resetOngoingBitmap();
+                    break;
+                case MotionEvent.ACTION_POINTER_UP:
+                    // Ends drawing operation if the main pointer left the screen
+                    if (event.getPointerId(index) == currentPointerId) {
+                        tool.end(ongoingOperationBitmap, pixelTouch, toolAttributes);
+                        tool.cancel();
+                        commitOngoingOperation();
+                        currentPointerId = NULL_POINTER_ID;
+                    }
                     break;
                 default:
                     return false;
@@ -286,10 +328,7 @@ public class DrawingSurface extends SurfaceView implements SurfaceHolder.Callbac
             transformation.postScale(scaleListener.getScale(), scaleListener.getScale());
             canvas.drawBitmap(ongoingOperationBitmap, transformation, bitmapPaint);
 
-            //pixelTouch.set(displayTouch.x, displayTouch.y);
-            //tool.move(canvas, null, displayTouch, toolAttributes);
-            
-            // Gridlines
+            // Grid lines
             if (pixelGrid.isEnabled()) {
                 pixelGrid.draw(canvas, viewport, scaleListener.getScale());
             }
@@ -312,15 +351,6 @@ public class DrawingSurface extends SurfaceView implements SurfaceHolder.Callbac
     private void commitOngoingOperation() {
         ongoingOperationCanvas.setBitmap(layers.get(currentLayer));
         ongoingOperationCanvas.drawBitmap(ongoingOperationBitmap, 0, 0, bitmapPaint);
-    }
-
-    private boolean isInBounds(Bitmap bitmap, PointF point) {
-        if (point.x >= 0 && point.x < bitmap.getWidth()) {
-            if (point.y >= 0 && point.y < bitmap.getHeight()) {
-                return true;
-            }
-        }
-        return false;
     }
 
     public void setColour(int colour) {
@@ -351,7 +381,15 @@ public class DrawingSurface extends SurfaceView implements SurfaceHolder.Callbac
         this.onClearPanelsListener = onClearPanelsListener;
     }
 
+    public void setOnDimensionsCalculatedListener(OnDimensionsCalculatedListener onDimensionsCalculatedListener) {
+        this.onDimensionsCalculatedListener = onDimensionsCalculatedListener;
+    }
+
     public interface OnClearPanelsListener {
         public void onClearPanels();
+    }
+
+    public interface OnDimensionsCalculatedListener {
+        public void onDimensionsCalculated(int width, int height);
     }
 }

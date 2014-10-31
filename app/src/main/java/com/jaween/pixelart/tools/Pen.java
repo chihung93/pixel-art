@@ -19,18 +19,24 @@ public class Pen extends Tool {
 
     @Override
     public void start(Bitmap bitmap, PointF event, Attributes attributes) {
+        cancelled = false;
+
+        path.reset();
         path.moveTo(event.x, event.y);
     }
 
     @Override
     public void move(Bitmap bitmap, PointF event, Attributes attributes) {
-        draw(bitmap, event, attributes);
+        if (cancelled == false) {
+            draw(bitmap, event, attributes);
+        }
     }
 
     @Override
     public void end(Bitmap bitmap, PointF event, Attributes attributes) {
-        draw(bitmap, event, attributes);
-        path.reset();
+        if (cancelled == false) {
+            draw(bitmap, event, attributes);
+        }
     }
 
     private void draw(Bitmap bitmap, PointF event, Attributes attributes) {

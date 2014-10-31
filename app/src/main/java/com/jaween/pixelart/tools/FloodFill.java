@@ -13,6 +13,8 @@ import java.util.Stack;
 public class FloodFill extends Tool {
 
     private static Paint floodPaint = new Paint();
+    private Bitmap floodedBitmap = null;
+
     private Stack<PointF> pixels = new Stack<PointF>();
 
     public FloodFill(String name) {
@@ -23,47 +25,47 @@ public class FloodFill extends Tool {
         floodPaint.setAntiAlias(false);
     }
 
-    @Override
-    public void start(Bitmap bitmap, PointF event, Attributes attributes) {
-        // No implementation
-    }
-
-    @Override
-    public void move(Bitmap bitmap, PointF event, Attributes attributes) {
-        // No implementation
+    public void setBitmapConfiguration(int width, int height, Bitmap.Config config) {
+        floodedBitmap = Bitmap.createBitmap(width, height, config);
     }
 
     // Top to bottom scanline flood fill using a stack
     // TODO: Fix long operation when filling large areas
-    // TODO: Fix occasionally doesn't fill when touching, dragging then lifting
+    // Takes 300~500ms on average and occasionally more than 1000ms on a 180x259px image!!!
     @Override
-    public void end(Bitmap bitmap, PointF event, Attributes attributes) {
+    public void start(Bitmap bitmap, PointF event, Attributes attributes) {
         long startTime = System.currentTimeMillis();
+        cancelled = false;
 
-        floodPaint.setColor(attributes.paint.getColor());
+        // Out of bounds
+        if (!isInBounds(bitmap, event)) {
+            return;
+        }
 
-        int oldColour = attributes.tempTouchedColour;
+        // Colour to be replaced and the colour which will replace it
+        int oldColour = bitmap.getPixel((int) event.x, (int) event.y);
         int newColour = attributes.paint.getColor();
+        floodPaint.setColor(attributes.paint.getColor());
 
         // No bitmap
         if (bitmap == null)
             return;
 
-        // Out of bounds
-        if (event.x < 0 || event.x >= bitmap.getWidth() || event.y < 0 || event.y >= bitmap.getHeight())
+        // Filling not required
+        if (oldColour == newColour) {
             return;
+        }
 
         // Filling not required
-        if (oldColour == newColour)
+        if (colour(bitmap, event.x, event.y) == newColour) {
             return;
+        }
 
-        // Filling not required
-        if (colour(bitmap, event.x, event.y) == newColour)
-            return;
-
+        // Clears pixel queue
         pixels.clear();
         pixels.push(event);
 
+        // Four-way flood fill algorithm
         while (!pixels.isEmpty()) {
             PointF pixel = pixels.pop();
             float x = pixel.x;
@@ -97,7 +99,26 @@ public class FloodFill extends Tool {
             }
         }
 
+        blitBitmap(bitmap, floodedBitmap);
+
         Log.d("FloodFill", "Flooding took " + (System.currentTimeMillis() - startTime) + "ms");
+    }
+
+    @Override
+    public void move(Bitmap bitmap, PointF event, Attributes attributes) {
+        blitBitmap(floodedBitmap, bitmap);
+    }
+
+    @Override
+    public void end(Bitmap bitmap, PointF event, Attributes attributes) {
+        blitBitmap(floodedBitmap, bitmap);
+    }
+
+    private void blitBitmap(Bitmap source, Bitmap destination) {
+        if (cancelled == false) {
+            canvas.setBitmap(destination);
+            canvas.drawBitmap(source, 0, 0, floodPaint);
+        }
     }
 
     private int colour(Bitmap bitmap, float x, float y) {
