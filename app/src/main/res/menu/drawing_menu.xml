@@ -13,7 +13,7 @@
         android:id="@+id/action_redo"
         android:icon="@drawable/ic_action_redo"
         android:orderInCategory="4"
-        android:showAsAction="always"
+        android:showAsAction="ifRoom"
         android:title="@string/action_redo" />
 
     <item
@@ -38,6 +38,7 @@
         android:id="@+id/action_grid"
         android:orderInCategory="33"
         android:showAsAction="ifRoom"
+        android:icon="@drawable/action_grid"
         android:title="@string/action_grid" />
 
     <item

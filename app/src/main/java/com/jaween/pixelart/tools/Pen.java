@@ -3,6 +3,7 @@ package com.jaween.pixelart.tools;
 import android.graphics.Bitmap;
 import android.graphics.Path;
 import android.graphics.PointF;
+import android.graphics.drawable.Drawable;
 
 /**
  * Created by ween on 9/28/14.
@@ -13,8 +14,8 @@ public class Pen extends Tool {
     private PointF previous = new PointF();
     private Path path = new Path();
 
-    public Pen(String name) {
-        super(name);
+    public Pen(String name, Drawable icon) {
+        super(name, icon);
     }
 
     @Override

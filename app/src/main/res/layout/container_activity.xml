@@ -5,12 +5,17 @@
     tools:context=".ContainerActivity">
 
     <FrameLayout
-        android:id="@+id/container_content"
+        android:id="@+id/fl_container_content"
         android:layout_width="match_parent"
         android:layout_height="match_parent" />
 
     <FrameLayout
-        android:id="@+id/container_panel"
+        android:id="@+id/fl_container_palette"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content" />
+
+    <FrameLayout
+        android:id="@+id/fl_container_toolbox"
         android:layout_width="match_parent"
         android:layout_height="wrap_content" />
 

@@ -1,0 +1,99 @@
+<merge xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <TableLayout xmlns:tools="http://schemas.android.com/tools"
+        android:id="@+id/gl_toolbox_grid"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@android:color/white"
+        android:padding="@dimen/palette_outer_margin"
+        tools:context="com.jaween.pixelart.ui.PaletteFragment">
+
+        <TableRow>
+
+            <com.jaween.pixelart.ui.ToolButton
+                android:id="@+id/ib_tool_pen"
+                style="?android:borderlessButtonStyle"
+                android:layout_width="0dp"
+                android:layout_height="60dp"
+                android:layout_weight="1"
+                android:src="@drawable/tool_pen" />
+
+            <com.jaween.pixelart.ui.ToolButton
+                android:id="@+id/ib_tool_eraser"
+                style="?android:borderlessButtonStyle"
+                android:layout_width="0dp"
+                android:layout_height="60dp"
+                android:layout_weight="1"
+                android:src="@drawable/tool_pen" />
+
+            <com.jaween.pixelart.ui.ToolButton
+                android:id="@+id/ib_tool_rect"
+                style="?android:borderlessButtonStyle"
+                android:layout_width="0dp"
+                android:layout_height="60dp"
+                android:layout_weight="1"
+                android:src="@drawable/tool_rect" />
+
+            <com.jaween.pixelart.ui.ToolButton
+                android:id="@+id/ib_tool_oval"
+                style="?android:borderlessButtonStyle"
+                android:layout_width="0dp"
+                android:layout_height="60dp"
+                android:layout_weight="1"
+                android:src="@drawable/tool_oval" />
+
+            <com.jaween.pixelart.ui.ToolButton
+                android:id="@+id/ib_tool_rect_select"
+                style="?android:borderlessButtonStyle"
+                android:layout_width="0dp"
+                android:layout_height="60dp"
+                android:layout_weight="1"
+                android:src="@drawable/tool_pen" />
+        </TableRow>
+
+        <TableRow>
+
+            <com.jaween.pixelart.ui.ToolButton
+                android:id="@+id/ib_tool_flood_fill"
+                style="?android:borderlessButtonStyle"
+                android:layout_width="0dp"
+                android:layout_height="60dp"
+                android:layout_weight="1"
+                android:src="@drawable/tool_fill" />
+
+            <com.jaween.pixelart.ui.ToolButton
+                android:id="@+id/ib_tool_colour_picker"
+                style="?android:borderlessButtonStyle"
+                android:layout_width="0dp"
+                android:layout_height="60dp"
+                android:layout_weight="1"
+                android:src="@drawable/tool_pen" />
+
+            <com.jaween.pixelart.ui.ToolButton
+                android:id="@+id/ib_tool_misingno"
+                style="?android:borderlessButtonStyle"
+                android:layout_width="0dp"
+                android:layout_height="60dp"
+                android:layout_weight="1"
+                android:src="@drawable/tool_pen" />
+
+            <com.jaween.pixelart.ui.ToolButton
+                android:id="@+id/ib_tool_magic_wand"
+                style="?android:borderlessButtonStyle"
+                android:layout_width="0dp"
+                android:layout_height="60dp"
+                android:layout_weight="1"
+                android:src="@drawable/tool_pen" />
+
+            <com.jaween.pixelart.ui.ToolButton
+                android:id="@+id/ib_tool_draw_select"
+                style="?android:borderlessButtonStyle"
+                android:layout_width="0dp"
+                android:layout_height="60dp"
+                android:layout_weight="1"
+                android:src="@drawable/tool_pen" />
+        </TableRow>
+
+    </TableLayout>
+
+</merge>

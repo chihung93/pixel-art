@@ -4,6 +4,7 @@ import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.PointF;
+import android.graphics.drawable.Drawable;
 
 /**
  * Created by ween on 9/28/14.
@@ -12,14 +13,20 @@ abstract public class Tool implements Command {
 
     protected Canvas canvas = new Canvas();
     protected final String name;
+    protected final Drawable icon;
     protected boolean cancelled = false;
 
-    public Tool(String name) {
+    public Tool(String name, Drawable icon) {
         this.name = name;
+        this.icon = icon;
     }
 
     public String getName() {
         return name;
+    }
+
+    public Drawable getIcon() {
+        return icon;
     }
 
     @Override

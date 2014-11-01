@@ -29,7 +29,7 @@ public final class DriverActivity extends Activity {
         // Picks the Activity based on the size of the screen and starts it up
         Intent intent;
         if (widthDp >= TABLET_LAYOUT_WIDTH_DP) {
-            intent = new Intent(this, BaseContainerActivity.class);
+            intent = new Intent(this, TabletContainerActivity.class);
         } else {
             intent = new Intent(this, PhoneContainerActivity.class);
         }

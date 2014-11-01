@@ -5,14 +5,16 @@ A work in progress pixel art drawing app for Android.
 Features
 --------
 This app currently includes:
- * Simple tools (pen and flood fill)
+ * Simple tools (pen, oval and flood fill)
  * Zooming and panning
+ * UI controls (colour palette and a pixel grid)
+ * Basic tablet support
+ * Plenty of bugs
 
 TODO
 ----
 Features that are currently lacking:
- * Standard tools (eraser, shapes, selection, etc.)
- * Tool selection UI
- * UI controls (colour picker, grids, undo/redo system etc.)
+ * Standard tools (eraser, selection, etc.)
+ * UI controls (undo/redo system etc.)
  * Layer support
  * Animation support

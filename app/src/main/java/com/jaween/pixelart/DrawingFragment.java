@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.app.Fragment;
 import android.graphics.Bitmap;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -16,18 +17,18 @@ import com.jaween.pixelart.tools.FloodFill;
 import com.jaween.pixelart.tools.Oval;
 import com.jaween.pixelart.tools.Pen;
 import com.jaween.pixelart.tools.Tool;
+import com.jaween.pixelart.ui.ToolboxFragment;
 
 public class DrawingFragment extends Fragment implements
         DrawingSurface.OnClearPanelsListener,
         DrawingSurface.OnDimensionsCalculatedListener {
 
     private DrawingSurface surface;
-    private Tool tool;
-    private Pen pen;
-    private FloodFill floodFill;
-    private Oval oval;
 
     private OnClearPanelsListener onClearPanelsListener = null;
+    private OnDimensionsCalculatedListener onDimensionsCalculatedListener = null;
+
+    private Tool selectedTool;
 
     public DrawingFragment() {
         // Required empty public constructor
@@ -36,10 +37,6 @@ public class DrawingFragment extends Fragment implements
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        pen = new Pen(getString(R.string.tool_pen));
-        floodFill = new FloodFill(getString(R.string.tool_flood_fill));
-        oval = new Oval(getString(R.string.tool_oval));
-        tool = pen;
 
         setHasOptionsMenu(true);
     }
@@ -50,6 +47,13 @@ public class DrawingFragment extends Fragment implements
 
     public int getColour() {
         return surface.getColour();
+    }
+
+    public void setTool(Tool tool) {
+        selectedTool = tool;
+        if (surface != null) {
+            surface.setTool(tool);
+        }
     }
 
     @Override
@@ -69,19 +73,6 @@ public class DrawingFragment extends Fragment implements
             case R.id.action_grid:
                 surface.toggleGrid();
                 break;
-            case R.id.action_tool_pen:
-                // TODO: Proper tool switching
-                surface.setTool(pen);
-                Toast.makeText(getActivity(), "Switched to Pen", Toast.LENGTH_SHORT).show();
-                break;
-            case R.id.action_tool_flood_fill:
-                surface.setTool(floodFill);
-                Toast.makeText(getActivity(), "Switched to Flood Fill", Toast.LENGTH_SHORT).show();
-                break;
-            case R.id.action_tool_oval:
-                surface.setTool(oval);
-                Toast.makeText(getActivity(), "Switched to Oval", Toast.LENGTH_SHORT).show();
-                break;
             default:
                 return false;
         }
@@ -90,7 +81,7 @@ public class DrawingFragment extends Fragment implements
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        surface = new DrawingSurface(getActivity(), tool);
+        surface = new DrawingSurface(getActivity(), selectedTool);
         surface.setOnClearPanelsListener(this);
         surface.setOnDimensionsCalculatedListener(this);
         return surface;
@@ -131,7 +122,15 @@ public class DrawingFragment extends Fragment implements
 
     @Override
     public void onDimensionsCalculated(int width, int height) {
-        floodFill.setBitmapConfiguration(width, height, Bitmap.Config.ARGB_8888);
+        onDimensionsCalculatedListener.onDimensionsCalculated(width, height);
+    }
+
+    public void setOnDimensionsCalculatedListener(OnDimensionsCalculatedListener onDimensionsCalculatedListener) {
+        this.onDimensionsCalculatedListener = onDimensionsCalculatedListener;
+    }
+
+    public interface OnDimensionsCalculatedListener {
+        public void onDimensionsCalculated(int width, int height);
     }
 
     public interface OnClearPanelsListener {

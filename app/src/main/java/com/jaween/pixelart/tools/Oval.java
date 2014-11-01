@@ -5,14 +5,15 @@ import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.PointF;
 import android.graphics.RectF;
+import android.graphics.drawable.Drawable;
 
 /**
  * Created by ween on 10/19/14.
  */
 public class Oval extends Tool {
 
-    public Oval(String name) {
-        super(name);
+    public Oval(String name, Drawable icon) {
+        super(name, icon);
     }
 
     private PointF start = new PointF();

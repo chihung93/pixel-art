@@ -3,6 +3,7 @@ package com.jaween.pixelart.tools;
 import android.graphics.Bitmap;
 import android.graphics.Paint;
 import android.graphics.PointF;
+import android.graphics.drawable.Drawable;
 import android.util.Log;
 
 import java.util.Stack;
@@ -17,8 +18,8 @@ public class FloodFill extends Tool {
 
     private Stack<PointF> pixels = new Stack<PointF>();
 
-    public FloodFill(String name) {
-        super(name);
+    public FloodFill(String name, Drawable icon) {
+        super(name, icon);
 
         // Attributes required for flooding (must only touch a single pixel at a time)
         floodPaint.setStrokeWidth(0);
