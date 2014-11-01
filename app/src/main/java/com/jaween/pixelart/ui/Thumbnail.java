@@ -13,7 +13,6 @@ public class Thumbnail {
 
     // Thumbnail Metrics
     private RectF thumbnailRect = new RectF();
-    private float scale;
     private float dp;
 
     // View window
@@ -22,8 +21,6 @@ public class Thumbnail {
 
     // Paints
     private Paint viewWindowPaint;
-    private Paint borderPaint;
-    private Paint bitmapPaint;
 
     // Colour preferences
     private static final int THUMBNAIL_BORDER_COLOUR = Color.DKGRAY;
@@ -42,13 +39,6 @@ public class Thumbnail {
     }
 
     private void initialisePaints() {
-        // Thumbnail border
-        borderPaint = new Paint();
-        borderPaint.setStyle(Paint.Style.STROKE);
-        borderPaint.setColor(THUMBNAIL_BORDER_COLOUR);
-        borderPaint.setStrokeWidth(dp);
-        borderPaint.setAntiAlias(false);
-
         // Thumbnail window
         viewWindowPaint = new Paint();
         viewWindowPaint.setStyle(Paint.Style.STROKE);
@@ -56,19 +46,15 @@ public class Thumbnail {
         viewWindowPaint.setAlpha(VIEW_WINDOW_TRANSPARENCY);
         viewWindowPaint.setStyle(Paint.Style.FILL);
         viewWindowPaint.setAntiAlias(false);
-
-        // Purely used to blit bitmaps
-        bitmapPaint = new Paint();
-        bitmapPaint.setAntiAlias(false);
     }
 
     // Draws thumbnail given a canvas to draw on to, the unscaled bitmap and the unscaled viewport
-    public void draw(Canvas canvas, Bitmap bitmap, RectF viewport) {
+    public void draw(Canvas canvas, Bitmap bitmap, RectF viewport, Paint bitmapPaint, Paint shadowPaint) {
+        // Border
+        canvas.drawRect(thumbnailRect, shadowPaint);
+
         // Thumbnail
         canvas.drawBitmap(bitmap, null, thumbnailRect, bitmapPaint);
-
-        // Border
-        canvas.drawRect(thumbnailRect, borderPaint);
 
         // View Window (portion of the image being viewed)
         if (viewWindowEnabled) {

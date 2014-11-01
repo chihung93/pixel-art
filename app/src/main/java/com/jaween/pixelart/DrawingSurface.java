@@ -75,6 +75,8 @@ public class DrawingSurface extends SurfaceView implements SurfaceHolder.Callbac
     private static final long CANCEL_DRAWING_MILLIS = 300;
     private static final int NULL_POINTER_ID = -1;
     private int currentPointerId = NULL_POINTER_ID;
+    private Paint shadowPaint;
+    RectF shadowRect = new RectF();
 
     public DrawingSurface(Context context, Tool tool) {
         super(context);
@@ -109,7 +111,11 @@ public class DrawingSurface extends SurfaceView implements SurfaceHolder.Callbac
 
         // Purely used to blit bitmaps
         bitmapPaint = new Paint();
-        bitmapPaint.setAntiAlias(false);
+        bitmapPaint.setStyle(Paint.Style.STROKE);
+
+        // Shadow around canvas and thumbnail
+        shadowPaint = new Paint();
+        shadowPaint.setShadowLayer(4*dp, 0, 2*dp, Color.DKGRAY);
 
         // Temporary UI text
         tempTextPaint = new Paint();
@@ -143,9 +149,9 @@ public class DrawingSurface extends SurfaceView implements SurfaceHolder.Callbac
 
         // Thumbnail
         float thumbnailLeft = getWidth() - layerWidth
-                - getResources().getDimension(R.dimen.activity_horizontal_margin);
+                - getResources().getDimension(R.dimen.canvas_margin);
         float thumbnailTop = getHeight() - layerHeight
-                - getResources().getDimension(R.dimen.activity_vertical_margin);
+                - getResources().getDimension(R.dimen.canvas_margin);
         thumbnail = new Thumbnail(thumbnailLeft, thumbnailTop, layerWidth, layerHeight, dp);
 
         // Multi-touch zoom and pan
@@ -313,7 +319,7 @@ public class DrawingSurface extends SurfaceView implements SurfaceHolder.Callbac
                     return false;
             }
             return true;
-            }
+        }
     }
 
     @Override
@@ -326,6 +332,13 @@ public class DrawingSurface extends SurfaceView implements SurfaceHolder.Callbac
             RectF viewport = scaleListener.getViewport();
             transformation.setTranslate(-viewport.left, -viewport.top);
             transformation.postScale(scaleListener.getScale(), scaleListener.getScale());
+
+            // Canvas and border shadow
+            shadowRect.set(0, 0, ongoingOperationBitmap.getWidth(), ongoingOperationBitmap.getHeight());
+            transformation.mapRect(shadowRect);
+            canvas.drawRect(shadowRect, shadowPaint);
+
+            // User drawn image
             canvas.drawBitmap(ongoingOperationBitmap, transformation, bitmapPaint);
 
             // Grid lines
@@ -337,7 +350,7 @@ public class DrawingSurface extends SurfaceView implements SurfaceHolder.Callbac
             if (thumbnail.isEnabled()) {
                 float scale = scaleListener.getScale();
                 if (scale >= INITIAL_SCALE || scale >= INITIAL_SCALE) {
-                    thumbnail.draw(canvas, ongoingOperationBitmap, scaleListener.getViewport());
+                    thumbnail.draw(canvas, ongoingOperationBitmap, scaleListener.getViewport(), bitmapPaint, shadowPaint);
                 }
             }
         }
