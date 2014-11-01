@@ -7,8 +7,8 @@
     <FrameLayout
         android:id="@+id/container_panel"
         android:layout_width="300dp"
+        android:layout_height="wrap_content"
         android:layout_alignParentRight="true"
-        android:layout_height="match_parent"
         android:layout_gravity="right">
     </FrameLayout>
 
@@ -19,5 +19,11 @@
         android:layout_alignParentLeft="true"
         android:layout_toLeftOf="@id/container_panel"
         android:layout_gravity="left"/>
+
+    <View
+        android:layout_width="8dp"
+        android:layout_height="match_parent"
+        android:layout_toLeftOf="@id/container_panel"
+        android:background="@drawable/panel_shadow_vertical" />
 
 </RelativeLayout>

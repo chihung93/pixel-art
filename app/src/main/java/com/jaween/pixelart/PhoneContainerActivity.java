@@ -1,40 +1,39 @@
 package com.jaween.pixelart;
 
-import android.app.Activity;
 import android.app.FragmentTransaction;
+import android.content.Context;
 import android.graphics.PorterDuff;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
+import android.util.AttributeSet;
 import android.view.Menu;
+import android.view.MenuInflater;
 import android.view.MenuItem;
+import android.view.View;
+import android.widget.Toast;
 
-import com.jaween.pixelart.ui.PaletteFragment;
+import com.jaween.pixelart.util.SlidingLinearLayout;
 
-public class ContainerActivity extends Activity implements PaletteFragment.OnColourSelectedListener, DrawingFragment.OnClearPanelsListener {
-
-    private PaletteFragment paletteFragment;
-    private DrawingFragment drawingFragment;
+/**
+ * BaseContainerActivity with specific implementation details for the phone UI (sliding panels
+ * different callbacks)
+ */
+public class PhoneContainerActivity extends BaseContainerActivity implements DrawingFragment.OnClearPanelsListener {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.container_activity);
+
         if (savedInstanceState == null) {
-            paletteFragment = new PaletteFragment();
-            drawingFragment = new DrawingFragment();
-
-            FragmentTransaction fragmentTransaction = getFragmentManager().beginTransaction();
-            fragmentTransaction.add(R.id.container_panel, paletteFragment);
-            fragmentTransaction.add(R.id.container_content, drawingFragment);
-            fragmentTransaction.commit();
-
             drawingFragment.setOnClearPanelsListener(this);
         }
     }
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-        return super.onCreateOptionsMenu(menu);
+        MenuInflater inflater = getMenuInflater();
+        inflater.inflate(R.menu.phone_drawing_menu, menu);
+        return true;
     }
 
     @Override
@@ -69,7 +68,8 @@ public class ContainerActivity extends Activity implements PaletteFragment.OnCol
 
     @Override
     public void onColourSelected(int colour, boolean done) {
-        drawingFragment.setColour(colour);
+        super.onColourSelected(colour, done);
+
         invalidateOptionsMenu();
 
         if (done) {

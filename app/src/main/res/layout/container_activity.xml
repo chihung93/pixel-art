@@ -12,7 +12,6 @@
     <FrameLayout
         android:id="@+id/container_panel"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content" >
-    </FrameLayout>
+        android:layout_height="wrap_content" />
 
 </FrameLayout>
