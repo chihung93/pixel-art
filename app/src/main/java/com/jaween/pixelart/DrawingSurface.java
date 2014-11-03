@@ -289,6 +289,7 @@ public class DrawingSurface extends SurfaceView implements SurfaceHolder.Callbac
                     break;
                 case MotionEvent.ACTION_UP:
                     currentPointerId = NULL_POINTER_ID;
+                    resetOngoingBitmap();
                     tool.end(ongoingOperationBitmap, pixelTouch);
                     commitOngoingOperation();
 
@@ -303,6 +304,7 @@ public class DrawingSurface extends SurfaceView implements SurfaceHolder.Callbac
                 case MotionEvent.ACTION_POINTER_UP:
                     // Ends drawing operation if the main pointer left the screen
                     if (event.getPointerId(index) == currentPointerId) {
+                        resetOngoingBitmap();
                         tool.end(ongoingOperationBitmap, pixelTouch);
                         tool.cancel();
                         commitOngoingOperation();

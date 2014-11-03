@@ -38,7 +38,7 @@
         android:layout_marginBottom="@dimen/view_margin"
         android:layout_marginLeft="@dimen/view_margin"
         android:layout_marginTop="@dimen/view_margin"
-        android:src="@drawable/tool_oval" />
+        android:src="@drawable/tool_options_oval_thickness_thin" />
 
     <ImageView
         android:id="@+id/iv_option_thickness_right"
@@ -49,7 +49,7 @@
         android:layout_marginBottom="@dimen/view_margin"
         android:layout_marginRight="@dimen/view_margin"
         android:layout_marginTop="@dimen/view_margin"
-        android:src="@drawable/tool_oval" />
+        android:src="@drawable/tool_options_oval_thickness_thick" />
 
     <SeekBar
         android:id="@+id/sb_option_thickness"

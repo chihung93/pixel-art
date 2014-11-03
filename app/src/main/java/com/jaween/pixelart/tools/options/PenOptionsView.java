@@ -2,6 +2,7 @@ package com.jaween.pixelart.tools.options;
 
 import android.content.Context;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.CheckBox;
@@ -67,7 +68,7 @@ public class PenOptionsView extends ToolOptionsView implements
                     ((PenToolAttributes) toolAttributes).setLockAngles(false);
                 } else {
                     lockAnglesCheckBox.setVisibility(VISIBLE);
-                    ((PenToolAttributes) toolAttributes).setLockAngles(((PenToolAttributes) toolAttributes).isLockAngles());
+                    ((PenToolAttributes) toolAttributes).setLockAngles(lockAnglesCheckBox.isChecked());
                 }
                 break;
             case R.id.cb_option_lock_angles:
