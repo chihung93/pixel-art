@@ -13,9 +13,8 @@ public interface Command {
      * operation here.
      * @param bitmap The bitmap to draw upon
      * @param event The coordinates of the drawing event
-     * @param attributes Additional attributes that are required to draw (e.g. paints)
      */
-    public void start(Bitmap bitmap, PointF event, Tool.Attributes attributes);
+    public void start(Bitmap bitmap, PointF event);
 
     /**
      * This method is called when the user moves their finger across the screen. Update the drawing
@@ -23,9 +22,8 @@ public interface Command {
      * lifecycle of this operation.
      * @param bitmap The bitmap to draw upon
      * @param event The coordinates of the drawing event
-     * @param attributes Additional attributes that are required to draw (e.g. paints)
      */
-    public void move(Bitmap bitmap, PointF event, Tool.Attributes attributes);
+    public void move(Bitmap bitmap, PointF event);
 
     /**
      * This method is called when the drawing operation has been successfully completed. Finish
@@ -33,9 +31,8 @@ public interface Command {
      * lifecycle of this operation.
      * @param bitmap The bitmap to draw upon
      * @param event The coordinates of the drawing event
-     * @param attributes Additional attributes that are required to draw (e.g. paints)
      */
-    public void end(Bitmap bitmap, PointF event, Tool.Attributes attributes);
+    public void end(Bitmap bitmap, PointF event);
 
     /**
      * This method is called when a drawing operation has is to be cancelled (e.g. due to a

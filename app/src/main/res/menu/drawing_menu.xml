@@ -17,24 +17,6 @@
         android:title="@string/action_redo" />
 
     <item
-        android:id="@+id/action_tool_pen"
-        android:orderInCategory="30"
-        android:showAsAction="never"
-        android:title="@string/tool_pen" />
-
-    <item
-        android:id="@+id/action_tool_flood_fill"
-        android:orderInCategory="31"
-        android:showAsAction="never"
-        android:title="@string/tool_flood_fill" />
-
-    <item
-        android:id="@+id/action_tool_oval"
-        android:orderInCategory="32"
-        android:showAsAction="never"
-        android:title="@string/tool_oval" />
-
-    <item
         android:id="@+id/action_grid"
         android:orderInCategory="33"
         android:showAsAction="ifRoom"

@@ -6,6 +6,8 @@ import android.graphics.PointF;
 import android.graphics.drawable.Drawable;
 import android.util.Log;
 
+import com.jaween.pixelart.tools.attributes.FloodFillToolAttributes;
+
 import java.util.Stack;
 
 /**
@@ -21,6 +23,8 @@ public class FloodFill extends Tool {
     public FloodFill(String name, Drawable icon) {
         super(name, icon);
 
+        toolAttributes = new FloodFillToolAttributes();
+
         // Attributes required for flooding (must only touch a single pixel at a time)
         floodPaint.setStrokeWidth(0);
         floodPaint.setAntiAlias(false);
@@ -34,7 +38,7 @@ public class FloodFill extends Tool {
     // TODO: Fix long operation when filling large areas
     // Takes 300~500ms on average and occasionally more than 1000ms on a 180x259px image!!!
     @Override
-    public void start(Bitmap bitmap, PointF event, Attributes attributes) {
+    public void start(Bitmap bitmap, PointF event) {
         long startTime = System.currentTimeMillis();
         cancelled = false;
 
@@ -45,8 +49,8 @@ public class FloodFill extends Tool {
 
         // Colour to be replaced and the colour which will replace it
         int oldColour = bitmap.getPixel((int) event.x, (int) event.y);
-        int newColour = attributes.paint.getColor();
-        floodPaint.setColor(attributes.paint.getColor());
+        int newColour = toolAttributes.getPaint().getColor();
+        floodPaint.setColor(toolAttributes.getPaint().getColor());
 
         // No bitmap
         if (bitmap == null)
@@ -106,12 +110,12 @@ public class FloodFill extends Tool {
     }
 
     @Override
-    public void move(Bitmap bitmap, PointF event, Attributes attributes) {
+    public void move(Bitmap bitmap, PointF event) {
         blitBitmap(floodedBitmap, bitmap);
     }
 
     @Override
-    public void end(Bitmap bitmap, PointF event, Attributes attributes) {
+    public void end(Bitmap bitmap, PointF event) {
         blitBitmap(floodedBitmap, bitmap);
     }
 

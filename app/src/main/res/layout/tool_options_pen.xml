@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:paddingBottom="@dimen/view_margin"
+    android:animateLayoutChanges="true">
+
+    <CheckBox
+        android:id="@+id/cb_option_straight"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_margin="@dimen/view_margin"
+        android:text="@string/tool_option_straight" />
+
+    <CheckBox
+        android:id="@+id/cb_option_lock_angles"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="@dimen/view_margin"
+        android:layout_marginLeft="@dimen/tool_options_column_2_margin"
+        android:layout_marginRight="@dimen/view_margin"
+        android:layout_marginTop="@dimen/view_margin"
+        android:text="@string/tool_option_lock_angles" />
+
+    <CheckBox
+        android:id="@+id/cb_option_aa"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentLeft="true"
+        android:layout_below="@id/cb_option_straight"
+        android:layout_margin="@dimen/view_margin"
+        android:text="@string/tool_option_aa" />
+
+    <ImageView
+        android:id="@+id/iv_option_thickness_left"
+        android:layout_width="32dp"
+        android:layout_height="32dp"
+        android:layout_below="@id/cb_option_aa"
+        android:layout_marginBottom="@dimen/view_margin"
+        android:layout_marginLeft="@dimen/view_margin"
+        android:layout_marginTop="@dimen/view_margin"
+        android:src="@drawable/tool_oval" />
+
+    <ImageView
+        android:id="@+id/iv_option_thickness_right"
+        android:layout_width="32dp"
+        android:layout_height="32dp"
+        android:layout_alignParentRight="true"
+        android:layout_below="@id/cb_option_aa"
+        android:layout_marginBottom="@dimen/view_margin"
+        android:layout_marginRight="@dimen/view_margin"
+        android:layout_marginTop="@dimen/view_margin"
+        android:src="@drawable/tool_oval" />
+
+    <SeekBar
+        android:id="@+id/sb_option_thickness"
+        android:layout_width="wrap_content"
+        android:layout_height="32dp"
+        android:layout_below="@id/cb_option_aa"
+        android:layout_margin="@dimen/view_margin"
+        android:layout_toLeftOf="@id/iv_option_thickness_right"
+        android:layout_toRightOf="@id/iv_option_thickness_left"
+        android:layout_weight="1"
+        android:max="@integer/max_tool_thickness" />
+
+
+</RelativeLayout>

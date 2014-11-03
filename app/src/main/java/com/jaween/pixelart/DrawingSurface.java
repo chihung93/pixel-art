@@ -47,7 +47,6 @@ public class DrawingSurface extends SurfaceView implements SurfaceHolder.Callbac
 
     // Tool and drawing variables
     private Tool tool;
-    private Tool.Attributes toolAttributes;
     private Paint toolPaint;
     private Paint bitmapPaint;
     private PointF displayTouch = new PointF();
@@ -88,11 +87,6 @@ public class DrawingSurface extends SurfaceView implements SurfaceHolder.Callbac
         holder.addCallback(this);
 
         initialisePaints();
-
-        // Tool defaults
-        int strokeWidth = 2;
-        toolAttributes = new Tool.Attributes(toolPaint, strokeWidth);
-        toolAttributes.paint = toolPaint;
 
         // Temporary variables
         random = new Random();
@@ -270,7 +264,7 @@ public class DrawingSurface extends SurfaceView implements SurfaceHolder.Callbac
                 } else {
                     // Scaling begun long after the initial touch, commits the drawing operation
                     // up until this point, but cancels further drawing
-                    tool.end(ongoingOperationBitmap, pixelTouch, toolAttributes);
+                    tool.end(ongoingOperationBitmap, pixelTouch);
                     tool.cancel();
                     commitOngoingOperation();
                 }
@@ -287,15 +281,15 @@ public class DrawingSurface extends SurfaceView implements SurfaceHolder.Callbac
 
                     touchDownTime = System.currentTimeMillis();
 
-                    tool.start(ongoingOperationBitmap, pixelTouch, toolAttributes);
+                    tool.start(ongoingOperationBitmap, pixelTouch);
                     break;
                 case MotionEvent.ACTION_MOVE:
                     resetOngoingBitmap();
-                    tool.move(ongoingOperationBitmap, pixelTouch, toolAttributes);
+                    tool.move(ongoingOperationBitmap, pixelTouch);
                     break;
                 case MotionEvent.ACTION_UP:
                     currentPointerId = NULL_POINTER_ID;
-                    tool.end(ongoingOperationBitmap, pixelTouch, toolAttributes);
+                    tool.end(ongoingOperationBitmap, pixelTouch);
                     commitOngoingOperation();
 
                     // TODO: Undo/redo system
@@ -309,7 +303,7 @@ public class DrawingSurface extends SurfaceView implements SurfaceHolder.Callbac
                 case MotionEvent.ACTION_POINTER_UP:
                     // Ends drawing operation if the main pointer left the screen
                     if (event.getPointerId(index) == currentPointerId) {
-                        tool.end(ongoingOperationBitmap, pixelTouch, toolAttributes);
+                        tool.end(ongoingOperationBitmap, pixelTouch);
                         tool.cancel();
                         commitOngoingOperation();
                         currentPointerId = NULL_POINTER_ID;
@@ -364,14 +358,6 @@ public class DrawingSurface extends SurfaceView implements SurfaceHolder.Callbac
     private void commitOngoingOperation() {
         ongoingOperationCanvas.setBitmap(layers.get(currentLayer));
         ongoingOperationCanvas.drawBitmap(ongoingOperationBitmap, 0, 0, bitmapPaint);
-    }
-
-    public void setColour(int colour) {
-        toolAttributes.paint.setColor(colour);
-    }
-
-    public int getColour() {
-        return toolAttributes.paint.getColor();
     }
 
     public void setTool(Tool tool) {

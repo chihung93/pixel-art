@@ -4,20 +4,24 @@ import android.app.Fragment;
 import android.graphics.Bitmap;
 import android.os.Bundle;
 import android.view.LayoutInflater;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Toast;
+import android.widget.FrameLayout;
 
 import com.jaween.pixelart.R;
 import com.jaween.pixelart.tools.FloodFill;
 import com.jaween.pixelart.tools.Oval;
 import com.jaween.pixelart.tools.Pen;
 import com.jaween.pixelart.tools.Tool;
+import com.jaween.pixelart.tools.options.OvalOptionsView;
+import com.jaween.pixelart.tools.options.PenOptionsView;
+import com.jaween.pixelart.tools.options.ToolOptionsView;
 
 /**
  * Created by ween on 11/1/14.
  */
-public class ToolboxFragment extends Fragment implements View.OnClickListener {
+public class ToolboxFragment extends Fragment implements  View.OnClickListener, View.OnTouchListener {
 
     private ToolButton selectedToolButton;
     private ToolButton penButton;
@@ -38,6 +42,14 @@ public class ToolboxFragment extends Fragment implements View.OnClickListener {
     private FloodFill floodFillTool;
     private Oval ovalTool;
 
+    private ToolOptionsView currentToolOptions;
+    private PenOptionsView penOptions;
+    private OvalOptionsView ovalOptions;
+
+    private FrameLayout optionsFrameLayout;
+
+    private ViewGroup parentViewGroup;
+
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -47,20 +59,27 @@ public class ToolboxFragment extends Fragment implements View.OnClickListener {
         ovalTool = new Oval(getString(R.string.tool_oval), getResources().getDrawable(R.drawable.tool_oval));
         selectedTool = penTool;
 
+        createToolOptions();
+
         if (onToolSelectListener != null) {
             onToolSelectListener.onToolSelected(selectedTool, false);
         }
     }
 
+    private void createToolOptions() {
+        penOptions = new PenOptionsView(getActivity());
+        ovalOptions = new OvalOptionsView(getActivity());
+    }
+
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        View view = inflater.inflate(R.layout.toolbox_fragment, null);
-        initialiseViews(view);
+        parentViewGroup = (ViewGroup) inflater.inflate(R.layout.toolbox_fragment, null);
+        initialiseViews(parentViewGroup);
 
-        return view;
+        return parentViewGroup;
     }
     
-    private void initialiseViews(View v) {
+    private void initialiseViews(ViewGroup v) {
         // Links Java objects to XML
         penButton = (ToolButton) v.findViewById(R.id.ib_tool_pen);
         eraserButton = (ToolButton) v.findViewById(R.id.ib_tool_eraser);
@@ -72,6 +91,8 @@ public class ToolboxFragment extends Fragment implements View.OnClickListener {
         misingnoButton = (ToolButton) v.findViewById(R.id.ib_tool_misingno);
         magicWandButton = (ToolButton) v.findViewById(R.id.ib_tool_magic_wand);
         drawSelectButton = (ToolButton) v.findViewById(R.id.ib_tool_draw_select);
+
+        optionsFrameLayout = (FrameLayout) v.findViewById(R.id.fl_container_tool_options);
 
         // OnClickListeners
         penButton.setOnClickListener(this);
@@ -85,16 +106,32 @@ public class ToolboxFragment extends Fragment implements View.OnClickListener {
         magicWandButton.setOnClickListener(this);
         drawSelectButton.setOnClickListener(this);
 
+        // Tool selection
+        penOptions.setToolAttributes(penTool.getToolAttributes());
+        ovalOptions.setToolAttributes(ovalTool.getToolAttributes());
         selectedToolButton = penButton;
         selectedToolButton.setSelected(true);
+
+        // Tool options
+        currentToolOptions = penOptions;
+        optionsFrameLayout.addView(currentToolOptions);
+
+        // Consumes touches
+        v.setOnTouchListener(this);
     }
 
     @Override
     public void onClick(View v) {
+        if (v instanceof  ToolButton) {
+            optionsFrameLayout.removeAllViews();
+        }
+
         Tool clickedTool;
         switch (v.getId()) {
             case R.id.ib_tool_pen:
                 clickedTool = penTool;
+                currentToolOptions = penOptions;
+                optionsFrameLayout.addView(currentToolOptions);
                 break;
             case R.id.ib_tool_eraser:
                 // No implementation
@@ -104,12 +141,15 @@ public class ToolboxFragment extends Fragment implements View.OnClickListener {
                 return;
             case R.id.ib_tool_oval:
                 clickedTool = ovalTool;
+                currentToolOptions = ovalOptions;
+                optionsFrameLayout.addView(currentToolOptions);
                 break;
             case R.id.ib_tool_rect_select:
                 // No implementation
                 return;
             case R.id.ib_tool_flood_fill:
                 clickedTool = floodFillTool;
+                currentToolOptions = null;
                 break;
             case R.id.ib_tool_colour_picker:
                 // No implementation
@@ -156,7 +196,18 @@ public class ToolboxFragment extends Fragment implements View.OnClickListener {
         this.onToolSelectListener = onToolSelectListener;
     }
 
+    @Override
+    public boolean onTouch(View v, MotionEvent event) {
+        // Consumes all touch events on the background so they don't pass through onto
+        // a possible canvas below
+        return true;
+    }
+
     public interface OnToolSelectListener {
         public void onToolSelected(Tool tool, boolean done);
+    }
+
+    public void setColour(int colour) {
+        selectedTool.getToolAttributes().getPaint().setColor(colour);
     }
 }

@@ -2,9 +2,10 @@ package com.jaween.pixelart.tools;
 
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
-import android.graphics.Paint;
 import android.graphics.PointF;
 import android.graphics.drawable.Drawable;
+
+import com.jaween.pixelart.tools.attributes.ToolAttributes;
 
 /**
  * Created by ween on 9/28/14.
@@ -15,6 +16,7 @@ abstract public class Tool implements Command {
     protected final String name;
     protected final Drawable icon;
     protected boolean cancelled = false;
+    protected ToolAttributes toolAttributes;
 
     public Tool(String name, Drawable icon) {
         this.name = name;
@@ -43,14 +45,7 @@ abstract public class Tool implements Command {
         return false;
     }
 
-    // TODO Fleshout and improve attributes
-    public static class Attributes {
-        public Paint paint;
-        public int radius;
-
-        public Attributes(Paint paint, int radius) {
-            this.paint = paint;
-            this.radius = radius;
-        }
+    public ToolAttributes getToolAttributes() {
+        return toolAttributes;
     }
 }

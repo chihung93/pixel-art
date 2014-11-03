@@ -1,10 +1,11 @@
-<com.jaween.pixelart.util.SlidingLinearLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<com.jaween.pixelart.util.SlidingLinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="fill_parent"
     android:layout_height="wrap_content"
     android:background="@android:color/transparent"
     android:orientation="vertical">
-    <include layout="@layout/toolbox_fragment_base"/>
+
+    <include layout="@layout/toolbox_fragment_base" />
+
     <View
         android:layout_width="match_parent"
         android:layout_height="8dp"

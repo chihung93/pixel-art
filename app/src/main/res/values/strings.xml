@@ -17,6 +17,12 @@
     <string name="tool_flood_fill">Flood Fill</string>
     <string name="tool_colour_picker">Colour Picker</string>
 
+    <string name="tool_option_straight">Straight</string>
+    <string name="tool_option_lock_angles">Lock Angles</string>
+    <string name="tool_option_aa">Anti-aliasing</string>
+    <string name="tool_option_circle_lock">Lock to Circle</string>
+    <string name="tool_option_inner_fill">Inner Fill</string>
+
     <string name="button_customise_palette">Customise</string>
     <string name="button_next_palette">Next Palette</string>
 

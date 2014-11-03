@@ -48,7 +48,7 @@ public class PhoneContainerActivity extends BaseContainerActivity implements Dra
     @Override
     public boolean onPrepareOptionsMenu(Menu menu) {
         Drawable drawable = getResources().getDrawable(R.drawable.palette_menu_item);
-        drawable.setColorFilter(drawingFragment.getColour(), PorterDuff.Mode.MULTIPLY);
+        drawable.setColorFilter(paletteFragment.getColour(), PorterDuff.Mode.MULTIPLY);
 
         MenuItem paletteItem = menu.findItem(R.id.action_palette);
         paletteItem.setIcon(drawable);

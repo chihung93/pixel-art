@@ -20,6 +20,8 @@ public class BaseContainerActivity extends Activity implements
     protected PaletteFragment paletteFragment;
     protected ToolboxFragment toolboxFragment;
 
+    private int colour;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -41,12 +43,16 @@ public class BaseContainerActivity extends Activity implements
 
     @Override
     public void onColourSelected(int colour, boolean done) {
-        drawingFragment.setColour(colour);
+        toolboxFragment.setColour(colour);
+        this.colour = colour;
     }
 
     @Override
     public void onToolSelected(Tool tool, boolean done) {
         drawingFragment.setTool(tool);
+
+        // When we switch tools, we must inform it of the current colour
+        tool.getToolAttributes().getPaint().setColor(colour);
     }
 
     @Override

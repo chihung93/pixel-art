@@ -37,6 +37,8 @@ public class PaletteFragment extends Fragment implements
     private Button customisePaletteButton;
     private Button nextPaletteButton;
 
+    private int colour;
+
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -62,6 +64,10 @@ public class PaletteFragment extends Fragment implements
         return parentLayout;
     }
 
+    public int getColour() {
+        return colour;
+    }
+
     private void initialisePalette(GridLayout gridLayout) {
         ViewTreeObserver viewTreeObserver = gridLayout.getViewTreeObserver();
         viewTreeObserver.addOnPreDrawListener(this);
@@ -81,6 +87,7 @@ public class PaletteFragment extends Fragment implements
             selectedColourButton.invalidate();
             selectedColourButton = pressedColourButton;
             selectedColourButton.setSelected(true);
+            colour = selectedColourButton.getColour();
             colourSelectedCallback.onColourSelected(pressedColourButton.getColour(), false);
         }
 
@@ -136,6 +143,7 @@ public class PaletteFragment extends Fragment implements
                     selectedColourButton = colourButton;
                     selectedColourButton.setSelected(true);
                     colourSelectedCallback.onColourSelected(selectedColourButton.getColour(), false);
+                    colour = selectedColourButton.getColour();
 
                     ViewGroup.LayoutParams params = new ViewGroup.LayoutParams(selectedColourButton.getWidth(), selectedColourButton.getHeight());
                     colourSelector = new ColourSelector(getActivity());

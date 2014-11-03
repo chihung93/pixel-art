@@ -41,14 +41,6 @@ public class DrawingFragment extends Fragment implements
         setHasOptionsMenu(true);
     }
 
-    public void setColour(int colour) {
-        surface.setColour(colour);
-    }
-
-    public int getColour() {
-        return surface.getColour();
-    }
-
     public void setTool(Tool tool) {
         selectedTool = tool;
         if (surface != null) {
