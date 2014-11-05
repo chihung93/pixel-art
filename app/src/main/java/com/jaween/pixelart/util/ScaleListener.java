@@ -2,6 +2,7 @@ package com.jaween.pixelart.util;
 
 import android.content.Context;
 import android.graphics.PointF;
+import android.graphics.Rect;
 import android.graphics.RectF;
 import android.view.GestureDetector;
 import android.view.MotionEvent;
@@ -22,35 +23,27 @@ public class ScaleListener extends ScaleGestureDetector.SimpleOnScaleGestureList
 
     private PointF viewportFocus = new PointF();
     private RectF viewport = new RectF();
-    private RectF contentRect = new RectF();
+    private Rect contentRect = new Rect();
     private float scale;
 
     private GestureDetector gestureDetector;
     private boolean isScaling = false;
 
-    public ScaleListener(Context context, float minScale, float maxScale, float initialScale, float containerWidth, float containerHeight) {
+    public ScaleListener(Context context, float minScale, float maxScale, RectF viewport, Rect containerRect) {
 
-        scale = initialScale;
+        scale = containerRect.width() / viewport.width();
 
-        contentRect.left = 0;
-        contentRect.top = 0;
-        contentRect.right = containerWidth;
-        contentRect.bottom = containerHeight;
-
-        viewport.left = 0;
-        viewport.top = 0;
-        viewport.right = contentRect.width() / initialScale;
-        viewport.bottom = contentRect.height() / initialScale;
-
-        horizontalMin = -containerWidth/2;
-        horizontalMax = containerWidth + containerWidth/2;
-        verticalMin = -containerHeight/2;
-        verticalMax = containerHeight + containerHeight/2;
+        horizontalMin = -containerRect.width() / 2;
+        horizontalMax = containerRect.width() + containerRect.width() / 2;
+        verticalMin = -containerRect.width() / 2;
+        verticalMax = containerRect.width() + containerRect.width() / 2;
 
         gestureDetector = new GestureDetector(context, gestureListener);
 
         this.minScale = minScale;
         this.maxScale = maxScale;
+        this.viewport = viewport;
+        this.contentRect = containerRect;
     }
 
     @Override
@@ -75,7 +68,6 @@ public class ScaleListener extends ScaleGestureDetector.SimpleOnScaleGestureList
         viewport.right = viewport.left + newWidth;
         viewport.bottom = viewport.top + newHeight;
         //constrainViewport();
-
 
         return true;
     }
@@ -189,7 +181,15 @@ public class ScaleListener extends ScaleGestureDetector.SimpleOnScaleGestureList
         return scale;
     }
 
+    public void setScale(float scale) {
+        this.scale = scale;
+    }
+
     public RectF getViewport() {
         return viewport;
+    }
+
+    public void setViewport(RectF viewport) {
+        this.viewport = viewport;
     }
 }

@@ -40,11 +40,6 @@ public class PaletteFragment extends Fragment implements
     private int colour;
 
     @Override
-    public void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-    }
-
-    @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         parentLayout = (SlidingLinearLayout) inflater.inflate(R.layout.palette_fragment, null, false);
         parentLayout.setOnTouchListener(this);
@@ -106,7 +101,7 @@ public class PaletteFragment extends Fragment implements
         super.onAttach(activity);
 
         try {
-            colourSelectedCallback = (OnColourSelectedListener) activity;
+            colourSelectedCallback = (OnColourSelectedListener) getParentFragment();
         } catch (ClassCastException e) {
             throw new ClassCastException(activity.toString()
                     + " must implement OnColourSelectedListener");

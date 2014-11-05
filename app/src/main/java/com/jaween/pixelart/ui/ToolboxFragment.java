@@ -60,7 +60,12 @@ public class ToolboxFragment extends Fragment implements  View.OnClickListener, 
         selectedTool = penTool;
 
         createToolOptions();
+    }
 
+    @Override
+    public void onStart() {
+        super.onStart();
+        selectedTool = penTool;
         if (onToolSelectListener != null) {
             onToolSelectListener.onToolSelected(selectedTool, false);
         }
