@@ -1,16 +1,16 @@
 package com.jaween.pixelart;
 
-import android.app.Activity;
-import android.app.FragmentTransaction;
 import android.content.res.Resources;
 import android.graphics.Point;
 import android.os.Bundle;
+import android.support.v4.app.FragmentActivity;
+import android.support.v4.app.FragmentTransaction;
 import android.view.Display;
 
 /**
  * Decides which ContainerFragment to add.
  */
-public final class ContainerActivity extends Activity {
+public final class ContainerActivity extends FragmentActivity {
 
     private static final int TABLET_LAYOUT_WIDTH_DP = 720;
 
@@ -23,7 +23,7 @@ public final class ContainerActivity extends Activity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.container_activity);
 
-        fragment = (ContainerFragment) getFragmentManager().findFragmentByTag(TAG_CONTAINER_FRAGMENT);
+        fragment = (ContainerFragment) getSupportFragmentManager().findFragmentByTag(TAG_CONTAINER_FRAGMENT);
         if (fragment == null) {
             // Screen size details
             Display display = getWindowManager().getDefaultDisplay();
@@ -40,7 +40,7 @@ public final class ContainerActivity extends Activity {
                 fragment = new ContainerFragmentNarrow();
             }
 
-            FragmentTransaction fragmentTransaction = getFragmentManager().beginTransaction();
+            FragmentTransaction fragmentTransaction = getSupportFragmentManager().beginTransaction();
             fragmentTransaction.add(R.id.fl_main_container, fragment, TAG_CONTAINER_FRAGMENT);
             fragmentTransaction.commit();
         }

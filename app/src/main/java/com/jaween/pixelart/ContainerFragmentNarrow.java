@@ -1,12 +1,10 @@
 package com.jaween.pixelart;
 
-import android.app.Fragment;
-import android.app.FragmentTransaction;
 import android.graphics.PorterDuff;
-import android.graphics.RectF;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
-import android.util.Log;
+import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentTransaction;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -125,7 +123,7 @@ public class ContainerFragmentNarrow extends ContainerFragment implements
         // Slides in the new panel
         if (in.isHidden()) {
             FragmentTransaction fragmentTransaction = getChildFragmentManager().beginTransaction();
-            fragmentTransaction.setCustomAnimations(R.animator.slide_down, R.animator.slide_up, R.animator.slide_down, R.animator.slide_up);
+            fragmentTransaction.setCustomAnimations(R.anim.slide_down, R.anim.slide_up, R.anim.slide_down, R.anim.slide_up);
             fragmentTransaction.show(in);
             fragmentTransaction.commit();
             return true;
@@ -139,7 +137,7 @@ public class ContainerFragmentNarrow extends ContainerFragment implements
     private boolean hidePanel(Fragment fragment) {
         if (!fragment.isHidden()) {
             FragmentTransaction fragmentTransaction = getChildFragmentManager().beginTransaction();
-            fragmentTransaction.setCustomAnimations(R.animator.slide_down, R.animator.slide_up, R.animator.slide_down, R.animator.slide_up);
+            fragmentTransaction.setCustomAnimations(R.anim.slide_down, R.anim.slide_up, R.anim.slide_down, R.anim.slide_up);
             fragmentTransaction.hide(fragment);
             fragmentTransaction.commit();
             return true;

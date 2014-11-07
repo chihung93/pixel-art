@@ -9,7 +9,6 @@ import android.graphics.Paint;
 import android.graphics.PointF;
 import android.graphics.Rect;
 import android.graphics.RectF;
-import android.util.Log;
 import android.view.MotionEvent;
 import android.view.ScaleGestureDetector;
 import android.view.SurfaceHolder;
@@ -76,11 +75,13 @@ public class DrawingSurface extends SurfaceView implements SurfaceHolder.Callbac
     private PointF pixelTouch = new PointF();
 
     // Configuration Change variables
+    private boolean configurationChanged = false;
     private RectF viewport = new RectF();
     private Bitmap restoredLayer = null;
-    private Float restoredCenterX = null;
-    private Float restoredCenterY = null;
-    private Float restoredScale = null;
+    private float restoredCenterX;
+    private float restoredCenterY;
+    private float restoredScale;
+    private boolean restoredGridState;
 
     // Temporary UI variables
     private Paint tempTextPaint;
@@ -147,6 +148,9 @@ public class DrawingSurface extends SurfaceView implements SurfaceHolder.Callbac
         // Grid
         int majorPixelSpacing = 8;
         pixelGrid = new PixelGrid(dp, layerWidth, layerHeight, majorPixelSpacing);
+        if (configurationChanged) {
+            pixelGrid.setEnabled(restoredGridState);
+        }
 
         surfaceCreated = true;
     }
@@ -203,7 +207,7 @@ public class DrawingSurface extends SurfaceView implements SurfaceHolder.Callbac
     }
 
     private void initialiseViewport() {
-        if (restoredCenterX != null && restoredCenterY != null && restoredScale != null) {
+        if (configurationChanged) {
             // Restores the viewport (based on previous center)
             viewport.left = restoredCenterX - (getWidth() / 2) / restoredScale;
             viewport.right = restoredCenterX + (getWidth() / 2) / restoredScale;
@@ -410,7 +414,7 @@ public class DrawingSurface extends SurfaceView implements SurfaceHolder.Callbac
             if (thumbnail.isEnabled()) {
                 // Draws only when zoomed in
                 float scale = scaleListener.getScale();
-                if (scale >= initialScale || scale >= initialScale) {
+                if (scale > initialScale || scale > initialScale) {
                     thumbnail.draw(canvas, ongoingOperationBitmap, scaleListener.getViewport(), bitmapPaint, shadowPaint);
                 }
             }
@@ -439,8 +443,20 @@ public class DrawingSurface extends SurfaceView implements SurfaceHolder.Callbac
         //undoRedoTracker.redo(layers.get(currentLayer));
     }
 
-    public void toggleGrid() {
-        pixelGrid.setEnabled(!pixelGrid.isEnabled());
+    public void setConfigurationChanged(boolean configurationChanged) {
+        this.configurationChanged = configurationChanged;
+    }
+
+    public boolean isGridEnabled() {
+        return pixelGrid.isEnabled();
+    }
+
+    public void setGridEnabled(boolean enabled) {
+        if (pixelGrid == null) {
+            restoredGridState = enabled;
+        } else {
+            pixelGrid.setEnabled(enabled);
+        }
     }
 
     public RectF getViewport() {

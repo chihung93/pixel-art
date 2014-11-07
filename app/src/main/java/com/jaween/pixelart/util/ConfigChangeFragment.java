@@ -1,8 +1,8 @@
 package com.jaween.pixelart.util;
 
-import android.app.Fragment;
 import android.graphics.Bitmap;
 import android.os.Bundle;
+import android.support.v4.app.Fragment;
 
 /**
  * Worker Fragment which holds onto large objects (such as the user Bitmaps or Undo stack) when the

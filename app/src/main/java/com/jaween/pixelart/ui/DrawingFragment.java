@@ -1,12 +1,12 @@
 package com.jaween.pixelart.ui;
 
 import android.app.Activity;
-import android.app.Fragment;
-import android.app.FragmentManager;
-import android.app.FragmentTransaction;
+import android.support.v4.app.FragmentManager;
 import android.graphics.Bitmap;
 import android.graphics.RectF;
 import android.os.Bundle;
+import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentTransaction;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -29,13 +29,14 @@ public class DrawingFragment extends Fragment implements
 
     private Tool selectedTool;
 
+    private static final String KEY_CENTER_X = "key_center_x";
+    private static final String KEY_CENTER_Y = "key_center_y";
+    private static final String KEY_SCALE = "key_scale";
+
+    private static final String KEY_GRID = "key_grid";
+
     private static final String TAG_CONFIG_CHANGE_FRAGMENT = "config_change_fragment";
     private ConfigChangeFragment configChangeWorker;
-
-    private Float restoredCenterX = null;
-    private Float restoredCenterY = null;
-    private Float restoredScale = null;
-
 
     public DrawingFragment() {
         // Required empty public constructor
@@ -54,13 +55,13 @@ public class DrawingFragment extends Fragment implements
         surface.setOnDimensionsCalculatedListener(this);
 
         // Worker fragment to save data across device configuration changes
-        FragmentManager fragmentManager = getActivity().getFragmentManager();
+        FragmentManager fragmentManager = getActivity().getSupportFragmentManager();
         configChangeWorker = (ConfigChangeFragment) fragmentManager.findFragmentByTag(TAG_CONFIG_CHANGE_FRAGMENT);
 
         if (configChangeWorker == null) {
             // Worker doesn't exist, creates new worker
             configChangeWorker = new ConfigChangeFragment();
-            FragmentTransaction fragmentTransaction = getActivity().getFragmentManager().beginTransaction();
+            FragmentTransaction fragmentTransaction = getActivity().getSupportFragmentManager().beginTransaction();
             fragmentTransaction.add(configChangeWorker, TAG_CONFIG_CHANGE_FRAGMENT);
             fragmentTransaction.commit();
         } else {
@@ -70,8 +71,20 @@ public class DrawingFragment extends Fragment implements
             configChangeWorker.setLayers(null);
         }
 
-        if (restoredCenterX != null && restoredCenterY != null && restoredScale != null) {
-            surface.restoreViewport(restoredCenterX, restoredCenterY, restoredScale);
+        if (savedInstanceState != null) {
+            surface.setConfigurationChanged(true);
+
+            // Restores viewport
+            float DEFAULT_CENTER_X = 0;
+            float DEFAULT_CENTER_Y = 0;
+            float centerX = savedInstanceState.getFloat(KEY_CENTER_X, DEFAULT_CENTER_X);
+            float centerY = savedInstanceState.getFloat(KEY_CENTER_Y, DEFAULT_CENTER_Y);
+            float scale = savedInstanceState.getFloat(KEY_SCALE, DrawingSurface.DEFAULT_SCALE);
+            surface.restoreViewport(centerX, centerY, scale);
+
+            boolean DEFAULT_GRID = false;
+            boolean gridEnabled = savedInstanceState.getBoolean(KEY_GRID, DEFAULT_GRID);
+            surface.setGridEnabled(gridEnabled);
         }
 
         return surface;
@@ -83,6 +96,15 @@ public class DrawingFragment extends Fragment implements
 
         // Saves user's drawing
         configChangeWorker.setLayers(surface.getLayers());
+
+        // Saves viewport
+        RectF viewport = surface.getViewport();
+        outState.putFloat(KEY_CENTER_X, viewport.left + viewport.width() / 2);
+        outState.putFloat(KEY_CENTER_Y, viewport.top + viewport.height() / 2);
+        outState.putFloat(KEY_SCALE, surface.getScale());
+
+        // Saves the state of the grid
+        outState.putBoolean(KEY_GRID, surface.isGridEnabled());
     }
 
     @Override
@@ -132,26 +154,13 @@ public class DrawingFragment extends Fragment implements
                 surface.redo();
                 break;
             case R.id.action_grid:
-                surface.toggleGrid();
+                // Toggles grid
+                surface.setGridEnabled(!surface.isGridEnabled());
                 break;
             default:
                 return false;
         }
         return true;
-    }
-
-    public float getScale() {
-        return surface.getScale();
-    }
-
-    public RectF getViewport() {
-        return surface.getViewport();
-    }
-
-    public void restoreViewport(float centerX, float centerY, float scale) {
-        restoredCenterX = centerX;
-        restoredCenterY = centerY;
-        restoredScale = scale;
     }
 
     public void setOnClearPanelsListener(OnClearPanelsListener onClearPanelsListener) {

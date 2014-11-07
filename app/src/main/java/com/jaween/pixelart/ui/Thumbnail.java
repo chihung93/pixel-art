@@ -23,7 +23,6 @@ public class Thumbnail {
     private Paint viewWindowPaint;
 
     // Colour preferences
-    private static final int THUMBNAIL_BORDER_COLOUR = Color.DKGRAY;
     private static final int VIEW_WINDOW_COLOUR = Color.LTGRAY;
     private static final int VIEW_WINDOW_TRANSPARENCY = 130;
     
