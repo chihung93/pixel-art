@@ -71,6 +71,7 @@ public class DrawingFragment extends Fragment implements
             configChangeWorker.setLayers(null);
         }
 
+        // TODO: Restore state only if there is state to be restored! Non-null instanceState doesn't ensure this!
         if (savedInstanceState != null) {
             surface.setConfigurationChanged(true);
 
@@ -94,17 +95,20 @@ public class DrawingFragment extends Fragment implements
     public void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
 
-        // Saves user's drawing
-        configChangeWorker.setLayers(surface.getLayers());
+        // If state is saved immediately after start up, the surface may not have been created yet
+        if (surface.isSurfaceCreated()) {
+            // Saves user's drawing
+            configChangeWorker.setLayers(surface.getLayers());
 
-        // Saves viewport
-        RectF viewport = surface.getViewport();
-        outState.putFloat(KEY_CENTER_X, viewport.left + viewport.width() / 2);
-        outState.putFloat(KEY_CENTER_Y, viewport.top + viewport.height() / 2);
-        outState.putFloat(KEY_SCALE, surface.getScale());
+            // Saves viewport
+            RectF viewport = surface.getViewport();
+            outState.putFloat(KEY_CENTER_X, viewport.left + viewport.width() / 2);
+            outState.putFloat(KEY_CENTER_Y, viewport.top + viewport.height() / 2);
+            outState.putFloat(KEY_SCALE, surface.getScale());
 
-        // Saves the state of the grid
-        outState.putBoolean(KEY_GRID, surface.isGridEnabled());
+            // Saves the state of the grid
+            outState.putBoolean(KEY_GRID, surface.isGridEnabled());
+        }
     }
 
     @Override

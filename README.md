@@ -6,8 +6,8 @@ Features
 --------
 This app currently includes:
  * Simple tools (pen, oval and flood fill)
- * Zooming and panning
- * UI controls (colour palette and a pixel grid)
+ * Smooth zooming and panning
+ * UI controls (colour palette, undo/redo system, pixel grid, thumbnail)
  * Basic tablet support
  * Plenty of bugs
 
@@ -15,6 +15,5 @@ TODO
 ----
 Features that are currently lacking:
  * Standard tools (eraser, selection, etc.)
- * UI controls (undo/redo system etc.)
  * Layer support
  * Animation support

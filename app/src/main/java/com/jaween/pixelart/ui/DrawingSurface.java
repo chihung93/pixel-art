@@ -15,6 +15,7 @@ import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 
 import com.jaween.pixelart.R;
+import com.jaween.pixelart.UndoRedoTracker;
 import com.jaween.pixelart.tools.Tool;
 import com.jaween.pixelart.util.ScaleListener;
 
@@ -56,7 +57,7 @@ public class DrawingSurface extends SurfaceView implements SurfaceHolder.Callbac
     private float dp;
 
     // UI Controls
-    //private UndoRedoTracker undoRedoTracker;
+    private UndoRedoTracker undoRedoTracker;
     private PixelGrid pixelGrid;
     private Thumbnail thumbnail;
     private OnClearPanelsListener onClearPanelsListener = null;
@@ -73,6 +74,7 @@ public class DrawingSurface extends SurfaceView implements SurfaceHolder.Callbac
     private long touchDownTime = 0;
     private static final long CANCEL_DRAWING_MILLIS = 300;
     private PointF pixelTouch = new PointF();
+    private boolean hasCommittedOperation = false;
 
     // Configuration Change variables
     private boolean configurationChanged = false;
@@ -142,8 +144,8 @@ public class DrawingSurface extends SurfaceView implements SurfaceHolder.Callbac
         thumbnail = new Thumbnail(thumbnailLeft, thumbnailTop, layerWidth, layerHeight, dp);
 
         // UI Controls
-        //int maxUndos = 5;
-        //undoRedoTracker = new UndoRedoTracker(layers.get(currentLayer), maxUndos);
+        int maxUndos = 50;
+        undoRedoTracker = new UndoRedoTracker(layers.get(currentLayer), maxUndos);
 
         // Grid
         int majorPixelSpacing = 8;
@@ -332,9 +334,14 @@ public class DrawingSurface extends SurfaceView implements SurfaceHolder.Callbac
                 } else {
                     // Scaling begun long after the initial touch, commits the drawing operation
                     // up until this point, but cancels further drawing
-                    tool.end(ongoingOperationBitmap, pixelTouch);
-                    tool.cancel();
-                    commitOngoingOperation();
+                        tool.end(ongoingOperationBitmap, pixelTouch);
+                        tool.cancel();
+                        commitOngoingOperation();
+
+                    if (hasCommittedOperation == false) {
+                        hasCommittedOperation = true;
+                        undoRedoTracker.bitmapModified(layers.get(currentLayer));
+                    }
                 }
                 return true;
             }
@@ -361,8 +368,7 @@ public class DrawingSurface extends SurfaceView implements SurfaceHolder.Callbac
                     tool.end(ongoingOperationBitmap, pixelTouch);
                     commitOngoingOperation();
 
-                    // TODO: Undo/redo system
-                    //undoRedoTracker.bitmapModified(layers.get(currentLayer));
+                    undoRedoTracker.bitmapModified(layers.get(currentLayer));
                     break;
                 case MotionEvent.ACTION_CANCEL:
                     currentPointerId = NULL_POINTER_ID;
@@ -372,11 +378,14 @@ public class DrawingSurface extends SurfaceView implements SurfaceHolder.Callbac
                 case MotionEvent.ACTION_POINTER_UP:
                     // Ends drawing operation if the main pointer left the screen
                     if (event.getPointerId(index) == currentPointerId) {
+                        currentPointerId = NULL_POINTER_ID;
+
                         resetOngoingBitmap();
                         tool.end(ongoingOperationBitmap, pixelTouch);
                         tool.cancel();
                         commitOngoingOperation();
-                        currentPointerId = NULL_POINTER_ID;
+
+                        undoRedoTracker.bitmapModified(layers.get(currentLayer));
                     }
                     break;
                 default:
@@ -436,15 +445,21 @@ public class DrawingSurface extends SurfaceView implements SurfaceHolder.Callbac
     }
 
     public void undo() {
-        //undoRedoTracker.undo(layers.get(currentLayer));
+        undoRedoTracker.undo(layers.get(currentLayer));
+        resetOngoingBitmap();
     }
 
     public void redo() {
-        //undoRedoTracker.redo(layers.get(currentLayer));
+        undoRedoTracker.redo(layers.get(currentLayer));
+        resetOngoingBitmap();
     }
 
     public void setConfigurationChanged(boolean configurationChanged) {
         this.configurationChanged = configurationChanged;
+    }
+
+    public boolean isSurfaceCreated() {
+        return surfaceCreated;
     }
 
     public boolean isGridEnabled() {
