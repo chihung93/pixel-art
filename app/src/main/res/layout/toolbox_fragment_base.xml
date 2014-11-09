@@ -11,7 +11,7 @@
 
             <com.jaween.pixelart.ui.ToolButton
                 android:id="@+id/ib_tool_pen"
-                style="?android:borderlessButtonStyle"
+                style="@style/Widget.AppCompat.ActionButton"
                 android:layout_width="0dp"
                 android:layout_height="60dp"
                 android:layout_weight="1"
@@ -19,7 +19,7 @@
 
             <com.jaween.pixelart.ui.ToolButton
                 android:id="@+id/ib_tool_eraser"
-                style="?android:borderlessButtonStyle"
+                style="@style/Widget.AppCompat.ActionButton"
                 android:layout_width="0dp"
                 android:layout_height="60dp"
                 android:layout_weight="1"
@@ -27,7 +27,7 @@
 
             <com.jaween.pixelart.ui.ToolButton
                 android:id="@+id/ib_tool_rect"
-                style="?android:borderlessButtonStyle"
+                style="@style/Widget.AppCompat.ActionButton"
                 android:layout_width="0dp"
                 android:layout_height="60dp"
                 android:layout_weight="1"
@@ -35,7 +35,7 @@
 
             <com.jaween.pixelart.ui.ToolButton
                 android:id="@+id/ib_tool_oval"
-                style="?android:borderlessButtonStyle"
+                style="@style/Widget.AppCompat.ActionButton"
                 android:layout_width="0dp"
                 android:layout_height="60dp"
                 android:layout_weight="1"
@@ -43,7 +43,7 @@
 
             <com.jaween.pixelart.ui.ToolButton
                 android:id="@+id/ib_tool_rect_select"
-                style="?android:borderlessButtonStyle"
+                style="@style/Widget.AppCompat.ActionButton"
                 android:layout_width="0dp"
                 android:layout_height="60dp"
                 android:layout_weight="1"
@@ -54,7 +54,7 @@
 
             <com.jaween.pixelart.ui.ToolButton
                 android:id="@+id/ib_tool_flood_fill"
-                style="?android:borderlessButtonStyle"
+                style="@style/Widget.AppCompat.ActionButton"
                 android:layout_width="0dp"
                 android:layout_height="60dp"
                 android:layout_weight="1"
@@ -62,7 +62,7 @@
 
             <com.jaween.pixelart.ui.ToolButton
                 android:id="@+id/ib_tool_colour_picker"
-                style="?android:borderlessButtonStyle"
+                style="@style/Widget.AppCompat.ActionButton"
                 android:layout_width="0dp"
                 android:layout_height="60dp"
                 android:layout_weight="1"
@@ -70,7 +70,7 @@
 
             <com.jaween.pixelart.ui.ToolButton
                 android:id="@+id/ib_tool_misingno"
-                style="?android:borderlessButtonStyle"
+                style="@style/Widget.AppCompat.ActionButton"
                 android:layout_width="0dp"
                 android:layout_height="60dp"
                 android:layout_weight="1"
@@ -78,7 +78,7 @@
 
             <com.jaween.pixelart.ui.ToolButton
                 android:id="@+id/ib_tool_magic_wand"
-                style="?android:borderlessButtonStyle"
+                style="@style/Widget.AppCompat.ActionButton"
                 android:layout_width="0dp"
                 android:layout_height="60dp"
                 android:layout_weight="1"
@@ -86,7 +86,7 @@
 
             <com.jaween.pixelart.ui.ToolButton
                 android:id="@+id/ib_tool_draw_select"
-                style="?android:borderlessButtonStyle"
+                style="@style/Widget.AppCompat.ActionButton"
                 android:layout_width="0dp"
                 android:layout_height="60dp"
                 android:layout_weight="1"
@@ -99,5 +99,5 @@
         android:id="@+id/fl_container_tool_options"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="@android:color/white"/>
+        android:background="@android:color/white" />
 </merge>

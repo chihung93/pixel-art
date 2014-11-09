@@ -17,7 +17,7 @@
         android:layout_height="1dp"
         android:layout_alignParentRight="true"
         android:layout_below="@id/fl_container_palette"
-        android:background="?android:attr/dividerHorizontal" />
+        android:background="?attr/dividerHorizontal" />
 
     <FrameLayout
         android:id="@+id/fl_container_toolbox"

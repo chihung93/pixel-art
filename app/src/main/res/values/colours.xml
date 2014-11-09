@@ -20,4 +20,6 @@
         <item>0xFF96F3F4</item>
     </integer-array>
 
+    <color name="actionbar_background">#EEEEEE</color>
+
 </resources>

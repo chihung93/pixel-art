@@ -1,16 +1,15 @@
 package com.jaween.pixelart;
 
-import android.content.res.Resources;
-import android.graphics.Point;
 import android.os.Bundle;
-import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.FragmentTransaction;
+import android.support.v7.app.ActionBarActivity;
+import android.util.DisplayMetrics;
 import android.view.Display;
 
 /**
  * Decides which ContainerFragment to add.
  */
-public final class ContainerActivity extends FragmentActivity {
+public final class ContainerActivity extends ActionBarActivity {
 
     private static final int TABLET_LAYOUT_WIDTH_DP = 720;
 
@@ -27,11 +26,11 @@ public final class ContainerActivity extends FragmentActivity {
         if (fragment == null) {
             // Screen size details
             Display display = getWindowManager().getDefaultDisplay();
-            Point size = new Point();
-            display.getSize(size);
+            DisplayMetrics metrics = new DisplayMetrics();
+            display.getMetrics(metrics);
 
-            float dp = Resources.getSystem().getDisplayMetrics().density;
-            float widthDp = size.x / dp;
+            float density = getResources().getDisplayMetrics().density;
+            float widthDp = metrics.widthPixels / density;
 
             // Picks the Fragment based on the size of the screen
             if (widthDp >= TABLET_LAYOUT_WIDTH_DP) {

@@ -4,6 +4,7 @@ import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
+import android.graphics.PorterDuff;
 import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.StateListDrawable;
 import android.os.Build;
@@ -71,20 +72,27 @@ public class ColourButton extends Button {
         hsvLighten[2] = hsvLighten[2] * LIGHTEN_FACTOR;
         int lighter = Color.HSVToColor(hsvLighten);
 
-        /*pressed.setColorFilter(darker, PorterDuff.Mode.MULTIPLY);
-        focused.setColorFilter(lighter, PorterDuff.Mode.MULTIPLY);
-        normal.setColorFilter(Color.MAGENTA, PorterDuff.Mode.MULTIPLY);*/
 
-        pressed.setColor(darker);
-        focused.setColor(lighter);
-        normal.setColor(colour);
+        int sdk = Build.VERSION.SDK_INT;
+
+        // Pre-Honeycomb doesn't have colorDrawable.setColor()
+        if (sdk < Build.VERSION_CODES.HONEYCOMB) {
+            pressed.setColorFilter(darker, PorterDuff.Mode.MULTIPLY);
+            focused.setColorFilter(lighter, PorterDuff.Mode.MULTIPLY);
+            normal.setColorFilter(Color.MAGENTA, PorterDuff.Mode.MULTIPLY);
+        } else {
+            pressed.setColor(darker);
+            focused.setColor(lighter);
+            normal.setColor(colour);
+        }
 
         StateListDrawable states = new StateListDrawable();
         states.addState(new int[]{android.R.attr.state_pressed}, pressed);
         states.addState(new int[]{android.R.attr.state_focused}, focused);
         states.addState(new int[]{}, normal);
 
-        int sdk = Build.VERSION.SDK_INT;
+        // Pre-Jellybean doesn't have setBackground()
+
         if (sdk < Build.VERSION_CODES.JELLY_BEAN) {
             setBackgroundDrawable(states);
         } else {

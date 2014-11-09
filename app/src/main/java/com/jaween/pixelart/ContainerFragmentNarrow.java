@@ -101,7 +101,7 @@ public class ContainerFragmentNarrow extends ContainerFragment implements
     public void onColourSelected(int colour, boolean done) {
         super.onColourSelected(colour, done);
 
-        getActivity().invalidateOptionsMenu();
+        getActivity().supportInvalidateOptionsMenu();
 
         if (done) {
             hidePanel(paletteFragment);
@@ -157,7 +157,7 @@ public class ContainerFragmentNarrow extends ContainerFragment implements
 
         // Updates the tool action on the ActionBar
         selectedTool = tool;
-        getActivity().invalidateOptionsMenu();
+        getActivity().supportInvalidateOptionsMenu();
 
         // Dismisses the toolbox panel
         if (done) {

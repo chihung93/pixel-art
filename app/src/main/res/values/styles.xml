@@ -1,11 +1,21 @@
 <resources>
 
     <!-- Base application theme. -->
-    <style name="AppTheme" parent="android:Theme.Holo.Light">
-        <!-- Customize your theme here. -->
+    <style name="AppTheme" parent="Theme.AppCompat.Light">
+        <item name="android:actionBarStyle">@style/MyActionBar</item>
 
         <!-- Transparent ActionBar (requires different parent theme I believe) -->
         <!--<item name="android:windowActionBarOverlay">true</item>-->
+
+        <!-- Support library compatibility -->
+        <item name="actionBarStyle">@style/MyActionBar</item>
+    </style>
+
+    <style name="MyActionBar" parent="Widget.AppCompat.ActionBar">
+        <item name="android:background">@color/actionbar_background</item>
+
+        <!-- Support library compatibilty -->
+        <item name="background">@color/actionbar_background</item>
     </style>
 
 </resources>

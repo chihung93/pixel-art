@@ -1,18 +1,19 @@
 <?xml version="1.0" encoding="utf-8"?>
-<menu xmlns:android="http://schemas.android.com/apk/res/android">
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
 
     <item
         android:id="@+id/action_tool"
         android:icon="@drawable/tool_pen"
         android:orderInCategory="1"
-        android:showAsAction="always"
-        android:title="@string/action_tool" />
+        android:title="@string/action_tool"
+        app:showAsAction="always" />
 
     <item
         android:id="@+id/action_palette"
         android:icon="@drawable/palette_colour_button"
         android:orderInCategory="2"
-        android:showAsAction="always"
-        android:title="@string/action_palette" />
+        android:title="@string/action_palette"
+        app:showAsAction="always" />
 
 </menu>

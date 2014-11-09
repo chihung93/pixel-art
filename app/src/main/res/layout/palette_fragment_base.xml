@@ -1,12 +1,11 @@
 <merge xmlns:android="http://schemas.android.com/apk/res/android">
 
-    <GridLayout xmlns:tools="http://schemas.android.com/tools"
+    <android.support.v7.widget.GridLayout
         android:id="@+id/gl_palette_grid"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:padding="@dimen/palette_outer_margin"
         android:background="@android:color/white"
-        tools:context="com.jaween.pixelart.ui.PaletteFragment" />
+        android:padding="@dimen/palette_outer_margin" />
 
     <LinearLayout
         android:layout_width="fill_parent"
@@ -16,7 +15,7 @@
 
         <Button
             android:id="@+id/bt_customise_palette"
-            style="?android:borderlessButtonStyle"
+            style="@style/Widget.AppCompat.ActionButton"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_below="@+id/gridLayout"
@@ -28,11 +27,11 @@
             android:layout_height="match_parent"
             android:layout_marginBottom="8dp"
             android:layout_marginTop="8dp"
-            android:background="?android:attr/dividerVertical" />
+            android:background="?attr/dividerVertical" />
 
         <Button
             android:id="@+id/bt_next_palette"
-            style="?android:borderlessButtonStyle"
+            style="@style/Widget.AppCompat.ActionButton"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_below="@+id/gridLayout"
