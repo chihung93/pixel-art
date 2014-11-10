@@ -78,7 +78,7 @@ public class DrawingSurface extends SurfaceView implements SurfaceHolder.Callbac
     private long touchDownTime = 0;
     private static final long CANCEL_DRAWING_MILLIS = 300;
     private PointF pixelTouch = new PointF();
-    private boolean hasCommittedOperation = false;
+    private boolean requiresUndoStackSaving = false;
 
     // Configuration Change variables
     private boolean configurationChanged = false;
@@ -335,16 +335,14 @@ public class DrawingSurface extends SurfaceView implements SurfaceHolder.Callbac
                     // Scaling began soon after the initial touch, cancels the drawing operation
                     tool.cancel();
                     resetOngoingBitmap();
+                    requiresUndoStackSaving = false;
                 } else {
                     // Scaling begun long after the initial touch, commits the drawing operation
                     // up until this point, but cancels further drawing
-                        toolPath = tool.end(ongoingOperationBitmap, pixelTouch);
-                        tool.cancel();
+                    toolPath = tool.end(ongoingOperationBitmap, pixelTouch);
+                    tool.cancel();
 
-                    if (hasCommittedOperation == false) {
-                        hasCommittedOperation = true;
-                        commitIfWithinDrawingBounds(toolPath);
-                    }
+                    commitIfWithinDrawingBounds(toolPath);
                 }
                 return true;
             }
@@ -358,8 +356,8 @@ public class DrawingSurface extends SurfaceView implements SurfaceHolder.Callbac
                     }
 
                     touchDownTime = System.currentTimeMillis();
-
                     tool.start(ongoingOperationBitmap, pixelTouch);
+                    requiresUndoStackSaving = true;
                     break;
                 case MotionEvent.ACTION_MOVE:
                     resetOngoingBitmap();
@@ -369,6 +367,7 @@ public class DrawingSurface extends SurfaceView implements SurfaceHolder.Callbac
                     currentPointerId = NULL_POINTER_ID;
                     resetOngoingBitmap();
                     toolPath = tool.end(ongoingOperationBitmap, pixelTouch);
+
                     commitIfWithinDrawingBounds(toolPath);
                     break;
                 case MotionEvent.ACTION_CANCEL:
@@ -384,7 +383,8 @@ public class DrawingSurface extends SurfaceView implements SurfaceHolder.Callbac
                         resetOngoingBitmap();
                         toolPath = tool.end(ongoingOperationBitmap, pixelTouch);
                         tool.cancel();
-                       commitIfWithinDrawingBounds(toolPath);
+
+                        commitIfWithinDrawingBounds(toolPath);
                     }
                     break;
                 default:
@@ -439,11 +439,15 @@ public class DrawingSurface extends SurfaceView implements SurfaceHolder.Callbac
     }
 
     private void commitIfWithinDrawingBounds(Path toolPath) {
-        toolPath.computeBounds(toolPathBounds, false);
-        transformation.mapRect(toolPathBounds);
-        if (toolPathBounds.intersects(transformedBitmapRect.left, transformedBitmapRect.top, transformedBitmapRect.right, transformedBitmapRect.bottom)) {
-            commitOngoingOperation();
-            undoRedoTracker.bitmapModified(layers.get(currentLayer));
+        if (requiresUndoStackSaving) {
+            requiresUndoStackSaving = false;
+
+            toolPath.computeBounds(toolPathBounds, false);
+            transformation.mapRect(toolPathBounds);
+            if (toolPathBounds.intersects(transformedBitmapRect.left, transformedBitmapRect.top, transformedBitmapRect.right, transformedBitmapRect.bottom)) {
+                commitOngoingOperation();
+                undoRedoTracker.bitmapModified(layers.get(currentLayer));
+            }
         }
     }
 
