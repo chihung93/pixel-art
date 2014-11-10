@@ -30,17 +30,41 @@ public class FloodFill extends Tool {
         floodPaint.setAntiAlias(false);
     }
 
-    public void setBitmapConfiguration(int width, int height, Bitmap.Config config) {
-        floodedBitmap = Bitmap.createBitmap(width, height, config);
-    }
-
     // Top to bottom scanline flood fill using a stack
     // TODO: Fix long operation when filling large areas
     // Takes 300~500ms on average and occasionally more than 1000ms on a 180x259px image!!!
     @Override
-    public void start(Bitmap bitmap, PointF event) {
+    protected void onStart(Bitmap bitmap, PointF event) {
+        performFloodFill(bitmap, event);
+    }
+
+    @Override
+    protected void onMove(Bitmap bitmap, PointF event) {
+        blitBitmap(floodedBitmap, bitmap);
+    }
+
+    @Override
+    protected void onEnd(Bitmap bitmap, PointF event) {
+        blitBitmap(floodedBitmap, bitmap);
+    }
+
+    private void blitBitmap(Bitmap source, Bitmap destination) {
+        if (cancelled == false) {
+            canvas.setBitmap(destination);
+            canvas.drawBitmap(source, 0, 0, floodPaint);
+        }
+    }
+
+    private int colour(Bitmap bitmap, float x, float y) {
+        return bitmap.getPixel((int) x, (int) y);
+    }
+
+    public void setBitmapConfiguration(int width, int height, Bitmap.Config config) {
+        floodedBitmap = Bitmap.createBitmap(width, height, config);
+    }
+
+    private void performFloodFill(Bitmap bitmap, PointF event) {
         long startTime = System.currentTimeMillis();
-        cancelled = false;
 
         // Out of bounds
         if (!isInBounds(bitmap, event)) {
@@ -107,26 +131,5 @@ public class FloodFill extends Tool {
         blitBitmap(bitmap, floodedBitmap);
 
         Log.d("FloodFill", "Flooding took " + (System.currentTimeMillis() - startTime) + "ms");
-    }
-
-    @Override
-    public void move(Bitmap bitmap, PointF event) {
-        blitBitmap(floodedBitmap, bitmap);
-    }
-
-    @Override
-    public void end(Bitmap bitmap, PointF event) {
-        blitBitmap(floodedBitmap, bitmap);
-    }
-
-    private void blitBitmap(Bitmap source, Bitmap destination) {
-        if (cancelled == false) {
-            canvas.setBitmap(destination);
-            canvas.drawBitmap(source, 0, 0, floodPaint);
-        }
-    }
-
-    private int colour(Bitmap bitmap, float x, float y) {
-        return bitmap.getPixel((int) x, (int) y);
     }
 }

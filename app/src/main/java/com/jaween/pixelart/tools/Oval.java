@@ -22,9 +22,7 @@ public class Oval extends Tool {
     private RectF ovalBounds = new RectF();
 
     @Override
-    public void start(Bitmap bitmap, PointF event) {
-        cancelled = false;
-
+    protected void onStart(Bitmap bitmap, PointF event) {
         start.x = event.x;
         start.y = event.y;
 
@@ -32,27 +30,24 @@ public class Oval extends Tool {
     }
 
     @Override
-    public void move(Bitmap bitmap, PointF event) {
-        if (cancelled == false) {
-            // Locks the oval to a circle
-            if (((OvalToolAttributes) toolAttributes).isCircleLocked()) {
-                lockCircle(event);
-            }
-
-            draw(canvas, bitmap, event);
+    protected void onMove(Bitmap bitmap, PointF event) {
+        // Locks the oval to a circle
+        if (((OvalToolAttributes) toolAttributes).isCircleLocked()) {
+            lockCircle(event);
         }
+
+        draw(canvas, bitmap, event);
     }
 
-    @Override
-    public void end(Bitmap bitmap, PointF event) {
-        if (cancelled == false) {
-            // Locks the oval to a circle
-            if (((OvalToolAttributes) toolAttributes).isCircleLocked()) {
-                lockCircle(event);
-            }
 
-            draw(canvas, bitmap, event);
+    @Override
+    protected void onEnd(Bitmap bitmap, PointF event) {
+        // Locks the oval to a circle
+        if (((OvalToolAttributes) toolAttributes).isCircleLocked()) {
+            lockCircle(event);
         }
+
+        draw(canvas, bitmap, event);
     }
 
     // TODO: Allow the coordinates of oval to go less than 0 in both x and y

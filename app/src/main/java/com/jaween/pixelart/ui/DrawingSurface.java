@@ -6,6 +6,7 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Matrix;
 import android.graphics.Paint;
+import android.graphics.Path;
 import android.graphics.PointF;
 import android.graphics.Rect;
 import android.graphics.RectF;
@@ -43,7 +44,7 @@ public class DrawingSurface extends SurfaceView implements SurfaceHolder.Callbac
     private ScaleGestureDetector scaleGestureDetector;
     private ScaleListener scaleListener;
     private Paint shadowPaint;
-    private RectF shadowRect = new RectF();
+    private RectF transformedBitmapRect = new RectF();
     private float shadowWidthDp;
 
     // Tool and drawing variables
@@ -57,10 +58,13 @@ public class DrawingSurface extends SurfaceView implements SurfaceHolder.Callbac
     private float dp;
 
     // UI Controls
+    private static final int MAX_UNDOS = 50;
     private UndoRedoTracker undoRedoTracker;
     private PixelGrid pixelGrid;
     private Thumbnail thumbnail;
     private OnClearPanelsListener onClearPanelsListener = null;
+    private Path toolPath;
+    private RectF toolPathBounds = new RectF();
 
     // Layers
     private ArrayList<Bitmap> layers;
@@ -144,7 +148,7 @@ public class DrawingSurface extends SurfaceView implements SurfaceHolder.Callbac
         thumbnail = new Thumbnail(thumbnailLeft, thumbnailTop, layerWidth, layerHeight, dp);
 
         // UI Controls
-        int maxUndos = 50;
+        int maxUndos = MAX_UNDOS;
         undoRedoTracker = new UndoRedoTracker(layers.get(currentLayer), maxUndos);
 
         // Grid
@@ -229,7 +233,7 @@ public class DrawingSurface extends SurfaceView implements SurfaceHolder.Callbac
             } else {
                 // Wide aspect ratio (or square)
 
-                // TODO Bug: lower shadow appears off screen
+                // TODO Bug: lower shadow appears off screen, touch point offset, fixes itself on first zoom
                 // Careful! Viewport  must maintain original aspect ratio otherwise hiccup on first zoom
                 float surfaceAspectRatio = (float) getWidth() / (float) getHeight();
                 viewport.left = (layerWidth - layerWidth * surfaceAspectRatio) / 2 - shadowPadding;
@@ -334,13 +338,12 @@ public class DrawingSurface extends SurfaceView implements SurfaceHolder.Callbac
                 } else {
                     // Scaling begun long after the initial touch, commits the drawing operation
                     // up until this point, but cancels further drawing
-                        tool.end(ongoingOperationBitmap, pixelTouch);
+                        toolPath = tool.end(ongoingOperationBitmap, pixelTouch);
                         tool.cancel();
-                        commitOngoingOperation();
 
                     if (hasCommittedOperation == false) {
                         hasCommittedOperation = true;
-                        undoRedoTracker.bitmapModified(layers.get(currentLayer));
+                        commitIfWithinDrawingBounds(toolPath);
                     }
                 }
                 return true;
@@ -365,10 +368,8 @@ public class DrawingSurface extends SurfaceView implements SurfaceHolder.Callbac
                 case MotionEvent.ACTION_UP:
                     currentPointerId = NULL_POINTER_ID;
                     resetOngoingBitmap();
-                    tool.end(ongoingOperationBitmap, pixelTouch);
-                    commitOngoingOperation();
-
-                    undoRedoTracker.bitmapModified(layers.get(currentLayer));
+                    toolPath = tool.end(ongoingOperationBitmap, pixelTouch);
+                    commitIfWithinDrawingBounds(toolPath);
                     break;
                 case MotionEvent.ACTION_CANCEL:
                     currentPointerId = NULL_POINTER_ID;
@@ -381,11 +382,9 @@ public class DrawingSurface extends SurfaceView implements SurfaceHolder.Callbac
                         currentPointerId = NULL_POINTER_ID;
 
                         resetOngoingBitmap();
-                        tool.end(ongoingOperationBitmap, pixelTouch);
+                        toolPath = tool.end(ongoingOperationBitmap, pixelTouch);
                         tool.cancel();
-                        commitOngoingOperation();
-
-                        undoRedoTracker.bitmapModified(layers.get(currentLayer));
+                       commitIfWithinDrawingBounds(toolPath);
                     }
                     break;
                 default:
@@ -402,16 +401,15 @@ public class DrawingSurface extends SurfaceView implements SurfaceHolder.Callbac
             canvas.drawColor(Color.LTGRAY);
 
             // Calculates the zoom and pan transformation
-            //viewport = scaleListener.getViewport();
             transformation.setTranslate(-viewport.left, -viewport.top);
             transformation.postScale(scaleListener.getScale(), scaleListener.getScale());
 
             // Applies the transformation to the border shadow around the drawing
-            shadowRect.set(0, 0, ongoingOperationBitmap.getWidth(), ongoingOperationBitmap.getHeight());
-            transformation.mapRect(shadowRect);
+            transformedBitmapRect.set(0, 0, layerWidth, layerHeight);
+            transformation.mapRect(transformedBitmapRect);
 
             // User drawn image and border shadow
-            canvas.drawRect(shadowRect, shadowPaint);
+            canvas.drawRect(transformedBitmapRect, shadowPaint);
             canvas.drawBitmap(ongoingOperationBitmap, transformation, bitmapPaint);
 
             // Grid lines
@@ -438,6 +436,15 @@ public class DrawingSurface extends SurfaceView implements SurfaceHolder.Callbac
     private void commitOngoingOperation() {
         ongoingOperationCanvas.setBitmap(layers.get(currentLayer));
         ongoingOperationCanvas.drawBitmap(ongoingOperationBitmap, 0, 0, bitmapPaint);
+    }
+
+    private void commitIfWithinDrawingBounds(Path toolPath) {
+        toolPath.computeBounds(toolPathBounds, false);
+        transformation.mapRect(toolPathBounds);
+        if (toolPathBounds.intersects(transformedBitmapRect.left, transformedBitmapRect.top, transformedBitmapRect.right, transformedBitmapRect.bottom)) {
+            commitOngoingOperation();
+            undoRedoTracker.bitmapModified(layers.get(currentLayer));
+        }
     }
 
     public void setTool(Tool tool) {
