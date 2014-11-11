@@ -73,7 +73,7 @@ public class ContainerFragmentNarrow extends ContainerFragment implements
 
         MenuItem paletteItem = menu.findItem(R.id.action_palette);
         paletteItem.setIcon(drawable);
-        paletteItem.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
+        getActivity().supportInvalidateOptionsMenu();
     }
 
     @Override
