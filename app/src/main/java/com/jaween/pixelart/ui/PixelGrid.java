@@ -11,7 +11,7 @@ import android.graphics.RectF;
 public class PixelGrid {
 
     // PixelGrid View
-    private boolean enabled = true;
+    private boolean enabled = false;
 
     // Visuals
     private float dp;

@@ -4,6 +4,7 @@ import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -69,7 +70,11 @@ public class ContainerFragment extends Fragment implements
 
     @Override
     public void onColourSelected(int colour, boolean done) {
+        // The tool must be notified of the colour change in order to have any effect
         toolboxFragment.setColour(colour);
+
+        // We must notify the palette, as the colour change may have originated from elsewhere in the app
+        paletteFragment.setColour(colour);
         this.colour = colour;
     }
 

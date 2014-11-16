@@ -6,7 +6,7 @@ import android.graphics.PointF;
 import android.graphics.drawable.Drawable;
 import android.util.Log;
 
-import com.jaween.pixelart.tools.attributes.FloodFillToolAttributes;
+import com.jaween.pixelart.tools.attributes.ToolAttributes;
 
 import java.util.Stack;
 
@@ -14,8 +14,6 @@ import java.util.Stack;
  * Created by ween on 9/28/14.
  */
 public class FloodFill extends Tool {
-
-    private static Paint floodPaint = new Paint();
     private Bitmap floodedBitmap = null;
 
     private Stack<PointF> pixels = new Stack<PointF>();
@@ -23,11 +21,11 @@ public class FloodFill extends Tool {
     public FloodFill(String name, Drawable icon) {
         super(name, icon);
 
-        toolAttributes = new FloodFillToolAttributes();
+        toolAttributes = new ToolAttributes();
 
-        // Attributes required for flooding (must only touch a single pixel at a time)
-        floodPaint.setStrokeWidth(0);
-        floodPaint.setAntiAlias(false);
+        // Floods pixel by pixel, so attributes must reflect this
+        toolAttributes.getPaint().setStrokeWidth(0);
+        toolAttributes.getPaint().setAntiAlias(false);
     }
 
     // Top to bottom scanline flood fill using a stack
@@ -51,7 +49,7 @@ public class FloodFill extends Tool {
     private void blitBitmap(Bitmap source, Bitmap destination) {
         if (cancelled == false) {
             canvas.setBitmap(destination);
-            canvas.drawBitmap(source, 0, 0, floodPaint);
+            canvas.drawBitmap(source, 0, 0, toolAttributes.getPaint());
         }
     }
 
@@ -74,7 +72,7 @@ public class FloodFill extends Tool {
         // Colour to be replaced and the colour which will replace it
         int oldColour = bitmap.getPixel((int) event.x, (int) event.y);
         int newColour = toolAttributes.getPaint().getColor();
-        floodPaint.setColor(toolAttributes.getPaint().getColor());
+        toolAttributes.getPaint().setColor(toolAttributes.getPaint().getColor());
 
         // No bitmap
         if (bitmap == null)
@@ -109,7 +107,7 @@ public class FloodFill extends Tool {
             boolean spanRight = false;
 
             while (y1 < bitmap.getHeight() && colour(bitmap, x, y1) == oldColour) {
-                bitmap.setPixel((int) x, (int) y1, floodPaint.getColor());
+                bitmap.setPixel((int) x, (int) y1, toolAttributes.getPaint().getColor());
 
                 if (!spanLeft && x > 0 && colour(bitmap, x - 1, y1) == oldColour) {
                     pixels.push(new PointF(x - 1, y1));

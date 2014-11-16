@@ -2,29 +2,37 @@ package com.jaween.pixelart.tools;
 
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
-import android.graphics.Path;
 import android.graphics.PointF;
 import android.graphics.drawable.Drawable;
 
 import com.jaween.pixelart.tools.attributes.ToolAttributes;
 
 /**
- * Created by ween on 9/28/14.
+ * To make a Tool:
+ *  1) Subclass Tool implementing 'onStart()', 'onMove()', 'onEnd()', draw with canvas.setBitmap(bitmap)
+ *  2) If the tool has user configurable attributes, implement a subclass of ToolAttributes and
+ *     create a corresponding XML layout. Subclass ToolOptionsView and linkup the UI.
+ *  3) In the constructor of the tool, set the 'toolAttributes' variable to an instance of ToolAttributes
+ *  4) In ToolboxFragment, create an instance of your tool, options, attributes and ImageButton.
+ *  5) In initialiseViews() of ToolboxFragment, call tool.setToolAttributes(attributes). Done!
  */
 public abstract class Tool implements Command {
 
-    protected Canvas canvas = new Canvas();
+    // User interface
     protected final String name;
     protected final Drawable icon;
-    protected boolean cancelled = false;
+
+    // Drawing
+    protected Canvas canvas = new Canvas();
     protected ToolAttributes toolAttributes;
-    protected Path toolPath;
+    protected ToolReport toolReport;
+    protected boolean cancelled = false;
 
     public Tool(String name, Drawable icon) {
         this.name = name;
         this.icon = icon;
 
-        toolPath = new Path();
+        toolReport = new ToolReport();
     }
 
     public String getName() {
@@ -36,28 +44,33 @@ public abstract class Tool implements Command {
     }
 
     @Override
-    public final void start(Bitmap bitmap, PointF event) {
+    public final ToolReport start(Bitmap bitmap, PointF event) {
         cancelled = false;
-        toolPath.reset();
-        toolPath.moveTo(event.x, event.y);
+        toolReport.getPath().reset();
+        toolReport.getPath().moveTo(event.x, event.y);
         onStart(bitmap, event);
+
+        return toolReport;
     }
 
     @Override
-    public final void move(Bitmap bitmap, PointF event) {
+    public final ToolReport move(Bitmap bitmap, PointF event) {
         if (!cancelled) {
-            toolPath.lineTo(event.x, event.y);
+            toolReport.getPath().lineTo(event.x, event.y);
             onMove(bitmap, event);
+            return toolReport;
         }
+        return null;
     }
 
     @Override
-    public final Path end(Bitmap bitmap, PointF event) {
+    public final ToolReport end(Bitmap bitmap, PointF event) {
         if (!cancelled) {
-            toolPath.moveTo(event.x, event.y);
+            toolReport.getPath().lineTo(event.x, event.y);
             onEnd(bitmap, event);
+            return toolReport;
         }
-        return toolPath;
+        return null;
     }
 
     @Override

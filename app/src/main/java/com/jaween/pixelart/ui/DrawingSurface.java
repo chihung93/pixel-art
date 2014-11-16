@@ -4,12 +4,14 @@ import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
+import android.graphics.DashPathEffect;
 import android.graphics.Matrix;
 import android.graphics.Paint;
 import android.graphics.Path;
 import android.graphics.PointF;
 import android.graphics.Rect;
 import android.graphics.RectF;
+import android.util.Log;
 import android.view.MotionEvent;
 import android.view.ScaleGestureDetector;
 import android.view.SurfaceHolder;
@@ -17,6 +19,7 @@ import android.view.SurfaceView;
 
 import com.jaween.pixelart.R;
 import com.jaween.pixelart.UndoRedoTracker;
+import com.jaween.pixelart.tools.ToolReport;
 import com.jaween.pixelart.tools.Tool;
 import com.jaween.pixelart.util.ScaleListener;
 
@@ -40,22 +43,29 @@ public class DrawingSurface extends SurfaceView implements SurfaceHolder.Callbac
     public static final float DEFAULT_SCALE = 4;
     private float initialScale;
     private Rect displayRect = new Rect();
+    private RectF transformedBitmapRect = new RectF();
     private Matrix transformation = new Matrix();
     private ScaleGestureDetector scaleGestureDetector;
     private ScaleListener scaleListener;
-    private Paint shadowPaint;
-    private RectF transformedBitmapRect = new RectF();
+    private Paint shadowPaint = new Paint();
     private float shadowWidthDp;
+
+    // Selection
+    private static final int SELECTION_BORDER_ALPHA = 240;
+    private static final int SELECTION_FILL_ALPHA = 50;
+    private Paint selectionBorderPaint = new Paint();
+    private Paint selectionInnerPaint = new Paint();
 
     // Tool and drawing variables
     private Tool tool;
-    private Paint toolPaint;
+    private Paint toolPaint = new Paint();
     private Paint bitmapPaint;
     private PointF displayTouch = new PointF();
+    private float dp;
     private Canvas ongoingOperationCanvas;
     private Bitmap ongoingOperationBitmap;
-    private OnDimensionsCalculatedListener onDimensionsCalculatedListener = null;
-    private float dp;
+    private OnSelectRegionListener onSelectRegionListener = null;
+    private OnDropColourListener onDropColourListener = null;
 
     // UI Controls
     private static final int MAX_UNDOS = 50;
@@ -63,20 +73,22 @@ public class DrawingSurface extends SurfaceView implements SurfaceHolder.Callbac
     private PixelGrid pixelGrid;
     private Thumbnail thumbnail;
     private OnClearPanelsListener onClearPanelsListener = null;
-    private Path toolPath;
+    private ToolReport toolReport;
     private RectF toolPathBounds = new RectF();
+    private final int selectionColour;
 
     // Layers
     private ArrayList<Bitmap> layers;
     private int currentLayer = 0;
     private int layerWidth;
     private int layerHeight;
+    private OnDimensionsCalculatedListener onDimensionsCalculatedListener = null;
 
     // Touch variables
     private static final int NULL_POINTER_ID = -1;
     private int currentPointerId = NULL_POINTER_ID;
-    private long touchDownTime = 0;
     private static final long CANCEL_DRAWING_MILLIS = 300;
+    private long touchDownTime = 0;
     private PointF pixelTouch = new PointF();
     private boolean requiresUndoStackSaving = false;
 
@@ -90,7 +102,9 @@ public class DrawingSurface extends SurfaceView implements SurfaceHolder.Callbac
     private boolean restoredGridState;
 
     // Temporary UI variables
-    private Paint tempTextPaint;
+    private Paint tempTextPaint = new Paint();
+    private Paint blankOutPaint = new Paint();
+    private Path selectedPath = new Path();
 
     public DrawingSurface(Context context, Tool tool) {
         super(context);
@@ -101,6 +115,8 @@ public class DrawingSurface extends SurfaceView implements SurfaceHolder.Callbac
         holder = getHolder();
         holder.addCallback(this);
 
+        selectionColour = context.getResources().getColor(R.color.tool_selection_colour);
+
         initialisePaints();
 
         this.context = context;
@@ -109,9 +125,7 @@ public class DrawingSurface extends SurfaceView implements SurfaceHolder.Callbac
 
     private void initialisePaints() {
         // Tool paint defaults
-        toolPaint = new Paint();
         toolPaint.setAntiAlias(false);
-        toolPaint.setStrokeWidth(6);
         toolPaint.setStyle(Paint.Style.STROKE);
         toolPaint.setColor(Color.DKGRAY);
 
@@ -121,14 +135,32 @@ public class DrawingSurface extends SurfaceView implements SurfaceHolder.Callbac
 
         // Shadow around canvas and thumbnail
         shadowWidthDp = 4 * dp;
-        shadowPaint = new Paint();
         shadowPaint.setShadowLayer(shadowWidthDp, 0, shadowWidthDp / 2, Color.DKGRAY);
 
+        // Region selection
+        selectionBorderPaint.setStrokeWidth(2 * dp);
+        selectionBorderPaint.setColor(selectionColour);
+        selectionBorderPaint.setAlpha(SELECTION_BORDER_ALPHA);
+        selectionBorderPaint.setAntiAlias(true);
+        selectionBorderPaint.setPathEffect(new DashPathEffect(new float[]{ 8 * dp, 8 * dp }, 0));
+        selectionBorderPaint.setStyle(Paint.Style.STROKE);
+
+        selectionInnerPaint.setColor(selectionColour);
+        selectionInnerPaint.setAlpha(SELECTION_FILL_ALPHA);
+        selectionInnerPaint.setAntiAlias(true);
+        selectionInnerPaint.setStyle(Paint.Style.FILL);
+
+        // Blank out sections
+        blankOutPaint.setColor(Color.WHITE);
+        blankOutPaint.setStyle(Paint.Style.FILL);
+        blankOutPaint.setAntiAlias(false);
+
+
         // Temporary UI text
-        tempTextPaint = new Paint();
         tempTextPaint.setTextSize(30);
         tempTextPaint.setAntiAlias(true);
         tempTextPaint.setColor(Color.MAGENTA);
+        tempTextPaint.setStyle(Paint.Style.FILL);
     }
 
     @Override
@@ -207,7 +239,7 @@ public class DrawingSurface extends SurfaceView implements SurfaceHolder.Callbac
             ongoingOperationCanvas = new Canvas(layers.get(0));
 
             // Blanks out canvas
-            ongoingOperationCanvas.drawColor(Color.WHITE);
+            ongoingOperationCanvas.drawColor(blankOutPaint.getColor());
             resetOngoingBitmap();
         }
     }
@@ -339,16 +371,17 @@ public class DrawingSurface extends SurfaceView implements SurfaceHolder.Callbac
                 } else {
                     // Scaling begun long after the initial touch, commits the drawing operation
                     // up until this point, but cancels further drawing
-                    toolPath = tool.end(ongoingOperationBitmap, pixelTouch);
+                    toolReport = tool.end(ongoingOperationBitmap, pixelTouch);
                     tool.cancel();
 
-                    commitIfWithinDrawingBounds(toolPath);
+                    commitIfWithinDrawingBounds(toolReport);
                 }
                 return true;
             }
 
             // Single-touch event
             switch (action) {
+
                 case MotionEvent.ACTION_DOWN:
 
                     if (onClearPanelsListener != null) {
@@ -356,19 +389,23 @@ public class DrawingSurface extends SurfaceView implements SurfaceHolder.Callbac
                     }
 
                     touchDownTime = System.currentTimeMillis();
-                    tool.start(ongoingOperationBitmap, pixelTouch);
                     requiresUndoStackSaving = true;
+                    toolReport = tool.start(ongoingOperationBitmap, pixelTouch);
+                    dropColour(toolReport);
                     break;
                 case MotionEvent.ACTION_MOVE:
                     resetOngoingBitmap();
-                    tool.move(ongoingOperationBitmap, pixelTouch);
+                    toolReport = tool.move(ongoingOperationBitmap, pixelTouch);
+                    dropColour(toolReport);
                     break;
                 case MotionEvent.ACTION_UP:
                     currentPointerId = NULL_POINTER_ID;
                     resetOngoingBitmap();
-                    toolPath = tool.end(ongoingOperationBitmap, pixelTouch);
+                    toolReport = tool.end(ongoingOperationBitmap, pixelTouch);
 
-                    commitIfWithinDrawingBounds(toolPath);
+                    commitIfWithinDrawingBounds(toolReport);
+                    selectRegion(toolReport);
+                    dropColour(toolReport);
                     break;
                 case MotionEvent.ACTION_CANCEL:
                     currentPointerId = NULL_POINTER_ID;
@@ -381,10 +418,12 @@ public class DrawingSurface extends SurfaceView implements SurfaceHolder.Callbac
                         currentPointerId = NULL_POINTER_ID;
 
                         resetOngoingBitmap();
-                        toolPath = tool.end(ongoingOperationBitmap, pixelTouch);
+                        toolReport = tool.end(ongoingOperationBitmap, pixelTouch);
                         tool.cancel();
 
-                        commitIfWithinDrawingBounds(toolPath);
+                        commitIfWithinDrawingBounds(toolReport);
+                        selectRegion(toolReport);
+                        dropColour(toolReport);
                     }
                     break;
                 default:
@@ -412,6 +451,13 @@ public class DrawingSurface extends SurfaceView implements SurfaceHolder.Callbac
             canvas.drawRect(transformedBitmapRect, shadowPaint);
             canvas.drawBitmap(ongoingOperationBitmap, transformation, bitmapPaint);
 
+            // Selection
+            if (toolReport != null && tool.getToolAttributes().isSelector()) {
+                toolReport.getPath().transform(transformation, selectedPath);
+                canvas.drawPath(selectedPath, selectionInnerPaint);
+                canvas.drawPath(selectedPath, selectionBorderPaint);
+            }
+
             // Grid lines
             if (pixelGrid.isEnabled()) {
                 pixelGrid.draw(canvas, viewport, scaleListener.getScale());
@@ -438,21 +484,55 @@ public class DrawingSurface extends SurfaceView implements SurfaceHolder.Callbac
         ongoingOperationCanvas.drawBitmap(ongoingOperationBitmap, 0, 0, bitmapPaint);
     }
 
-    private void commitIfWithinDrawingBounds(Path toolPath) {
+    private void commitIfWithinDrawingBounds(ToolReport toolToolReport) {
         if (requiresUndoStackSaving) {
             requiresUndoStackSaving = false;
 
-            toolPath.computeBounds(toolPathBounds, false);
-            transformation.mapRect(toolPathBounds);
-            if (toolPathBounds.intersects(transformedBitmapRect.left, transformedBitmapRect.top, transformedBitmapRect.right, transformedBitmapRect.bottom)) {
-                commitOngoingOperation();
-                undoRedoTracker.bitmapModified(layers.get(currentLayer));
+            if (tool.getToolAttributes().isMutator()) {
+                toolToolReport.getPath().computeBounds(toolPathBounds, false);
+                transformation.mapRect(toolPathBounds);
+                if (toolPathBounds.intersects(transformedBitmapRect.left, transformedBitmapRect.top, transformedBitmapRect.right, transformedBitmapRect.bottom)) {
+                    commitOngoingOperation();
+                    undoRedoTracker.bitmapModified(layers.get(currentLayer));
+                }
             }
         }
     }
 
+    private void selectRegion(ToolReport toolReport) {
+        if (tool.getToolAttributes().isSelector() && onSelectRegionListener != null && toolReport != null) {
+            toolReport.getPath().transform(transformation, selectedPath);
+            onSelectRegionListener.onSelectRegion(selectedPath);
+        }
+    }
+
+    private void dropColour(ToolReport toolReport) {
+        if (tool.getToolAttributes().isDropper() && onDropColourListener != null && toolReport != null) {
+            onDropColourListener.onDropColour(toolReport.getDropColour());
+        }
+    }
+
+    public void dismissSelection() {
+        toolReport = null;
+    }
+
+    public void clearSelection() {
+        if (toolReport != null) {
+            ongoingOperationCanvas.setBitmap(ongoingOperationBitmap);
+            ongoingOperationCanvas.drawPath(toolReport.getPath(), blankOutPaint);
+            commitOngoingOperation();
+
+            undoRedoTracker.bitmapModified(layers.get(currentLayer));
+        } else {
+            Log.e("DrawingSurface", "Error: Clearing section but toolReport was null!");
+        }
+
+        dismissSelection();
+    }
+
     public void setTool(Tool tool) {
         this.tool = tool;
+        toolReport = null;
     }
 
     public void undo() {
@@ -515,11 +595,27 @@ public class DrawingSurface extends SurfaceView implements SurfaceHolder.Callbac
         this.onDimensionsCalculatedListener = onDimensionsCalculatedListener;
     }
 
+    public void setOnSelectRegionListener(OnSelectRegionListener onSelectRegionListener) {
+        this.onSelectRegionListener = onSelectRegionListener;
+    }
+
+    public void setOnDropColourListener(OnDropColourListener onDropColourListener) {
+        this.onDropColourListener = onDropColourListener;
+    }
+
     public interface OnClearPanelsListener {
         public void onClearPanels();
     }
 
     public interface OnDimensionsCalculatedListener {
         public void onDimensionsCalculated(int width, int height);
+    }
+
+    public interface OnSelectRegionListener {
+        public void onSelectRegion(Path selectedRegion);
+    }
+
+    public interface OnDropColourListener {
+        public void onDropColour(int colour);
     }
 }

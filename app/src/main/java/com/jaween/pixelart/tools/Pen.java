@@ -31,8 +31,8 @@ public class Pen extends Tool {
     protected void onMove(Bitmap bitmap, PointF event) {
         // Straight lines
         if (((PenToolAttributes) toolAttributes).isStraight()) {
-            toolPath.reset();
-            toolPath.moveTo(start.x, start.y);
+            toolReport.getPath().reset();
+            toolReport.getPath().moveTo(start.x, start.y);
         }
 
         // Common pixel art angles
@@ -47,8 +47,8 @@ public class Pen extends Tool {
     protected void onEnd(Bitmap bitmap, PointF event) {
         // Straight lines
         if (((PenToolAttributes) toolAttributes).isStraight()) {
-            toolPath.reset();
-            toolPath.moveTo(start.x, start.y);
+            toolReport.getPath().reset();
+            toolReport.getPath().moveTo(start.x, start.y);
         }
 
         // Common pixel art angles
@@ -61,10 +61,10 @@ public class Pen extends Tool {
 
 
     private void draw(Bitmap bitmap, PointF event) {
-        toolPath.lineTo(event.x, event.y);
+        toolReport.getPath().lineTo(event.x, event.y);
 
         canvas.setBitmap(bitmap);
-        canvas.drawPath(toolPath, toolAttributes.getPaint());
+        canvas.drawPath(toolReport.getPath(), toolAttributes.getPaint());
     }
 
     // Locks the line in 11.25 degree (PI/8 radians) increments, so we can have 16 different angles
