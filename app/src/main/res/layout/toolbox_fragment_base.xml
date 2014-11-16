@@ -4,7 +4,7 @@
         android:id="@+id/gl_toolbox_grid"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="@android:color/white"
+        android:background="@color/actionbar_background_colour"
         tools:context="com.jaween.pixelart.ui.PaletteFragment">
 
         <TableRow>
@@ -47,7 +47,7 @@
                 android:layout_width="0dp"
                 android:layout_height="60dp"
                 android:layout_weight="1"
-                android:src="@drawable/tool_pen" />
+                android:src="@drawable/tool_rect_select" />
         </TableRow>
 
         <TableRow>
@@ -61,12 +61,12 @@
                 android:src="@drawable/tool_fill" />
 
             <com.jaween.pixelart.ui.ToolButton
-                android:id="@+id/ib_tool_colour_picker"
+                android:id="@+id/ib_tool_dropper"
                 style="@style/Widget.AppCompat.ActionButton"
                 android:layout_width="0dp"
                 android:layout_height="60dp"
                 android:layout_weight="1"
-                android:src="@drawable/tool_pen" />
+                android:src="@drawable/tool_dropper" />
 
             <com.jaween.pixelart.ui.ToolButton
                 android:id="@+id/ib_tool_misingno"
@@ -85,12 +85,12 @@
                 android:src="@drawable/tool_pen" />
 
             <com.jaween.pixelart.ui.ToolButton
-                android:id="@+id/ib_tool_draw_select"
+                android:id="@+id/ib_tool_free_select"
                 style="@style/Widget.AppCompat.ActionButton"
                 android:layout_width="0dp"
                 android:layout_height="60dp"
                 android:layout_weight="1"
-                android:src="@drawable/tool_pen" />
+                android:src="@drawable/tool_free_select" />
         </TableRow>
 
     </TableLayout>
@@ -99,5 +99,5 @@
         android:id="@+id/fl_container_tool_options"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="@android:color/white" />
+        android:background="@color/actionbar_background_colour" />
 </merge>

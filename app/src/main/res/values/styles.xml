@@ -1,7 +1,7 @@
 <resources>
 
     <!-- Base application theme. -->
-    <style name="AppTheme" parent="Theme.AppCompat.Light">
+    <style name="AppTheme" parent="Theme.AppCompat">
         <item name="android:actionBarStyle">@style/MyActionBar</item>
 
         <!-- Transparent ActionBar (requires different parent theme I believe) -->
@@ -12,10 +12,17 @@
     </style>
 
     <style name="MyActionBar" parent="Widget.AppCompat.ActionBar">
-        <item name="android:background">@color/actionbar_background</item>
+        <item name="android:background">@color/actionbar_background_colour</item>
+        <item name="android:titleTextStyle">@style/MyActionBarTextStyle</item>
 
         <!-- Support library compatibilty -->
-        <item name="background">@color/actionbar_background</item>
+
+        <item name="background">@color/actionbar_background_colour</item>
+        <item name="titleTextStyle">@style/MyActionBarTextStyle</item>
+    </style>
+
+    <style name="MyActionBarTextStyle" parent="@style/TextAppearance.AppCompat.Widget.ActionBar.Title">
+        <item name="android:textColor">@color/actionbar_text_colour</item>
     </style>
 
 </resources>

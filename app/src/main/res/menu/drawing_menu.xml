@@ -17,7 +17,7 @@
 
     <item
         android:id="@+id/action_grid"
-        android:icon="@drawable/action_grid"
+        android:icon="@drawable/ic_action_grid_off"
         android:orderInCategory="33"
         android:title="@string/action_grid"
         app:showAsAction="ifRoom" />

@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v7.widget.GridLayout;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
@@ -14,6 +15,8 @@ import android.widget.Toast;
 
 import com.jaween.pixelart.R;
 import com.jaween.pixelart.util.SlidingLinearLayout;
+
+import java.util.ArrayList;
 
 /**
  * Created by ween on 10/24/14.
@@ -37,7 +40,10 @@ public class PaletteFragment extends Fragment implements
     private Button customisePaletteButton;
     private Button nextPaletteButton;
 
+    private ArrayList<ArrayList<ColourButton>> palettes = new ArrayList<ArrayList<ColourButton>>();
+    private int numberOfPalettes = 1;
     private int colour;
+    private boolean colourSet = false;
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -63,7 +69,30 @@ public class PaletteFragment extends Fragment implements
         return colour;
     }
 
+
+    public void setColour(int colour) {
+        colourSet = true;
+        this.colour = colour;
+
+        for (int i = 0; i < palettes.size(); i++) {
+            for (int j = 0; j < palettes.get(i).size(); j++) {
+                ColourButton colourButton = palettes.get(i).get(j);
+                if (colourButton.getColour() == colour) {
+                    changeSelectedColourButton(colourButton);
+                    return;
+                }
+            }
+        }
+
+        // The new colour wasn't in any palette, notifies the palette of this
+        changeSelectedColourButton(null);
+    }
+
     private void initialisePalette(GridLayout gridLayout) {
+        for (int i = 0; i < numberOfPalettes; i++) {
+            palettes.add(new ArrayList<ColourButton>());
+        }
+
         ViewTreeObserver viewTreeObserver = gridLayout.getViewTreeObserver();
         viewTreeObserver.addOnPreDrawListener(this);
     }
@@ -71,19 +100,17 @@ public class PaletteFragment extends Fragment implements
     @Override
     public void onClick(View view) {
         if (view instanceof ColourButton) {
-            ColourButton pressedColourButton = (ColourButton) view;
+            ColourButton clickedColourButton = (ColourButton) view;
 
-            // User tapped the selected colour again, hides the panel if possible
-            if (selectedColourButton == pressedColourButton) {
-                colourSelectedCallback.onColourSelected(pressedColourButton.getColour(), true);
+            boolean dismissPanel = false;
+            if (selectedColourButton == clickedColourButton) {
+                // User tapped the selected colour again, hides the panel if possible
+                dismissPanel = true;
             }
 
-            selectedColourButton.setSelected(false);
-            selectedColourButton.invalidate();
-            selectedColourButton = pressedColourButton;
-            selectedColourButton.setSelected(true);
-            colour = selectedColourButton.getColour();
-            colourSelectedCallback.onColourSelected(pressedColourButton.getColour(), false);
+            changeSelectedColourButton(clickedColourButton);
+
+            colourSelectedCallback.onColourSelected(colour, dismissPanel);
         }
 
         switch (view.getId()) {
@@ -93,6 +120,21 @@ public class PaletteFragment extends Fragment implements
             case R.id.bt_next_palette:
                 Toast.makeText(getActivity(), "TODO: Next palette", Toast.LENGTH_SHORT).show();
                 break;
+        }
+    }
+
+    private void changeSelectedColourButton(ColourButton newColourButton) {
+        // Can be null on a configuration change
+        if (selectedColourButton != null) {
+            selectedColourButton.setSelected(false);
+            selectedColourButton.invalidate();
+        }
+
+        // A null colour button means that the colour doesn't exist in the palette
+        if (newColourButton != null) {
+            selectedColourButton = newColourButton;
+            selectedColourButton.setSelected(true);
+            colour = selectedColourButton.getColour();
         }
     }
 
@@ -118,6 +160,7 @@ public class PaletteFragment extends Fragment implements
         gridLayout.getViewTreeObserver().removeOnPreDrawListener(this);
         int finalWidth = gridLayout.getMeasuredWidth();
 
+        int currentPalette = 0;
         for (int row = 0; row < gridLayout.getRowCount(); row++) {
             for (int column = 0; column < gridLayout.getColumnCount(); column++) {
                 ColourButton colourButton = new ColourButton(getActivity());
@@ -132,9 +175,10 @@ public class PaletteFragment extends Fragment implements
                 int[] colours = getResources().getIntArray(R.array.default_palette);
                 colourButton.setColour(colours[row * gridLayout.getColumnCount() + column]);
                 gridLayout.addView(colourButton);
+                palettes.get(currentPalette).add(colourButton);
 
                 // Sets the initial colour
-                if (selectedColourButton == null) {
+                if (selectedColourButton == null && colourSet == false) {
                     selectedColourButton = colourButton;
                     selectedColourButton.setSelected(true);
                     colourSelectedCallback.onColourSelected(selectedColourButton.getColour(), false);
@@ -146,6 +190,12 @@ public class PaletteFragment extends Fragment implements
                     parentLayout.addView(colourSelector);
                 }
             }
+        }
+
+        // TODO: This is too hacky
+        // In the case that the colour was set before the ColourButtons were created we must update the ColourSelector
+        if (colourSet) {
+            setColour(colour);
         }
         return true;
     }

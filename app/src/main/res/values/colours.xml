@@ -20,6 +20,12 @@
         <item>0xFF96F3F4</item>
     </integer-array>
 
-    <color name="actionbar_background">#EEEEEE</color>
+    <color name="actionbar_text_colour">#FFFFFF</color>
+    <color name="actionbar_background_colour">@color/accent_colour</color>
+    <color name="tool_selection_colour">@color/accent_colour</color>
+    <color name="accent_colour">@color/cerulean</color>
+
+    <color name="cerulean">#007BA7</color>
+    <color name="palette_icon_grey_border">#CCCCCC</color>
 
 </resources>

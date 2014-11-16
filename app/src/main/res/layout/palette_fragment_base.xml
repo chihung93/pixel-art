@@ -4,13 +4,13 @@
         android:id="@+id/gl_palette_grid"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="@android:color/white"
+        android:background="@color/actionbar_background_colour"
         android:padding="@dimen/palette_outer_margin" />
 
     <LinearLayout
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
-        android:background="@android:color/white"
+        android:background="@color/actionbar_background_colour"
         android:orientation="horizontal">
 
         <Button

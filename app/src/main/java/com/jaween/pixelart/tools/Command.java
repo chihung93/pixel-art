@@ -1,7 +1,6 @@
 package com.jaween.pixelart.tools;
 
 import android.graphics.Bitmap;
-import android.graphics.Path;
 import android.graphics.PointF;
 
 /**
@@ -15,7 +14,7 @@ public interface Command {
      * @param bitmap The bitmap to draw upon
      * @param event The coordinates of the drawing event
      */
-    public void start(Bitmap bitmap, PointF event);
+    public ToolReport start(Bitmap bitmap, PointF event);
 
     /**
      * This method is called when the user moves their finger across the screen. Update the drawing
@@ -23,8 +22,9 @@ public interface Command {
      * lifecycle of this operation.
      * @param bitmap The bitmap to draw upon
      * @param event The coordinates of the drawing event
+     * @return The Region which this tool has taken over the lifecycle of this drawing operation
      */
-    public void move(Bitmap bitmap, PointF event);
+    public ToolReport move(Bitmap bitmap, PointF event);
 
     /**
      * This method is called when the drawing operation has been successfully completed. Finish
@@ -32,9 +32,9 @@ public interface Command {
      * lifecycle of this operation.
      * @param bitmap The bitmap to draw upon
      * @param event The coordinates of the drawing event
-     * @return The path which this tool took over the lifecycle of this drawing operation
+     * @return The Region which this tool had taken over the lifecycle of this drawing operation
      */
-    public Path end(Bitmap bitmap, PointF event);
+    public ToolReport end(Bitmap bitmap, PointF event);
 
     /**
      * This method is called when a drawing operation has is to be cancelled (e.g. due to a

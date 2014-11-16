@@ -9,17 +9,21 @@
     <string name="action_tool">Tools</string>
     <string name="action_palette">Palette</string>
     <string name="action_settings">Settings</string>
+    <string name="action_copy">Copy</string>
+    <string name="action_cut">Cut</string>
+    <string name="action_delete">Delete</string>
 
     <string name="tool_pen">Pen</string>
     <string name="tool_eraser">Eraser</string>
-    <string name="tool_shape">Shape</string>
     <string name="tool_oval">Oval</string>
     <string name="tool_flood_fill">Flood Fill</string>
-    <string name="tool_colour_picker">Colour Picker</string>
+    <string name="tool_rect_select">Rectangular Selection</string>
+    <string name="tool_dropper">Colour Dropper</string>
+    <string name="tool_free_select">Free Selection</string>
 
     <string name="tool_option_straight">Straight</string>
     <string name="tool_option_lock_angles">Lock Angles</string>
-    <string name="tool_option_aa">Anti-aliasing</string>
+    <string name="tool_option_aa">Soften Edges</string>
     <string name="tool_option_circle_lock">Lock to Circle</string>
     <string name="tool_option_inner_fill">Inner Fill</string>
 

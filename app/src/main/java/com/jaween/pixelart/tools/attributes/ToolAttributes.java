@@ -5,8 +5,19 @@ import android.graphics.Paint;
 /**
  * Created by ween on 11/2/14.
  */
-public abstract class ToolAttributes {
+public class ToolAttributes {
+
+    // Paint with which this tool will draw
     protected Paint paint;
+
+    // This tool modifies the drawing (for example selection tool will not mutate the drawing)
+    protected boolean mutator = true;
+
+    // This tool returns a selectable region
+    protected boolean selector = false;
+
+    // This tool returns a colour
+    protected boolean dropper = false;
 
     public ToolAttributes() {
         paint = new Paint();
@@ -14,7 +25,32 @@ public abstract class ToolAttributes {
         paint.setStyle(Paint.Style.STROKE);
     }
 
-    public Paint getPaint() {
+    public final Paint getPaint() {
         return paint;
     }
+
+    public boolean isMutator() {
+        return mutator;
+    }
+
+    public void setMutator(boolean mutator) {
+        this.mutator = mutator;
+    }
+
+    public boolean isSelector() {
+        return selector;
+    }
+
+    public void setSelector(boolean selectable) {
+        this.selector = selectable;
+    }
+
+    public boolean isDropper() {
+        return dropper;
+    }
+
+    public void setDropper(boolean dropper) {
+        this.dropper = dropper;
+    }
+
 }
