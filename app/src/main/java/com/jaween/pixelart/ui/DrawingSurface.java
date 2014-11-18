@@ -38,10 +38,8 @@ public class DrawingSurface extends SurfaceView implements SurfaceHolder.Callbac
     private boolean surfaceCreated = false;
 
     // Drawing canvas
-    private static final float MIN_SCALE = 1;
-    private static final float MAX_SCALE = 48;
     public static final float DEFAULT_SCALE = 4;
-    private float initialScale;
+    private float thumbnailScaleTheshold;
     private Rect displayRect = new Rect();
     private RectF transformedBitmapRect = new RectF();
     private Matrix transformation = new Matrix();
@@ -173,11 +171,11 @@ public class DrawingSurface extends SurfaceView implements SurfaceHolder.Callbac
         initialiseGestureDetector();
 
         // Thumbnail
-        float thumbnailLeft = getWidth() - layerWidth
+        float thumbnailLeft = getWidth() - layerWidth * dp
                 - getResources().getDimension(R.dimen.canvas_margin);
-        float thumbnailTop = getHeight() - layerHeight
+        float thumbnailTop = getHeight() - layerHeight * dp
                 - getResources().getDimension(R.dimen.canvas_margin);
-        thumbnail = new Thumbnail(thumbnailLeft, thumbnailTop, layerWidth, layerHeight, dp);
+        thumbnail = new Thumbnail(thumbnailLeft, thumbnailTop, layerWidth * dp, layerHeight * dp, dp);
 
         // UI Controls
         int maxUndos = MAX_UNDOS;
@@ -273,14 +271,29 @@ public class DrawingSurface extends SurfaceView implements SurfaceHolder.Callbac
                 viewport.top = -shadowPadding;
                 viewport.bottom = layerHeight + shadowPadding;
             }
-            initialScale = getWidth() / viewport.width();
         }
+
+        // Scale limit determining when thumbnail displayed (viewport's smaller dimension can't fit the image)
+        if (getWidth() < getHeight()) {
+            thumbnailScaleTheshold = getWidth() / layerWidth;
+        }  else {
+            thumbnailScaleTheshold = getHeight() / layerHeight;
+        }
+
     }
 
+    // Multi-touch zoom and pan
     private void initialiseGestureDetector() {
-        // Multi-touch zoom and pan
+        // Smallest scale is when 1 pixel of the image equals 1 dp
+        final float minScale = dp;
+
+        // Largest scale is when there are only 4 image pixels on screen in the smaller dimension
+        final float smallerDimensionPixels = Math.min(getWidth(), getHeight());
+        final float pixelsAlongSmallerDimension = 4;
+        final float maxScale =  smallerDimensionPixels / pixelsAlongSmallerDimension;
+
         displayRect.set(0, 0, getWidth(), getHeight());
-        scaleListener = new ScaleListener(context, MIN_SCALE, MAX_SCALE, viewport, displayRect);
+        scaleListener = new ScaleListener(context, minScale, maxScale, viewport, displayRect);
         scaleGestureDetector = new ScaleGestureDetector(context, scaleListener);
     }
 
@@ -467,7 +480,7 @@ public class DrawingSurface extends SurfaceView implements SurfaceHolder.Callbac
             if (thumbnail.isEnabled()) {
                 // Draws only when zoomed in
                 float scale = scaleListener.getScale();
-                if (scale > initialScale || scale > initialScale) {
+                if (scale > thumbnailScaleTheshold) {
                     thumbnail.draw(canvas, ongoingOperationBitmap, scaleListener.getViewport(), bitmapPaint, shadowPaint);
                 }
             }

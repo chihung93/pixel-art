@@ -18,6 +18,7 @@ public class Thumbnail {
     // View window
     private boolean viewWindowEnabled = true;
     private RectF viewWindowRect = new RectF();
+    private RectF scaledViewport = new RectF();
 
     // Paints
     private Paint viewWindowPaint;
@@ -57,7 +58,8 @@ public class Thumbnail {
 
         // View Window (portion of the image being viewed)
         if (viewWindowEnabled) {
-           constrainViewWindow(viewport);
+            scaledViewport.set(viewport.left * dp, viewport.top * dp, viewport.right * dp, viewport.bottom * dp);
+           constrainViewWindow(scaledViewport);
            drawViewWindow(canvas);
         }
     }
@@ -98,7 +100,8 @@ public class Thumbnail {
                 viewWindowPaint);
     }
 
-    // Takes a viewport rect i
+    // Determines the viewing area on the thumbnail (viewWindowRect) based on the area displayed on
+    // the screen (viewportRect) and the location of the thumbnail (thumbnailRect)
     private void constrainViewWindow(RectF viewport) {
         // Left
         if (viewport.left < 0) {

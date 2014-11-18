@@ -45,18 +45,18 @@ public class PixelGrid {
 
         // Horizontal lines
         for (float y = 0; y < imageHeight * scale; y += majorScaledSpacing) {
-            majorGridLines[i++] = (int) (-viewport.left * scale);
-            majorGridLines[i++] = (int) (-viewport.top * scale + y);
-            majorGridLines[i++] = (int) ((-viewport.left + imageWidth) * scale);
-            majorGridLines[i++] = (int) (-viewport.top * scale + y);
+            majorGridLines[i++] = (int) Math.floor((-viewport.left * scale));
+            majorGridLines[i++] = (int) Math.floor((-viewport.top * scale + y));
+            majorGridLines[i++] = (int) Math.floor(((-viewport.left + imageWidth) * scale));
+            majorGridLines[i++] = (int) Math.floor((-viewport.top * scale + y));
         }
 
         // Vertical lines
         for (float x = 0; x < imageWidth * scale; x += majorScaledSpacing) {
-            majorGridLines[i++] = (int) (-viewport.left * scale + x);
-            majorGridLines[i++] = (int) (-viewport.top * scale);
-            majorGridLines[i++] = (int) (-viewport.left * scale + x);
-            majorGridLines[i++] = (int) ((-viewport.top + imageHeight) * scale);
+            majorGridLines[i++] = (int) Math.floor((-viewport.left * scale + x));
+            majorGridLines[i++] = (int) Math.floor((-viewport.top * scale));
+            majorGridLines[i++] = (int) Math.floor((-viewport.left * scale + x));
+            majorGridLines[i++] = (int) Math.floor(((-viewport.top + imageHeight) * scale));
         }
 
         canvas.drawLines(majorGridLines, 0, i, gridPaint);
