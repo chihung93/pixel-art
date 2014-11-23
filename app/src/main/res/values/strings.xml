@@ -3,6 +3,7 @@
 
     <string name="app_name">Pixel Art</string>
 
+    <!-- General ActionBar Actions-->
     <string name="action_undo">Undo</string>
     <string name="action_redo">Redo</string>
     <string name="action_grid">Grid</string>
@@ -11,8 +12,11 @@
     <string name="action_settings">Settings</string>
     <string name="action_copy">Copy</string>
     <string name="action_cut">Cut</string>
-    <string name="action_delete">Delete</string>
+    <string name="action_rotate">Rotate</string>
+    <string name="action_new_palette">New Palette</string>
+    <string name="action_delete_palette">Delete Palette</string>
 
+    <!-- Tools -->
     <string name="tool_pen">Pen</string>
     <string name="tool_eraser">Eraser</string>
     <string name="tool_oval">Oval</string>
@@ -21,13 +25,27 @@
     <string name="tool_dropper">Colour Dropper</string>
     <string name="tool_free_select">Free Selection</string>
 
+    <!-- Tool Options -->
     <string name="tool_option_straight">Straight</string>
     <string name="tool_option_lock_angles">Lock Angles</string>
     <string name="tool_option_aa">Soften Edges</string>
     <string name="tool_option_circle_lock">Lock to Circle</string>
     <string name="tool_option_inner_fill">Inner Fill</string>
 
+    <!-- Palette -->
     <string name="button_customise_palette">Customise</string>
     <string name="button_next_palette">Next Palette</string>
+
+    <!--Colour Picker Spaces-->
+    <string name="label_opacity">Opacity</string>
+
+    <string name="label_red">Red</string>
+    <string name="label_green">Green</string>
+    <string name="label_blue">Blue</string>
+
+    <string name="label_hue">Hue</string>
+    <string name="label_saturation">Saturation</string>
+    <string name="label_lightness">Lightness</string>
+
 
 </resources>

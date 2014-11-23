@@ -1,11 +1,15 @@
 <merge xmlns:android="http://schemas.android.com/apk/res/android">
 
-    <android.support.v7.widget.GridLayout
-        android:id="@+id/gl_palette_grid"
+    <TableLayout
+        android:id="@+id/tl_palette_grid"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="@color/actionbar_background_colour"
-        android:padding="@dimen/palette_outer_margin" />
+        android:background="@color/actionbar_background_colour"/>
+
+    <FrameLayout
+        android:id="@+id/fl_container_colour_picker"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"/>
 
     <LinearLayout
         android:layout_width="fill_parent"
@@ -15,12 +19,13 @@
 
         <Button
             android:id="@+id/bt_customise_palette"
-            style="@style/Widget.AppCompat.ActionButton"
+            style="@style/Widget.AppCompat.Light.ActionButton"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_below="@+id/gridLayout"
             android:layout_weight="2"
-            android:text="@string/button_customise_palette" />
+            android:text="@string/button_customise_palette"
+            android:textColor="@android:color/white" />
 
         <View
             android:layout_width="1dp"
@@ -36,7 +41,8 @@
             android:layout_height="wrap_content"
             android:layout_below="@+id/gridLayout"
             android:layout_weight="2"
-            android:text="@string/button_next_palette" />
+            android:text="@string/button_next_palette"
+            android:textColor="@android:color/white" />
 
     </LinearLayout>
 

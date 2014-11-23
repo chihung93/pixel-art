@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <item
+        android:bottom="@dimen/palette_colour_button_border_margin"
+        android:left="@dimen/palette_colour_button_border_margin"
+        android:right="@dimen/palette_colour_button_border_margin"
+        android:top="@dimen/palette_colour_button_border_margin">
+        <shape android:shape="rectangle">
+            <solid android:color="@android:color/white" />
+            <corners android:radius="2dp"/>
+        </shape>
+    </item>
+
+</layer-list>

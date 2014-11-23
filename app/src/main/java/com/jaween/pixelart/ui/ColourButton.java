@@ -3,13 +3,18 @@ package com.jaween.pixelart.ui;
 import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Color;
+import android.graphics.ColorFilter;
 import android.graphics.Paint;
 import android.graphics.PorterDuff;
-import android.graphics.drawable.ColorDrawable;
-import android.graphics.drawable.StateListDrawable;
+import android.graphics.Rect;
+import android.graphics.RectF;
+import android.graphics.drawable.Drawable;
+import android.graphics.drawable.LayerDrawable;
 import android.os.Build;
 import android.util.AttributeSet;
 import android.widget.Button;
+
+import com.jaween.pixelart.R;
 
 /**
  * Created by ween on 10/24/14.
@@ -20,51 +25,68 @@ public class ColourButton extends Button {
     private static final float LIGHTEN_FACTOR = 1.3f;
     private static final float DARKEN_FACTOR = 0.7f;
 
-    private float[] hsvDarken = new float[3];
-    private float[] hsvLighten = new float[3];
+    /*private float[] hsvDarken = new float[3];
+    private float[] hsvLighten = new float[3];*/
 
     private Paint selectedPaint;
     private boolean selected = false;
 
-    /*private Drawable pressed;
+    /*(private Drawable pressed;
     private Drawable focused;
     private Drawable normal;*/
 
-    private ColorDrawable pressed;
-    private ColorDrawable focused;
-    private ColorDrawable normal;
+    //private ColorDrawable pressed;
+    //private ColorDrawable focused;
+    //private ColorDrawable normal;
+
+    //private int[] statePressed = new int [] { android.R.attr.state_pressed };
+    //private int[] stateFocused = new int [] { android.R.attr.state_focused };
+    //private int[] stateNormal = new int [] { /* No state attribute */ };
+
+    private float radius;
+    private float dp;
+
+    private Drawable[] layers = new Drawable[2];
+
+    private Rect bounds = new Rect();
 
     public ColourButton(Context context) {
         super(context);
+        init(context);
+    }
 
-        /*pressed = getResources().getDrawable(R.drawable.palette_colour_button);
-        focused = getResources().getDrawable(R.drawable.palette_colour_button);
-        normal = getResources().getDrawable(R.drawable.palette_colour_button);
+    public ColourButton(Context context, AttributeSet attrs) {
+        super(context, attrs);
+        init(context);
+    }
+
+    public ColourButton(Context context, AttributeSet attrs, int defStyle) {
+        super(context, attrs, defStyle);
+        init(context);
+    }
+
+    private void init(Context context) {
+        dp = context.getResources().getDisplayMetrics().density;
+        /*pressed = getResources().getDrawable(R.drawable.palette_menu_item);
+        focused = getResources().getDrawable(R.drawable.palette_menu_item);
+        normal = getResources().getDrawable(R.drawable.palette_menu_item);
 
         pressed.mutate();
         focused.mutate();
         normal.mutate();*/
 
-        pressed = new ColorDrawable(colour);
+        /*pressed = new ColorDrawable(colour);
         focused = new ColorDrawable(colour);
-        normal = new ColorDrawable(colour);
+        normal = new ColorDrawable(colour);*/
 
         selectedPaint = new Paint();
-        selectedPaint.setColor(Color.BLACK);
-        selectedPaint.setStyle(Paint.Style.STROKE);
-        selectedPaint.setStrokeWidth(8);
-    }
-
-    public ColourButton(Context context, AttributeSet attrs) {
-        super(context, attrs);
-    }
-
-    public ColourButton(Context context, AttributeSet attrs, int defStyle) {
-        super(context, attrs, defStyle);
+        selectedPaint.setColor(Color.LTGRAY);
+        selectedPaint.setAlpha(100);
+        selectedPaint.setStyle(Paint.Style.FILL);
     }
 
     public void setColour(int colour) {
-        Color.colorToHSV(colour, hsvDarken);
+        /*Color.colorToHSV(colour, hsvDarken);
         hsvDarken[2] = hsvDarken[2] * DARKEN_FACTOR;
         int darker = Color.HSVToColor(hsvDarken);
 
@@ -72,10 +94,8 @@ public class ColourButton extends Button {
         hsvLighten[2] = hsvLighten[2] * LIGHTEN_FACTOR;
         int lighter = Color.HSVToColor(hsvLighten);
 
-
-        int sdk = Build.VERSION.SDK_INT;
-
         // Pre-Honeycomb doesn't have colorDrawable.setColor()
+        int sdk = Build.VERSION.SDK_INT;
         if (sdk < Build.VERSION_CODES.HONEYCOMB) {
             pressed.setColorFilter(darker, PorterDuff.Mode.MULTIPLY);
             focused.setColorFilter(lighter, PorterDuff.Mode.MULTIPLY);
@@ -84,19 +104,37 @@ public class ColourButton extends Button {
             pressed.setColor(darker);
             focused.setColor(lighter);
             normal.setColor(colour);
+        }*/
+
+        /*StateListDrawable states = new StateListDrawable();
+        states.addState(statePressed, pressed);
+        states.addState(stateFocused, focused);
+        states.addState(stateNormal, normal);*/
+
+        // Tints the inner square to the selected colour
+        Drawable colouredDrawable = getResources().getDrawable(R.drawable.palette_colour_button);
+        colouredDrawable.mutate();
+        colouredDrawable.setColorFilter(colour, PorterDuff.Mode.MULTIPLY);
+
+        // The white border
+        Drawable borderDrawable;
+        borderDrawable = getResources().getDrawable(R.drawable.palette_colour_button_border);
+        if (colour == Color.WHITE) {
+            // The selected colour is white, darkens the border slightly
+            borderDrawable.setColorFilter(Color.LTGRAY, PorterDuff.Mode.MULTIPLY);
         }
 
-        StateListDrawable states = new StateListDrawable();
-        states.addState(new int[]{android.R.attr.state_pressed}, pressed);
-        states.addState(new int[]{android.R.attr.state_focused}, focused);
-        states.addState(new int[]{}, normal);
+        // Layers the two elements
+        layers[0] = borderDrawable;
+        layers[1] = colouredDrawable;
+        LayerDrawable layerDrawable = new LayerDrawable(layers);
 
         // Pre-Jellybean doesn't have setBackground()
-
+        int sdk = Build.VERSION.SDK_INT;
         if (sdk < Build.VERSION_CODES.JELLY_BEAN) {
-            setBackgroundDrawable(states);
+            setBackgroundDrawable(layerDrawable);
         } else {
-            setBackground(states);
+            setBackground(layerDrawable);
         }
 
         this.colour = colour;
@@ -108,6 +146,7 @@ public class ColourButton extends Button {
 
     public void setSelected(boolean selected) {
         this.selected = selected;
+
     }
 
     public boolean isSelected() {
@@ -115,10 +154,19 @@ public class ColourButton extends Button {
     }
 
     @Override
+    protected void onSizeChanged(int w, int h, int oldw, int oldh) {
+        super.onSizeChanged(w, h, oldw, oldh);
+
+        bounds.set(0, 0, w, h);
+        radius = 15 * dp;
+
+        //setPadding(padding, padding, padding, padding);
+    }
+    @Override
     protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
         if (selected) {
-            canvas.drawRect(0, 0, getWidth(), getHeight(), selectedPaint);
+            canvas.drawRect(bounds, selectedPaint);
         }
     }
 }

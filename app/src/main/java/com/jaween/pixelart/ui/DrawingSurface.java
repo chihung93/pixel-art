@@ -2,6 +2,7 @@ package com.jaween.pixelart.ui;
 
 import android.content.Context;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.DashPathEffect;
@@ -11,6 +12,9 @@ import android.graphics.Path;
 import android.graphics.PointF;
 import android.graphics.Rect;
 import android.graphics.RectF;
+import android.graphics.Shader;
+import android.graphics.drawable.BitmapDrawable;
+import android.graphics.drawable.Drawable;
 import android.util.Log;
 import android.view.MotionEvent;
 import android.view.ScaleGestureDetector;
@@ -103,6 +107,8 @@ public class DrawingSurface extends SurfaceView implements SurfaceHolder.Callbac
     private Paint tempTextPaint = new Paint();
     private Paint blankOutPaint = new Paint();
     private Path selectedPath = new Path();
+    BitmapDrawable checkerboardTile;
+    Bitmap bitmap;
 
     public DrawingSurface(Context context, Tool tool) {
         super(context);
@@ -189,6 +195,10 @@ public class DrawingSurface extends SurfaceView implements SurfaceHolder.Callbac
         }
 
         surfaceCreated = true;
+
+        bitmap = BitmapFactory.decodeResource(context.getResources(), R.drawable.checkerboard);
+        checkerboardTile = new BitmapDrawable(bitmap);
+        checkerboardTile.setTileModeXY(Shader.TileMode.REPEAT, Shader.TileMode.REPEAT);
     }
 
     @Override
@@ -319,6 +329,15 @@ public class DrawingSurface extends SurfaceView implements SurfaceHolder.Callbac
                 //E/Surface﹕ Surface::unlockAndPost failed, no locked buffer
                 //W/dalvikvm﹕ threadid=11: thread exiting with uncaught exception (group=0x41900700)
                 //E/AndroidRuntime﹕ FATAL EXCEPTION: Thread-65118
+
+                // TODO Fix similar IllegalArgumentException on app startup
+                //11-21 14:56:03.900  26409-26436/com.jaween.pixelart E/AndroidRuntime﹕ FATAL EXCEPTION: Thread-6285
+                //java.lang.IllegalArgumentException
+                //at android.view.Surface.nativeUnlockCanvasAndPost(Native Method)
+                //at android.view.Surface.unlockCanvasAndPost(Surface.java:255)
+                //at android.view.SurfaceView$4.unlockCanvasAndPost(SurfaceView.java:844)
+                //at com.jaween.pixelart.ui.DrawingSurface.run(DrawingSurface.java:333)
+                //at java.lang.Thread.run(Thread.java:841)
                 if (canvas != null)
                     holder.unlockCanvasAndPost(canvas);
             }
@@ -446,10 +465,13 @@ public class DrawingSurface extends SurfaceView implements SurfaceHolder.Callbac
         }
     }
 
+
+
     @Override
     public void draw(Canvas canvas) {
         if (surfaceCreated) {
             // Background
+            //canvas.drawBitmap(checkerboardTile.getBitmap(), 0, 0, bitmapPaint);
             canvas.drawColor(Color.LTGRAY);
 
             // Calculates the zoom and pan transformation

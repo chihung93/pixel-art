@@ -4,7 +4,6 @@ import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -18,7 +17,7 @@ import com.jaween.pixelart.ui.ToolboxFragment;
  * Base container class for the main screen of the app: the drawing canvas and the tool panels.
  */
 public class ContainerFragment extends Fragment implements
-        PaletteFragment.OnColourSelectedListener,
+        PaletteFragment.OnPrimaryColourSelectedListener,
         ToolboxFragment.OnToolSelectListener,
         DrawingFragment.OnDimensionsCalculatedListener {
 
@@ -69,12 +68,15 @@ public class ContainerFragment extends Fragment implements
     }
 
     @Override
-    public void onColourSelected(int colour, boolean done) {
+    public void onPrimaryColourSelected(int colour, boolean done, boolean fromPalette) {
         // The tool must be notified of the colour change in order to have any effect
         toolboxFragment.setColour(colour);
 
-        // We must notify the palette, as the colour change may have originated from elsewhere in the app
-        paletteFragment.setColour(colour);
+        // Notifies the palette if the colour change originated from a tool (avoids a circular call cycle if the palette notified itself)
+        if (fromPalette == false) {
+            paletteFragment.setColourButton(colour);
+        }
+
         this.colour = colour;
     }
 

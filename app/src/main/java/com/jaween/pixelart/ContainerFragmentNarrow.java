@@ -7,6 +7,8 @@ import android.graphics.drawable.LayerDrawable;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentTransaction;
+import android.support.v7.app.ActionBarActivity;
+import android.support.v7.view.ActionMode;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -25,10 +27,15 @@ import com.jaween.pixelart.ui.PaletteFragment;
  */
 public class ContainerFragmentNarrow extends ContainerFragment implements
         DrawingFragment.OnClearPanelsListener,
-        DrawingSurface.OnDropColourListener {
+        DrawingSurface.OnDropColourListener,
+        PaletteFragment.OnShowColourPaletteListener,
+        ActionMode.Callback {
 
     private Tool selectedTool;
     private Drawable[] paletteMenuItemLayers = new Drawable[2];
+
+    private ActionMode actionMode = null;
+    private ActionMode.Callback actionModeCallback = this;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -47,6 +54,7 @@ public class ContainerFragmentNarrow extends ContainerFragment implements
 
         drawingFragment.setOnClearPanelsListener(this);
         drawingFragment.setOnDropColourListener(this);
+        paletteFragment.setOnShowColourPaletteListener(this);
 
         FragmentTransaction fragmentTransaction = getChildFragmentManager().beginTransaction();
         //fragmentTransaction.hide(paletteFragment);
@@ -79,11 +87,10 @@ public class ContainerFragmentNarrow extends ContainerFragment implements
 
         // The white border
         Drawable borderDrawable;
+        borderDrawable = getResources().getDrawable(R.drawable.palette_menu_item_border);
         if (paletteFragment.getColour() == Color.WHITE) {
             // The selected colour is white, darkens the border slightly
-            borderDrawable = getResources().getDrawable(R.drawable.palette_menu_item_border_grey);
-        } else {
-            borderDrawable = getResources().getDrawable(R.drawable.palette_menu_item_border);
+            borderDrawable.setColorFilter(Color.LTGRAY, PorterDuff.Mode.MULTIPLY);
         }
 
         // Layers the two elements
@@ -99,6 +106,11 @@ public class ContainerFragmentNarrow extends ContainerFragment implements
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
+        // Consumes items clicks as the CAB is animating in
+        if (actionMode != null) {
+            return true;
+        }
+
         switch (item.getItemId()) {
             case R.id.action_tool:
                 togglePanel(toolboxFragment);
@@ -115,12 +127,16 @@ public class ContainerFragmentNarrow extends ContainerFragment implements
     // Returns true if a panels was made hidden, false otherwise
     @Override
     public boolean onBackPressed() {
-        return onClearPanels();
+        if (actionMode == null) {
+            return onClearPanels();
+        } else {
+            return false;
+        }
     }
 
     @Override
-    public void onColourSelected(int colour, boolean done) {
-        super.onColourSelected(colour, done);
+    public void onPrimaryColourSelected(int colour, boolean done, boolean fromPalette) {
+        super.onPrimaryColourSelected(colour, done, fromPalette);
         
         getActivity().supportInvalidateOptionsMenu();
 
@@ -151,7 +167,7 @@ public class ContainerFragmentNarrow extends ContainerFragment implements
 
     @Override
     public void onDropColour(int colour) {
-        onColourSelected(colour, false);
+        onPrimaryColourSelected(colour, false, false);
     }
 
     private boolean togglePanel(Fragment fragment) {
@@ -189,5 +205,60 @@ public class ContainerFragmentNarrow extends ContainerFragment implements
             return true;
         }
         return false;
+    }
+
+    @Override
+    public void onToggleColourPalette(boolean visible) {
+        if (visible) {
+            if (actionMode == null) {
+                ((ActionBarActivity) getActivity()).startSupportActionMode(actionModeCallback);
+            }
+        } else {
+            FragmentTransaction fragmentTransaction = getChildFragmentManager().beginTransaction();
+            fragmentTransaction.show(drawingFragment);
+            fragmentTransaction.commit();
+        }
+    }
+
+    @Override
+    public void onColourPaletteAnimationEnd() {
+        FragmentTransaction fragmentTransaction = getChildFragmentManager().beginTransaction();
+        fragmentTransaction.hide(drawingFragment);
+        fragmentTransaction.commit();
+    }
+
+    @Override
+    public boolean onCreateActionMode(ActionMode actionMode, Menu menu) {
+        MenuInflater inflater = getActivity().getMenuInflater();
+        inflater.inflate(R.menu.colour_picker_menu, menu);
+        this.actionMode = actionMode;
+        return true;
+    }
+
+    @Override
+    public boolean onPrepareActionMode(ActionMode actionMode, Menu menu) {
+        return false;
+    }
+
+    @Override
+    public boolean onActionItemClicked(ActionMode actionMode, MenuItem menuItem) {
+        switch (menuItem.getItemId()) {
+            case R.id.action_add:
+                // TODO: Adding palettes
+                break;
+            case R.id.action_delete:
+                // TODO: Deleting palettes
+                break;
+            default:
+                return false;
+        }
+        return true;
+    }
+
+    @Override
+    public void onDestroyActionMode(ActionMode actionMode) {
+        paletteFragment.hideColourPicker();
+        onToggleColourPalette(false);
+        this.actionMode = null;
     }
 }

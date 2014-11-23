@@ -4,6 +4,7 @@ import android.content.Context;
 import android.graphics.PointF;
 import android.graphics.Rect;
 import android.graphics.RectF;
+import android.util.Log;
 import android.view.GestureDetector;
 import android.view.MotionEvent;
 import android.view.ScaleGestureDetector;
@@ -26,6 +27,7 @@ public class ScaleListener extends ScaleGestureDetector.SimpleOnScaleGestureList
     private Rect contentRect = new Rect();
     private float scale;
 
+    private ScaleGestureDetector scaleGestureDetector;
     private GestureDetector gestureDetector;
     private boolean isScaling = false;
 
@@ -48,6 +50,8 @@ public class ScaleListener extends ScaleGestureDetector.SimpleOnScaleGestureList
 
     @Override
     public boolean onScale(ScaleGestureDetector detector) {
+        scaleGestureDetector = detector;
+
         scale *= detector.getScaleFactor();
 
         constrainScale();

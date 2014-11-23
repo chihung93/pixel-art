@@ -6,9 +6,8 @@
     <dimen name="view_margin">4dp</dimen>
     <dimen name="canvas_margin">16dp</dimen>
 
-    <dimen name="palette_item_margin">4dp</dimen>
-    <dimen name="palette_outer_margin">2dp</dimen>
-    <dimen name="palette_colour_button_margin">2dp</dimen>
+    <dimen name="palette_colour_button_inner_margin">10dp</dimen>
+    <dimen name="palette_colour_button_border_margin">6dp</dimen>
 
     <dimen name="tool_options_column_2_margin">180dp</dimen>
 </resources>

@@ -17,15 +17,22 @@
         <item>0xFF96F3F4</item>
         <item>0xFF7293FF</item>
         <item>0xFFCD72FF</item>
-        <item>0xFF96F3F4</item>
+        <item>0xFFFFFFFF</item>
     </integer-array>
 
-    <color name="actionbar_text_colour">#FFFFFF</color>
-    <color name="actionbar_background_colour">@color/accent_colour</color>
-    <color name="tool_selection_colour">@color/accent_colour</color>
-    <color name="accent_colour">@color/cerulean</color>
 
+    <color name="accent_colour">@color/pink</color>
+    <color name="primary">@color/cerulean</color>
+    <color name="primary_dark">@color/cerulean_dark</color>
+
+    <color name="actionbar_text_colour">#FFFFFF</color>
+    <color name="actionbar_background_colour">@color/primary</color>
+    <color name="tool_selection_colour">@color/primary</color>
+    <color name="selectable_item_background">#444444</color>
+
+    <color name="pink">#FF5555</color>
     <color name="cerulean">#007BA7</color>
+    <color name="cerulean_dark">#0044AA</color>
     <color name="palette_icon_grey_border">#CCCCCC</color>
 
 </resources>
