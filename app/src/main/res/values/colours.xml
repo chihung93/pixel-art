@@ -29,6 +29,8 @@
     <color name="actionbar_background_colour">@color/primary</color>
     <color name="tool_selection_colour">@color/primary</color>
     <color name="selectable_item_background">#444444</color>
+    <color name="panel_background">@color/primary</color>
+    <color name="panel_text_colour">#FFFFFF</color>
 
     <color name="pink">#FF5555</color>
     <color name="cerulean">#007BA7</color>

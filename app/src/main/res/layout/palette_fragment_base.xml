@@ -1,49 +1,19 @@
-<merge xmlns:android="http://schemas.android.com/apk/res/android">
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="fill_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:background="@color/panel_background">
 
     <TableLayout
         android:id="@+id/tl_palette_grid"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:background="@color/actionbar_background_colour"/>
+        android:layout_height="wrap_content" />
 
     <FrameLayout
         android:id="@+id/fl_container_colour_picker"
         android:layout_width="fill_parent"
-        android:layout_height="wrap_content"/>
+        android:layout_height="wrap_content" />
 
-    <LinearLayout
-        android:layout_width="fill_parent"
-        android:layout_height="wrap_content"
-        android:background="@color/actionbar_background_colour"
-        android:orientation="horizontal">
+    <include layout="@layout/palette_fragment_button_bar" />
 
-        <Button
-            android:id="@+id/bt_customise_palette"
-            style="@style/Widget.AppCompat.Light.ActionButton"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_below="@+id/gridLayout"
-            android:layout_weight="2"
-            android:text="@string/button_customise_palette"
-            android:textColor="@android:color/white" />
-
-        <View
-            android:layout_width="1dp"
-            android:layout_height="match_parent"
-            android:layout_marginBottom="8dp"
-            android:layout_marginTop="8dp"
-            android:background="?attr/dividerVertical" />
-
-        <Button
-            android:id="@+id/bt_next_palette"
-            style="@style/Widget.AppCompat.ActionButton"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_below="@+id/gridLayout"
-            android:layout_weight="2"
-            android:text="@string/button_next_palette"
-            android:textColor="@android:color/white" />
-
-    </LinearLayout>
-
-</merge>
+</LinearLayout>

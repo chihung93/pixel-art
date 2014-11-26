@@ -1,0 +1,19 @@
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="wrap_content"
+    android:layout_height="fill_parent">
+
+    <FrameLayout
+        android:id="@+id/fl_container_palette"
+        android:layout_width="@dimen/side_pane_width"
+        android:layout_height="fill_parent"
+        android:layout_alignParentRight="true" />
+
+    <FrameLayout
+        android:id="@+id/fl_container_toolbox"
+        android:layout_width="@dimen/side_pane_width"
+        android:layout_height="fill_parent"
+        android:layout_alignParentRight="true"
+        tools:layout="@layout/toolbox_fragment" />
+
+</RelativeLayout>

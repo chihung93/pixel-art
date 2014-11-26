@@ -11,6 +11,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.FrameLayout;
 
+import com.jaween.pixelart.ContainerActivity;
 import com.jaween.pixelart.R;
 import com.jaween.pixelart.tools.Dropper;
 import com.jaween.pixelart.tools.FloodFill;
@@ -62,6 +63,8 @@ public class ToolboxFragment extends Fragment implements  View.OnClickListener, 
 
     private ViewGroup parentViewGroup;
 
+    private int restoredColour;
+
     private static final String KEY_TOOL = "key_tool";
 
     @Override
@@ -95,8 +98,6 @@ public class ToolboxFragment extends Fragment implements  View.OnClickListener, 
         tools.add(dropperTool);
         tools.add(freeSelect);
 
-        selectedTool = penTool;
-
         createToolOptions();
     }
 
@@ -111,8 +112,6 @@ public class ToolboxFragment extends Fragment implements  View.OnClickListener, 
             onToolSelectListener.onToolSelected(selectedTool, false);
         }
 
-        changeSelectedTool(selectedTool);
-
         return parentViewGroup;
     }
 
@@ -124,10 +123,8 @@ public class ToolboxFragment extends Fragment implements  View.OnClickListener, 
     }
 
     public void onRestoreInstanceState(Bundle savedInstanceState) {
-        // TODO: Should restore state only if there is a state to be restored! A non-null instanceState doesn't ensure this!
-        // Restores the tool state
+        // Restores the selected tool state
         if (savedInstanceState != null) {
-
             String toolName = savedInstanceState.getString(KEY_TOOL);
             if (toolName == null) {
                 toolName = penTool.getName();
@@ -150,10 +147,19 @@ public class ToolboxFragment extends Fragment implements  View.OnClickListener, 
                 // Default tool
                 selectedTool = penTool;
             }
+
+            // DrawingFragment would have given us a restored colour
+            selectedTool.getToolAttributes().getPaint().setColor(restoredColour);
         } else {
             // Default tool
             selectedTool = penTool;
         }
+
+        // Updates the tool options UI
+        setToolOptions(selectedTool);
+
+        // Highlight the selected tool's button
+        changeSelectedTool(selectedTool);
     }
 
     private void initialiseViews(ViewGroup v) {
@@ -186,8 +192,6 @@ public class ToolboxFragment extends Fragment implements  View.OnClickListener, 
         // Tool selection
         penOptions.setToolAttributes(penTool.getToolAttributes());
         ovalOptions.setToolAttributes(ovalTool.getToolAttributes());
-        selectedToolButton = penButton;
-        selectedToolButton.setSelected(true);
 
         // Tool options
         currentToolOptions = penOptions;
@@ -303,9 +307,51 @@ public class ToolboxFragment extends Fragment implements  View.OnClickListener, 
     }
 
     private void changeSelectedToolButton(ToolButton newToolButton) {
-        selectedToolButton.setSelected(false);
+        // On the initial selection selectedToolButton will be null
+        if (selectedToolButton != null) {
+            selectedToolButton.setSelected(false);
+        }
+
         selectedToolButton = newToolButton;
         selectedToolButton.setSelected(true);
+    }
+
+    /**
+     * Updates the Tool options UI given a Tool
+     * @param tool The tool whose ToolOptionsView is to be added to the UI
+     */
+    private void setToolOptions(Tool tool) {
+        if (tool instanceof Pen) {
+            currentToolOptions = penOptions;
+        /*} else if (tool instanceof  Eraser) {
+            currentToolOptions = eraserOptions;
+        } else if (tool instanceof  Rect) {
+            currentToolOptions = rectOptions;*/
+        } else if (tool instanceof  Oval) {
+            currentToolOptions = ovalOptions;
+        } else if (tool instanceof  RectSelect) {
+            currentToolOptions = null;
+        } else if (tool instanceof  FloodFill) {
+            currentToolOptions = null;
+        } else if (tool instanceof  Dropper) {
+            currentToolOptions = null;
+        /*} else if (tool instanceof  MissingNo) {
+            currentToolOptions = missingNoOptions;
+        } else if (tool instanceof  MagicWand) {
+            currentToolOptions = magicWandOptions;*/
+        } else if (tool instanceof  FreeSelect) {
+            currentToolOptions = null;
+        }
+
+        // Updates the UI
+        optionsFrameLayout.removeAllViews();
+        if (currentToolOptions != null) {
+            optionsFrameLayout.addView(currentToolOptions);
+        }
+    }
+
+    public Tool getTool() {
+        return selectedTool;
     }
 
     public void setDimensions(int width, int height) {
@@ -330,6 +376,10 @@ public class ToolboxFragment extends Fragment implements  View.OnClickListener, 
     }
 
     public void setColour(int colour) {
-        selectedTool.getToolAttributes().getPaint().setColor(colour);
+        if (selectedTool == null) {
+            restoredColour = colour;
+        } else {
+            selectedTool.getToolAttributes().getPaint().setColor(colour);
+        }
     }
 }

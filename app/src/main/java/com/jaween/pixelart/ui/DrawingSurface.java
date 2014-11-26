@@ -14,7 +14,6 @@ import android.graphics.Rect;
 import android.graphics.RectF;
 import android.graphics.Shader;
 import android.graphics.drawable.BitmapDrawable;
-import android.graphics.drawable.Drawable;
 import android.util.Log;
 import android.view.MotionEvent;
 import android.view.ScaleGestureDetector;
@@ -43,7 +42,7 @@ public class DrawingSurface extends SurfaceView implements SurfaceHolder.Callbac
 
     // Drawing canvas
     public static final float DEFAULT_SCALE = 4;
-    private float thumbnailScaleTheshold;
+    private float thumbnailScaleThreshold;
     private Rect displayRect = new Rect();
     private RectF transformedBitmapRect = new RectF();
     private Matrix transformation = new Matrix();
@@ -159,7 +158,6 @@ public class DrawingSurface extends SurfaceView implements SurfaceHolder.Callbac
         blankOutPaint.setStyle(Paint.Style.FILL);
         blankOutPaint.setAntiAlias(false);
 
-
         // Temporary UI text
         tempTextPaint.setTextSize(30);
         tempTextPaint.setAntiAlias(true);
@@ -177,11 +175,19 @@ public class DrawingSurface extends SurfaceView implements SurfaceHolder.Callbac
         initialiseGestureDetector();
 
         // Thumbnail
-        float thumbnailLeft = getWidth() - layerWidth * dp
+        // To avoid the pixels lose their aspect ratio, we round the thumbnail scale
+        // We round up as we don' want pixels smaller than 1dp
+        float thumnbnailScale = (float) Math.ceil(dp);
+        float thumbnailLeft = getWidth() - layerWidth * thumnbnailScale
                 - getResources().getDimension(R.dimen.canvas_margin);
-        float thumbnailTop = getHeight() - layerHeight * dp
+        float thumbnailTop = getHeight() - layerHeight * thumnbnailScale
                 - getResources().getDimension(R.dimen.canvas_margin);
-        thumbnail = new Thumbnail(thumbnailLeft, thumbnailTop, layerWidth * dp, layerHeight * dp, dp);
+        thumbnail = new Thumbnail(
+                thumbnailLeft,
+                thumbnailTop,
+                layerWidth * thumnbnailScale,
+                layerHeight * thumnbnailScale,
+                thumnbnailScale);
 
         // UI Controls
         int maxUndos = MAX_UNDOS;
@@ -285,17 +291,19 @@ public class DrawingSurface extends SurfaceView implements SurfaceHolder.Callbac
 
         // Scale limit determining when thumbnail displayed (viewport's smaller dimension can't fit the image)
         if (getWidth() < getHeight()) {
-            thumbnailScaleTheshold = getWidth() / layerWidth;
+            thumbnailScaleThreshold = getWidth() / layerWidth;
         }  else {
-            thumbnailScaleTheshold = getHeight() / layerHeight;
+            thumbnailScaleThreshold = getHeight() / layerHeight;
         }
 
     }
 
     // Multi-touch zoom and pan
     private void initialiseGestureDetector() {
-        // Smallest scale is when 1 pixel of the image equals 1 dp
-        final float minScale = dp;
+        // Smallest scale is when either 1 pixel of the image equals 1 dp rounded up
+        // Avoids pixels losing aspect ratio when the device's density is not round by rounding up
+        // TODO: Improve, rounding to multiples of 0.5 would be better, right?
+        final float minScale = (float) Math.ceil(dp);
 
         // Largest scale is when there are only 4 image pixels on screen in the smaller dimension
         final float smallerDimensionPixels = Math.min(getWidth(), getHeight());
@@ -465,8 +473,6 @@ public class DrawingSurface extends SurfaceView implements SurfaceHolder.Callbac
         }
     }
 
-
-
     @Override
     public void draw(Canvas canvas) {
         if (surfaceCreated) {
@@ -502,7 +508,7 @@ public class DrawingSurface extends SurfaceView implements SurfaceHolder.Callbac
             if (thumbnail.isEnabled()) {
                 // Draws only when zoomed in
                 float scale = scaleListener.getScale();
-                if (scale > thumbnailScaleTheshold) {
+                if (scale > thumbnailScaleThreshold) {
                     thumbnail.draw(canvas, ongoingOperationBitmap, scaleListener.getViewport(), bitmapPaint, shadowPaint);
                 }
             }

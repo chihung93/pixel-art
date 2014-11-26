@@ -4,7 +4,6 @@ import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.text.Editable;
 import android.text.TextWatcher;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -85,17 +84,17 @@ public class ColourPickerFragment extends Fragment implements
         opacity = opacityBar.getProgress();
 
         if (hasRestoredColour) {
-            colourPickerView.setHSL(restoredColour[0], restoredColour[1], restoredColour[2]);
+            colourPickerView.setHSL(restoredColour[0], restoredColour[1], restoredColour[2], true);
         } else {
             colourPickerView.setHSL(
                     (float) hueBar.getProgress() / (float) hueBar.getMax(),
                     (float) saturationBar.getProgress() / (float) saturationBar.getMax(),
-                    (float) lightnessBar.getProgress() / (float) lightnessBar.getMax());
+                    (float) lightnessBar.getProgress() / (float) lightnessBar.getMax(), true);
         }
     }
 
     // Sets the colour of the colour picker from an ARGB value
-    public void setColour(int colour) {
+    public void setColour(int colour, boolean fromPalette) {
 
         // Converts the RGB value into HSL
         opacity = android.graphics.Color.alpha(colour);
@@ -111,12 +110,15 @@ public class ColourPickerFragment extends Fragment implements
             restoredColour[1] = hsl[1];
             restoredColour[2] = hsl[2];
         } else {
-            colourPickerView.setHSL(hsl[0], hsl[1], hsl[2]);
+            if (fromPalette) {
+                colourPickerView.setHSL(hsl[0], hsl[1], hsl[2], fromPalette);
+            }
         }
 
         this.colour = colour;
     }
 
+    // ColourPickerView has chosen a colour, modifies the palette accordingly
     @Override
     public void onColourSelect(int colour) {
         colour = android.graphics.Color.argb(opacity, android.graphics.Color.red(colour), android.graphics.Color.green(colour), android.graphics.Color.blue(colour));
@@ -130,7 +132,7 @@ public class ColourPickerFragment extends Fragment implements
 
         // Notifies the colour palette of the new colour
         if (onColourUpdateListener != null) {
-            onColourUpdateListener.onColorUpdate(colour);
+            onColourUpdateListener.onModifyPalette(colour);
         }
 
         this.colour = colour;
@@ -332,7 +334,7 @@ public class ColourPickerFragment extends Fragment implements
     }
 
     public interface OnColourUpdateListener {
-        public void onColorUpdate(int colour);
+        public void onModifyPalette(int colour);
     }
 
     public interface OnColourPickerAnimationEndListener {

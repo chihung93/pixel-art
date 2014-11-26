@@ -1,13 +1,13 @@
 package com.jaween.pixelart.ui;
 
 import android.app.Activity;
-import android.graphics.Path;
-import android.graphics.drawable.Drawable;
-import android.support.v4.app.FragmentManager;
 import android.graphics.Bitmap;
+import android.graphics.Path;
 import android.graphics.RectF;
+import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
 import android.support.v7.app.ActionBarActivity;
 import android.support.v7.view.ActionMode;
@@ -19,6 +19,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Toast;
 
+import com.jaween.pixelart.ContainerActivity;
 import com.jaween.pixelart.R;
 import com.jaween.pixelart.tools.Tool;
 import com.jaween.pixelart.util.ConfigChangeFragment;
@@ -35,7 +36,6 @@ public class DrawingFragment extends Fragment implements
     // Callbacks
     private OnClearPanelsListener onClearPanelsListener = null;
     private OnDimensionsCalculatedListener onDimensionsCalculatedListener = null;
-    private DrawingSurface.OnDropColourListener onDropColourListener = null;
     private ActionMode.Callback actionModeCallback = this;
 
     // Regular UI state
@@ -49,7 +49,6 @@ public class DrawingFragment extends Fragment implements
 
     // UI save-state
     private static final String KEY_GRID = "key_grid";
-    private static final String KEY_COLOUR = "key_colour";
     private static final String TAG_CONFIG_CHANGE_FRAGMENT = "config_change_fragment";
     private ConfigChangeFragment configChangeWorker;
 
@@ -87,33 +86,7 @@ public class DrawingFragment extends Fragment implements
             configChangeWorker.setLayers(null);
         }
 
-        // TODO: Should restore state only if there is a state to be restored! A non-null instanceState doesn't ensure this!
-        if (savedInstanceState != null) {
-            surface.setConfigurationChanged(true);
-
-            // Restores viewport
-            float DEFAULT_CENTER_X = 0;
-            float DEFAULT_CENTER_Y = 0;
-            float centerX = savedInstanceState.getFloat(KEY_CENTER_X, DEFAULT_CENTER_X);
-            float centerY = savedInstanceState.getFloat(KEY_CENTER_Y, DEFAULT_CENTER_Y);
-            float scale = savedInstanceState.getFloat(KEY_SCALE, DrawingSurface.DEFAULT_SCALE);
-            surface.restoreViewport(centerX, centerY, scale);
-
-            // Restores the grid
-            boolean DEFAULT_GRID = false;
-            boolean gridEnabled = savedInstanceState.getBoolean(KEY_GRID, DEFAULT_GRID);
-            surface.setGridEnabled(gridEnabled);
-
-            // Restores the palette colour
-            int colour = savedInstanceState.getInt(KEY_COLOUR);
-            if (onDropColourListener != null) {
-                onDropColourListener.onDropColour(colour);
-            }
-        }
-
-        if (onDropColourListener != null) {
-            surface.setOnDropColourListener(onDropColourListener);
-        }
+        onRestoreInstanceState(savedInstanceState);
 
         return surface;
     }
@@ -135,9 +108,25 @@ public class DrawingFragment extends Fragment implements
 
             // Saves the state of the grid
             outState.putBoolean(KEY_GRID, surface.isGridEnabled());
+        }
+    }
 
-            // Saves the current colour
-            outState.putInt(KEY_COLOUR, selectedTool.getToolAttributes().getPaint().getColor());
+    public void onRestoreInstanceState(Bundle savedInstanceState) {
+        if (savedInstanceState != null) {
+            surface.setConfigurationChanged(true);
+
+            // Restores viewport
+            float DEFAULT_CENTER_X = 0;
+            float DEFAULT_CENTER_Y = 0;
+            float centerX = savedInstanceState.getFloat(KEY_CENTER_X, DEFAULT_CENTER_X);
+            float centerY = savedInstanceState.getFloat(KEY_CENTER_Y, DEFAULT_CENTER_Y);
+            float scale = savedInstanceState.getFloat(KEY_SCALE, DrawingSurface.DEFAULT_SCALE);
+            surface.restoreViewport(centerX, centerY, scale);
+
+            // Restores the grid
+            boolean DEFAULT_GRID = false;
+            boolean gridEnabled = savedInstanceState.getBoolean(KEY_GRID, DEFAULT_GRID);
+            surface.setGridEnabled(gridEnabled);
         }
     }
 
@@ -196,8 +185,7 @@ public class DrawingFragment extends Fragment implements
             case R.id.action_grid:
                 // Toggles grid
                 Drawable gridIcon;
-                if (surface.isGridEnabled())
-                {
+                if (surface.isGridEnabled()) {
                     gridIcon = getResources().getDrawable(R.drawable.ic_action_grid_off);
                 } else {
                     gridIcon = getResources().getDrawable(R.drawable.ic_action_grid);
@@ -241,8 +229,9 @@ public class DrawingFragment extends Fragment implements
         this.onDimensionsCalculatedListener = onDimensionsCalculatedListener;
     }
 
+    // Passed along to the DrawingSurface
     public void setOnDropColourListener(DrawingSurface.OnDropColourListener onDropColourListener) {
-        this.onDropColourListener = onDropColourListener;
+        surface.setOnDropColourListener(onDropColourListener);
     }
 
     @Override

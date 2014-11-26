@@ -80,7 +80,7 @@ public class ColourPickerView extends View {
 
     public void setSaturation(float saturation) {
         this.saturation = saturation;
-        invalidateSelectedColour();
+        invalidateSelectedColour(false);
     }
 
     public float getHue() {
@@ -89,7 +89,7 @@ public class ColourPickerView extends View {
 
     public void setHue(float hue) {
         this.hue = hue;
-        invalidateSelectedColour();
+        invalidateSelectedColour(false);
     }
 
     public float getLightness() {
@@ -98,15 +98,15 @@ public class ColourPickerView extends View {
 
     public void setLightness(float lightness) {
         this.lightness = lightness;
-        invalidateSelectedColour();
+        invalidateSelectedColour(false);
     }
 
-    public void setHSL(float hue, float saturation, float lightness) {
+    public void setHSL(float hue, float saturation, float lightness, boolean fromPalette) {
         this.hue = hue;
         this.saturation = saturation;
         this.lightness = lightness;
 
-        invalidateSelectedColour();
+        invalidateSelectedColour(fromPalette);
     }
 
     @Override
@@ -176,15 +176,17 @@ public class ColourPickerView extends View {
     }
 
     // Updates the selector reticule
-    private void invalidateSelectedColour() {
+    private void invalidateSelectedColour(boolean fromPalette) {
         int colour = Color.HSLToColor(hue, saturation, lightness);
 
         float angleRadians = (float) (hue * Math.PI / 180f);
         selectedPoint.x = bounds.centerX() - (float) (radius * lightness * Math.cos(angleRadians));
         selectedPoint.y = bounds.centerY() - (float) (radius * lightness * Math.sin(angleRadians));
 
-        if (onColourSelectListener != null) {
-            onColourSelectListener.onColourSelect(colour);
+        if (!fromPalette) {
+            if (onColourSelectListener != null) {
+                onColourSelectListener.onColourSelect(colour);
+            }
         }
 
         invalidate();
@@ -229,7 +231,7 @@ public class ColourPickerView extends View {
             lightness = hsl[2];
 
             // Updates the UI selector
-            invalidateSelectedColour();
+            invalidateSelectedColour(false);
         }
     }
 

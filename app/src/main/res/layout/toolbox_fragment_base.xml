@@ -1,10 +1,13 @@
-<merge xmlns:android="http://schemas.android.com/apk/res/android">
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical">
 
     <TableLayout xmlns:tools="http://schemas.android.com/tools"
         android:id="@+id/gl_toolbox_grid"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="@color/actionbar_background_colour"
+        android:background="@color/panel_background"
         tools:context="com.jaween.pixelart.ui.PaletteFragment">
 
         <TableRow>
@@ -92,12 +95,10 @@
                 android:layout_weight="1"
                 android:src="@drawable/tool_free_select" />
         </TableRow>
-
     </TableLayout>
-
     <FrameLayout
         android:id="@+id/fl_container_tool_options"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:background="@color/actionbar_background_colour" />
-</merge>
+        android:layout_height="match_parent"
+        android:background="@color/panel_background" />
+</LinearLayout>

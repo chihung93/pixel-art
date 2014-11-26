@@ -1,45 +1,23 @@
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    tools:context=".ContainerActivity">
+    android:layout_height="match_parent">
 
     <FrameLayout
-        android:id="@+id/fl_container_palette"
+        android:id="@+id/fl_container_panels"
         android:layout_width="@dimen/side_pane_width"
-        android:layout_height="wrap_content"
-        android:layout_alignParentRight="true"
-        tools:layout="@layout/palette_fragment" />
-
-    <View
-        android:id="@+id/v_palette_toolbox_divider"
-        android:layout_width="@dimen/side_pane_width"
-        android:layout_height="1dp"
-        android:layout_alignParentRight="true"
-        android:layout_below="@id/fl_container_palette"
-        android:background="?attr/dividerHorizontal" />
-
-    <FrameLayout
-        android:id="@+id/fl_container_toolbox"
-        android:layout_width="@dimen/side_pane_width"
-        android:layout_height="wrap_content"
-        android:layout_alignParentRight="true"
-        android:layout_below="@id/v_palette_toolbox_divider"
-        tools:layout="@layout/toolbox_fragment"></FrameLayout>
+        android:layout_height="match_parent"
+        android:layout_alignParentRight="true" />
 
     <FrameLayout
         android:id="@+id/fl_container_drawing"
-        android:layout_width="wrap_content"
+        android:layout_width="fill_parent"
         android:layout_height="match_parent"
-        android:layout_alignParentLeft="true"
-        android:layout_gravity="left"
-        android:layout_toLeftOf="@id/fl_container_palette"
-        tools:layout="@layout/container_activity" />
+        android:layout_toLeftOf="@id/fl_container_panels" />
 
     <View
         android:layout_width="8dp"
         android:layout_height="match_parent"
-        android:layout_toLeftOf="@id/fl_container_palette"
+        android:layout_toLeftOf="@id/fl_container_panels"
         android:background="@drawable/panel_shadow_vertical" />
 
 </RelativeLayout>

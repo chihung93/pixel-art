@@ -46,8 +46,6 @@ public class ColourButton extends Button {
     private float radius;
     private float dp;
 
-    private Drawable[] layers = new Drawable[2];
-
     private Rect bounds = new Rect();
 
     public ColourButton(Context context) {
@@ -112,22 +110,9 @@ public class ColourButton extends Button {
         states.addState(stateNormal, normal);*/
 
         // Tints the inner square to the selected colour
-        Drawable colouredDrawable = getResources().getDrawable(R.drawable.palette_colour_button);
-        colouredDrawable.mutate();
-        colouredDrawable.setColorFilter(colour, PorterDuff.Mode.MULTIPLY);
-
-        // The white border
-        Drawable borderDrawable;
-        borderDrawable = getResources().getDrawable(R.drawable.palette_colour_button_border);
-        if (colour == Color.WHITE) {
-            // The selected colour is white, darkens the border slightly
-            borderDrawable.setColorFilter(Color.LTGRAY, PorterDuff.Mode.MULTIPLY);
-        }
-
-        // Layers the two elements
-        layers[0] = borderDrawable;
-        layers[1] = colouredDrawable;
-        LayerDrawable layerDrawable = new LayerDrawable(layers);
+        Drawable colouredInner = getResources().getDrawable(R.drawable.palette_colour_button);
+        Drawable border = getResources().getDrawable(R.drawable.palette_colour_button_border);
+        LayerDrawable layerDrawable = com.jaween.pixelart.ui.colourpicker.Color.tintAndLayerDrawable(colouredInner, border, colour);
 
         // Pre-Jellybean doesn't have setBackground()
         int sdk = Build.VERSION.SDK_INT;

@@ -1,5 +1,11 @@
 package com.jaween.pixelart.ui.colourpicker;
 
+import android.graphics.PorterDuff;
+import android.graphics.drawable.Drawable;
+import android.graphics.drawable.LayerDrawable;
+
+import com.jaween.pixelart.R;
+
 /**
  * Created by ween on 11/21/14.
  */
@@ -9,6 +15,8 @@ public class Color {
     private static final int ALPHA_CHANNEL = 255 << ALPHA_CHANNEL_SHIFT;
     private static final int RED_CHANNEL_SHIFT = 16;
     private static final int GREEN_CHANNEL_SHIFT = 8;
+
+    private static final Drawable[] layers = new Drawable[2];
 
     public static int HSLToColor(float h, float s, float l) {
         float chroma = (1 - Math.abs(2*l - 1)) * s;
@@ -105,5 +113,28 @@ public class Color {
         hsl[0] = h;
         hsl[1] = s;
         hsl[2] = l;
+    }
+
+
+
+
+
+    public static LayerDrawable tintAndLayerDrawable(Drawable colouredInnner, Drawable border, int colour) {
+        // Tints the inner square to the selected colour
+        colouredInnner.mutate();
+        colouredInnner.setColorFilter(colour, PorterDuff.Mode.MULTIPLY);
+
+        // The white border
+        if (colour == android.graphics.Color.WHITE) {
+            // The selected colour is white, darkens the border slightly
+            border.setColorFilter(android.graphics.Color.LTGRAY, PorterDuff.Mode.MULTIPLY);
+        }
+
+        // Layers the two elements
+        layers[0] = border;
+        layers[1] = colouredInnner;
+        LayerDrawable layerDrawable = new LayerDrawable(layers);
+
+        return layerDrawable;
     }
 }

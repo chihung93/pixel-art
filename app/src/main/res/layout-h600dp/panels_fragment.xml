@@ -1,0 +1,33 @@
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/rl_combined_panel"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <FrameLayout
+        android:id="@+id/fl_container_palette"
+        android:layout_width="@dimen/side_pane_width"
+        android:layout_height="wrap_content"
+        android:layout_alignParentRight="true" />
+
+    <View
+        android:id="@+id/vw_palette_toolbox_divider"
+        android:layout_width="@dimen/side_pane_width"
+        android:layout_height="1dp"
+        android:layout_alignParentRight="true"
+        android:layout_below="@id/fl_container_palette"
+        android:background="?attr/dividerHorizontal" />
+
+    <FrameLayout
+        android:id="@+id/fl_container_toolbox"
+        android:layout_width="@dimen/side_pane_width"
+        android:layout_height="match_parent"
+        android:layout_alignParentRight="true"
+        android:layout_below="@id/vw_palette_toolbox_divider" />
+
+    <View
+        android:layout_width="8dp"
+        android:layout_height="match_parent"
+        android:layout_toLeftOf="@id/fl_container_palette"
+        android:background="@drawable/panel_shadow_vertical" />
+
+</RelativeLayout>
