@@ -1,5 +1,6 @@
 package com.jaween.pixelart;
 
+import android.graphics.Bitmap;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.LayerDrawable;
 import android.os.Bundle;
@@ -20,7 +21,15 @@ import com.jaween.pixelart.ui.DrawingFragment;
 import com.jaween.pixelart.ui.DrawingSurface;
 import com.jaween.pixelart.ui.PaletteFragment;
 import com.jaween.pixelart.ui.ToolboxFragment;
+<<<<<<< HEAD
 import com.jaween.pixelart.util.Color;
+=======
+import com.jaween.pixelart.ui.colourpicker.Color;
+import com.jaween.pixelart.ui.layer.Layer;
+import com.jaween.pixelart.ui.layer.LayerFragment;
+
+import java.util.LinkedList;
+>>>>>>> Add simple layer support
 
 /**
  * Base container class for the main screen of the app: the drawing canvas and the tool panels.
@@ -31,6 +40,7 @@ public class ContainerFragment extends Fragment implements
         DrawingFragment.OnDimensionsCalculatedListener,
         DrawingSurface.OnDropColourListener,
         PaletteFragment.OnShowPaletteListener,
+        LayerFragment.LayerListener,
         ActionMode.Callback {
 
     // Child Fragments
@@ -38,6 +48,7 @@ public class ContainerFragment extends Fragment implements
     private PanelManagerFragment panelManagerFragment;
     private PaletteFragment paletteFragment;
     private ToolboxFragment toolboxFragment;
+    private LayerFragment layerFragment;
 
     // Fragment tags
     private static final String TAG_DRAWING_FRAGMENT = "tag_drawing_fragment";
@@ -78,6 +89,7 @@ public class ContainerFragment extends Fragment implements
         // Gets fragments from the PanelManagerFragment in order to manage callbacks
         paletteFragment = panelManagerFragment.getPaletteFragment();
         toolboxFragment = panelManagerFragment.getToolboxFragment();
+        layerFragment = panelManagerFragment.getLayerFragment();
 
         // Fragment callbacks
         drawingFragment.setOnDimensionsCalculatedListener(this);
@@ -85,6 +97,7 @@ public class ContainerFragment extends Fragment implements
         drawingFragment.setOnClearPanelsListener(panelManagerFragment);
         paletteFragment.setOnPrimaryColourSelectedListener(this);
         toolboxFragment.setOnToolSelectListener(this);
+        layerFragment.setLayerListener(this);
 
         // Initial tool
         drawingFragment.setTool(toolboxFragment.getTool());
@@ -133,6 +146,9 @@ public class ContainerFragment extends Fragment implements
             case R.id.action_palette:
                 panelManagerFragment.togglePanel(paletteFragment);
                 break;
+            case R.id.action_layers:
+                panelManagerFragment.togglePanel(layerFragment);
+                break;
             default:
                 return false;
         }
@@ -175,6 +191,10 @@ public class ContainerFragment extends Fragment implements
     @Override
     public void onDimensionsCalculated(int width, int height) {
         toolboxFragment.setDimensions(width, height);
+
+        // Initial layers
+        layerFragment.setInitialLayers(drawingFragment.getLayers());
+        layerFragment.setCurrentLayer(drawingFragment.getCurrentLayer());
     }
 
     @Override
@@ -245,5 +265,30 @@ public class ContainerFragment extends Fragment implements
         paletteFragment.hideColourPicker();
         onToggleColourPalette(false);
         this.actionMode = null;
+    }
+
+    @Override
+    public void onCurrentLayerChange(int i) {
+        drawingFragment.setCurrentLayer(i);
+    }
+
+    @Override
+    public void onLayerStateChange(LinkedList<Layer> layerItems) {
+        drawingFragment.setLayerItems(layerItems);
+    }
+
+    @Override
+    public Bitmap onAddLayer(boolean duplicate) {
+        return drawingFragment.addLayer(duplicate);
+    }
+
+    @Override
+    public void onDeleteLayer(int i) {
+        drawingFragment.deleteLayer(i);
+    }
+
+    @Override
+    public void onMergeLayer(int i) {
+        // TODO: Implement layer merging
     }
 }

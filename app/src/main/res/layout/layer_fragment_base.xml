@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/ll_layer_fragment"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/panel_background">
+
+    <ListView
+        android:id="@+id/lv_layer_list"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_above="@+id/vw_layer_button_bar_separator"
+        android:layout_alignParentTop="true"
+        android:choiceMode="singleChoice"
+        android:clipToPadding="false"
+        android:scrollbarStyle="outsideOverlay" />
+
+    <View
+        android:id="@+id/vw_layer_button_bar_separator"
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:layout_above="@+id/ll_layer_button_bar"
+        android:background="?attr/dividerHorizontal" />
+
+    <LinearLayout
+        android:id="@+id/ll_layer_button_bar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:orientation="horizontal">
+
+        <ImageButton
+            android:id="@+id/ib_layer_duplicate"
+            style="@style/Widget.AppCompat.Light.ActionButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:src="@drawable/ic_action_copy" />
+
+        <ImageButton
+            android:id="@+id/ib_layer_add"
+            style="@style/Widget.AppCompat.Light.ActionButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:src="@drawable/ic_action_add" />
+
+    </LinearLayout>
+
+</RelativeLayout>

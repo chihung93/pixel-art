@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/rl_layer_item"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:background="@drawable/layer_item_selector"
+    android:gravity="center_vertical"
+    android:padding="@dimen/view_margin">
+
+    <TextView
+        android:id="@+id/tv_layer_title"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentLeft="true"
+        android:layout_marginLeft="@dimen/view_margin"
+        android:layout_toLeftOf="@+id/iv_layer_delete"
+        android:ellipsize="end"
+        android:maxLines="2"
+        android:text="Top Layer"
+        android:textColor="@color/panel_text_colour"
+        android:textSize="20sp" />
+
+    <ImageView
+        android:id="@+id/iv_layer_delete"
+        style="@style/Base.Widget.AppCompat.ActionButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignLeft="@+id/iv_layer_visibility"
+        android:layout_alignRight="@+id/iv_layer_visibility"
+        android:layout_marginBottom="@dimen/view_margin"
+        android:clickable="true"
+        android:src="@drawable/ic_layer_delete" />
+
+
+    <ImageView
+        android:id="@+id/iv_layer_handle"
+        android:layout_width="40dp"
+        android:layout_height="wrap_content"
+        android:layout_alignBottom="@+id/iv_layer_image"
+        android:layout_alignTop="@+id/iv_layer_image"
+        android:layout_below="@+id/iv_layer_delete"
+        android:clickable="true"
+        android:src="@drawable/ic_drag_handle" />
+
+    <ImageView
+        android:id="@+id/iv_layer_image"
+        android:layout_width="96dp"
+        android:layout_height="96dp"
+        android:layout_below="@+id/iv_layer_delete"
+        android:layout_centerHorizontal="true"
+        android:layout_marginBottom="@dimen/view_margin"
+        android:layout_marginLeft="14dp"
+        android:layout_marginRight="26dp" />
+
+
+    <ImageView
+        android:id="@+id/iv_layer_visibility"
+        style="@style/Base.Widget.AppCompat.ActionButton"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:layout_alignParentRight="true"
+        android:layout_alignTop="@id/iv_layer_image"
+        android:clickable="true"
+        android:src="@drawable/ic_action_layer_visible" />
+
+    <ImageView
+        android:id="@+id/iv_layer_lock"
+        style="@style/Base.Widget.AppCompat.ActionButton"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:layout_alignBottom="@id/iv_layer_image"
+        android:layout_alignParentRight="true"
+        android:clickable="true"
+        android:src="@drawable/tool_pen" />
+</RelativeLayout>

@@ -23,12 +23,13 @@ import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 
 import com.jaween.pixelart.R;
-import com.jaween.pixelart.UndoRedoTracker;
+import com.jaween.pixelart.ui.layer.Layer;
+import com.jaween.pixelart.util.UndoRedoTracker;
 import com.jaween.pixelart.tools.ToolReport;
 import com.jaween.pixelart.tools.Tool;
 import com.jaween.pixelart.util.ScaleListener;
 
-import java.util.ArrayList;
+import java.util.LinkedList;
 
 /**
  * Created by ween on 9/28/14.
@@ -47,7 +48,7 @@ public class DrawingSurface extends SurfaceView implements SurfaceHolder.Callbac
     private int surfaceBackgroundColour;
     private float thumbnailScaleThreshold;
     private Rect displayRect = new Rect();
-    private RectF transformedBitmapRect = new RectF();
+    private RectF transformedBitmapRectF = new RectF();
     private Matrix transformation = new Matrix();
     private ScaleGestureDetector scaleGestureDetector;
     private ScaleListener scaleListener;
@@ -67,7 +68,7 @@ public class DrawingSurface extends SurfaceView implements SurfaceHolder.Callbac
     private Paint bitmapPaint;
     private PointF displayTouch = new PointF();
     private float dp;
-    private Canvas ongoingOperationCanvas;
+    private Canvas reusableCanvas = new Canvas();
     private Bitmap ongoingOperationBitmap;
     private OnSelectRegionListener onSelectRegionListener = null;
     private OnDropColourListener onDropColourListener = null;
@@ -83,10 +84,13 @@ public class DrawingSurface extends SurfaceView implements SurfaceHolder.Callbac
     private final int selectionColour;
 
     // Layers
-    private ArrayList<Bitmap> layers;
-    private int currentLayer = 0;
+    public static final int NULL_CURRENT_LAYER = -1;
+    private LinkedList<Bitmap> layers;
+    private int currentLayer = NULL_CURRENT_LAYER;
     private int layerWidth;
     private int layerHeight;
+    private Bitmap compositeBitmap;
+    private LinkedList<Layer> layerItems;
     private OnDimensionsCalculatedListener onDimensionsCalculatedListener = null;
 
     // Touch variables
@@ -100,7 +104,6 @@ public class DrawingSurface extends SurfaceView implements SurfaceHolder.Callbac
     // Configuration Change variables
     private boolean configurationChanged = false;
     private RectF viewport = new RectF();
-    private Bitmap restoredLayer = null;
     private float restoredCenterX;
     private float restoredCenterY;
     private float restoredScale;
@@ -110,8 +113,8 @@ public class DrawingSurface extends SurfaceView implements SurfaceHolder.Callbac
     private Paint tempTextPaint = new Paint();
     private Paint blankOutPaint = new Paint();
     private Path selectedPath = new Path();
-    BitmapDrawable checkerboardTile;
-    Bitmap bitmap;
+    private BitmapDrawable checkerboardTile;
+    private Rect transformedBitmapRect = new Rect();
 
     public DrawingSurface(Context context, Tool tool) {
         super(context);
@@ -127,6 +130,11 @@ public class DrawingSurface extends SurfaceView implements SurfaceHolder.Callbac
 
         // Paints
         initialisePaints();
+
+        // Transparency checkerboard background
+        Bitmap checkerboardBitmap = BitmapFactory.decodeResource(context.getResources(), R.drawable.checkerboard);
+        checkerboardTile = new BitmapDrawable(getResources(), checkerboardBitmap);
+        checkerboardTile.setTileModeXY(Shader.TileMode.REPEAT, Shader.TileMode.REPEAT);
 
         this.context = context;
         this.tool = tool;
@@ -160,7 +168,7 @@ public class DrawingSurface extends SurfaceView implements SurfaceHolder.Callbac
         selectionInnerPaint.setStyle(Paint.Style.FILL);
 
         // Blank out sections
-        blankOutPaint.setColor(Color.WHITE);
+        blankOutPaint.setColor(Color.TRANSPARENT);
         blankOutPaint.setStyle(Paint.Style.FILL);
         blankOutPaint.setAntiAlias(false);
         blankOutPaint.setXfermode(new PorterDuffXfermode(PorterDuff.Mode.CLEAR));
@@ -207,7 +215,7 @@ public class DrawingSurface extends SurfaceView implements SurfaceHolder.Callbac
             pixelGrid.setEnabled(restoredGridState);
         }
 
-        bitmap = BitmapFactory.decodeResource(context.getResources(), R.drawable.checkerboard);
+        Bitmap bitmap = BitmapFactory.decodeResource(context.getResources(), R.drawable.checkerboard);
         checkerboardTile = new BitmapDrawable(bitmap);
         checkerboardTile.setTileModeXY(Shader.TileMode.REPEAT, Shader.TileMode.REPEAT);
 
@@ -236,40 +244,29 @@ public class DrawingSurface extends SurfaceView implements SurfaceHolder.Callbac
     }
 
     private void initialiseLayers() {
-        layers = new ArrayList<Bitmap>();
-        if (restoredLayer != null) {
-            // Restored layers
-            layerWidth = restoredLayer.getWidth();
-            layerHeight = restoredLayer.getHeight();
-            layers.add(restoredLayer);
-
-            ongoingOperationBitmap = restoredLayer.copy(Bitmap.Config.ARGB_8888, true);
-
-            // Attaches a canvas to a layer
-            ongoingOperationCanvas = new Canvas(layers.get(0));
-        } else {
+        if (currentLayer == NULL_CURRENT_LAYER) {
             // New layers
+            layers = new LinkedList<Bitmap>();
             layerWidth = 128;//(int) (getWidth() / INITIAL_SCALE);
             layerHeight = 128;//(int) (getHeight() / INITIAL_SCALE);
-            layers.add(Bitmap.createBitmap(
-                    layerWidth,
-                    layerHeight,
-                    Bitmap.Config.ARGB_8888));
+            currentLayer = 0;
 
             // Bitmap that is used to temporarily store ongoing drawing operations
             // (e.g. dragging out an oval shape is an ongoing operation that draws many temporary ovals)
-            ongoingOperationBitmap = Bitmap.createBitmap(
-                    layerWidth,
-                    layerHeight,
-                    Bitmap.Config.ARGB_8888);
+            ongoingOperationBitmap = Bitmap.createBitmap(layerWidth, layerHeight, Bitmap.Config.ARGB_8888);
 
-            // Attaches a canvas to a layer
-            ongoingOperationCanvas = new Canvas(layers.get(0));
-
-            // Blanks out canvas
-            ongoingOperationCanvas.drawColor(blankOutPaint.getColor());
+            addLayer(false);
             resetOngoingBitmap();
+        } else {
+            // Restored layers
+            layerWidth = layers.get(currentLayer).getWidth();
+            layerHeight = layers.get(currentLayer).getHeight();
         }
+
+        compositeBitmap = Bitmap.createBitmap(layerWidth, layerHeight, Bitmap.Config.ARGB_8888);
+
+        // Attaches the canvas to a layer
+        reusableCanvas.setBitmap(layers.get(currentLayer));
     }
 
     private void initialiseViewport() {
@@ -360,8 +357,15 @@ public class DrawingSurface extends SurfaceView implements SurfaceHolder.Callbac
                 //at android.view.SurfaceView$4.unlockCanvasAndPost(SurfaceView.java:844)
                 //at com.jaween.pixelart.ui.DrawingSurface.run(DrawingSurface.java:333)
                 //at java.lang.Thread.run(Thread.java:841)
-                if (canvas != null)
-                    holder.unlockCanvasAndPost(canvas);
+                if (canvas != null) {
+                    try {
+                        holder.unlockCanvasAndPost(canvas);
+                    } catch (IllegalArgumentException e) {
+                        // Fixes occasional crash on Galaxy Nexus during Fragment startup
+                        Log.e("DrawingSurface", "unlockCanvasAndPost error caught!");
+                        e.printStackTrace();
+                    }
+                }
             }
         }
     }
@@ -408,6 +412,17 @@ public class DrawingSurface extends SurfaceView implements SurfaceHolder.Callbac
                 currentPointerId = event.getPointerId(index);
             }
 
+            // Clears any panels
+            if (onClearPanelsListener != null) {
+                onClearPanelsListener.onClearPanels();
+            }
+
+            // Stops drawing if the current layer is locked
+            if (layerItems.get(currentLayer).isLocked()) {
+                // Consumes the touch event
+                return true;
+            }
+
             // Adjusts the viewport and gets the coordinates of the touch on the drawing
             viewport = scaleListener.getViewport();
             displayTouch.set(event.getX(), event.getY());
@@ -436,11 +451,6 @@ public class DrawingSurface extends SurfaceView implements SurfaceHolder.Callbac
             switch (action) {
 
                 case MotionEvent.ACTION_DOWN:
-
-                    if (onClearPanelsListener != null) {
-                        onClearPanelsListener.onClearPanels();
-                    }
-
                     touchDownTime = System.currentTimeMillis();
                     requiresUndoStackSaving = true;
                     toolReport = tool.start(ongoingOperationBitmap, pixelTouch);
@@ -502,12 +512,20 @@ public class DrawingSurface extends SurfaceView implements SurfaceHolder.Callbac
             transformation.postScale(scaleListener.getScale(), scaleListener.getScale());
 
             // Applies the transformation to the border shadow around the drawing
-            transformedBitmapRect.set(0, 0, layerWidth, layerHeight);
-            transformation.mapRect(transformedBitmapRect);
+            transformedBitmapRectF.set(0, 0, layerWidth, layerHeight);
+            transformation.mapRect(transformedBitmapRectF);
 
-            // User drawn image and border shadow
-            canvas.drawRect(transformedBitmapRect, shadowPaint);
-            canvas.drawBitmap(ongoingOperationBitmap, transformation, bitmapPaint);
+            // Image's border shadow
+            canvas.drawRect(transformedBitmapRectF, shadowPaint);
+
+            // Transparency checkerboard
+            transformedBitmapRect.set((int) transformedBitmapRectF.left, (int) transformedBitmapRectF.top, (int) transformedBitmapRectF.right, (int) transformedBitmapRectF.bottom);
+            checkerboardTile.setBounds(transformedBitmapRect);
+            checkerboardTile.draw(canvas);
+
+            // Draws the users image
+            compositeLayers();
+            canvas.drawBitmap(compositeBitmap, transformation, bitmapPaint);
 
             // Selection
             if (!selectedPath.isEmpty() && tool.getToolAttributes().isSelector()) {
@@ -526,20 +544,45 @@ public class DrawingSurface extends SurfaceView implements SurfaceHolder.Callbac
                 // Draws only when zoomed in
                 float scale = scaleListener.getScale();
                 if (scale > thumbnailScaleThreshold) {
-                    thumbnail.draw(canvas, ongoingOperationBitmap, scaleListener.getViewport(), bitmapPaint, shadowPaint);
+                    thumbnail.draw(canvas, compositeBitmap, scaleListener.getViewport(), checkerboardTile, bitmapPaint, shadowPaint);
                 }
             }
         }
     }
 
+    // Composites layers onto the single compositeBitmap
+    private void compositeLayers() {
+        // Blanks out composite bitmap
+        compositeBitmap.eraseColor(blankOutPaint.getColor());
+        reusableCanvas.setBitmap(compositeBitmap);
+
+        // Draws each visible layer of the user's image
+        for (int i = layers.size() - 1; i >= 0; i--) {
+            if (layerItems.get(i).isVisible()) {
+                Bitmap layer;
+                if (i == currentLayer) {
+                    layer = ongoingOperationBitmap;
+                } else {
+                    layer = layers.get(i);
+                }
+
+                reusableCanvas.drawBitmap(layer, 0, 0, bitmapPaint);
+            }
+        }
+    }
+
     private void resetOngoingBitmap() {
-        ongoingOperationCanvas.setBitmap(ongoingOperationBitmap);
-        ongoingOperationCanvas.drawBitmap(layers.get(currentLayer), 0, 0, bitmapPaint);
+        // Erases the ongoing operation, then blits the current layer onto it
+        ongoingOperationBitmap.eraseColor(blankOutPaint.getColor());
+        reusableCanvas.setBitmap(ongoingOperationBitmap);
+        reusableCanvas.drawBitmap(layers.get(currentLayer), 0, 0, bitmapPaint);
     }
 
     private void commitOngoingOperation() {
-        ongoingOperationCanvas.setBitmap(layers.get(currentLayer));
-        ongoingOperationCanvas.drawBitmap(ongoingOperationBitmap, 0, 0, bitmapPaint);
+        // Erases the current layer, then blits the ongoing operation onto it
+        layers.get(currentLayer).eraseColor(blankOutPaint.getColor());
+        reusableCanvas.setBitmap(layers.get(currentLayer));
+        reusableCanvas.drawBitmap(ongoingOperationBitmap, 0, 0, bitmapPaint);
     }
 
     private void commitIfWithinDrawingBounds(ToolReport toolToolReport) {
@@ -549,7 +592,7 @@ public class DrawingSurface extends SurfaceView implements SurfaceHolder.Callbac
             if (tool.getToolAttributes().isMutator()) {
                 toolToolReport.getPath().computeBounds(toolPathBounds, false);
                 transformation.mapRect(toolPathBounds);
-                if (toolPathBounds.intersects(transformedBitmapRect.left, transformedBitmapRect.top, transformedBitmapRect.right, transformedBitmapRect.bottom)) {
+                if (toolPathBounds.intersects(transformedBitmapRectF.left, transformedBitmapRectF.top, transformedBitmapRectF.right, transformedBitmapRectF.bottom)) {
                     commitOngoingOperation();
                     undoRedoTracker.bitmapModified(layers.get(currentLayer));
                 }
@@ -578,14 +621,78 @@ public class DrawingSurface extends SurfaceView implements SurfaceHolder.Callbac
         }
     }
 
+    public void setLayerItems(LinkedList<Layer> layerItems) {
+        this.layerItems = layerItems;
+    }
+
+    public void setCurrentLayer(int i) {
+        currentLayer = i;
+        resetOngoingBitmap();
+    }
+
+    public int getCurrentLayer() {
+        return currentLayer;
+    }
+
+    public Bitmap getOngoingOperationBitmap() {
+        return ongoingOperationBitmap;
+    }
+
+    public void setRestoredOngoingBitmap(Bitmap ongoingOperationBitmap) {
+        this.ongoingOperationBitmap = ongoingOperationBitmap;
+    }
+
+    public Bitmap addLayer(boolean duplicate) {
+        Bitmap newLayer;
+        if (duplicate) {
+            // Clones the current layer
+            newLayer = layers.get(currentLayer).copy(layers.get(currentLayer).getConfig(), true);
+        } else {
+            newLayer = Bitmap.createBitmap(
+                    layerWidth,
+                    layerHeight,
+                    Bitmap.Config.ARGB_8888);
+
+            // Blanks out the new layer
+            reusableCanvas.setBitmap(newLayer);
+            newLayer.eraseColor(blankOutPaint.getColor());
+        }
+
+        layers.addFirst(newLayer);
+
+        setCurrentLayer(0);
+
+        return newLayer;
+    }
+
+    public void deleteLayer(int i) {
+        // Current layer must have its index reduced when i is greater than it or if it's at the end of the list
+        if (currentLayer > i || currentLayer == layers.size() - 1) {
+            currentLayer--;
+            setCurrentLayer(currentLayer);
+        }
+
+        layers.remove(i);
+
+
+    }
+
+    public int getLayerWidth() {
+        return layerWidth;
+    }
+
+    public int getLayerHeight() {
+        return layerHeight;
+    }
+
     public void dismissSelection() {
         selectedPath.reset();;
     }
 
     public void clearSelection() {
         if (toolReport != null) {
-            ongoingOperationCanvas.setBitmap(ongoingOperationBitmap);
-            ongoingOperationCanvas.drawPath(toolReport.getPath(), blankOutPaint);
+            reusableCanvas.setBitmap(ongoingOperationBitmap);
+            reusableCanvas.drawPath(toolReport.getPath(), blankOutPaint);
             commitOngoingOperation();
 
             undoRedoTracker.bitmapModified(layers.get(currentLayer));
@@ -648,13 +755,14 @@ public class DrawingSurface extends SurfaceView implements SurfaceHolder.Callbac
         restoredScale = scale;
     }
 
-    public Bitmap getLayers() {
-        return ongoingOperationBitmap;
+    public LinkedList<Bitmap> getLayers() {
+        return layers;
     }
 
-    public void setRestoredLayers(Bitmap bitmap) {
-        restoredLayer = bitmap;
+    public void setRestoredLayers(LinkedList<Bitmap> restoredLayers) {
+        layers = restoredLayers;
     }
+
 
     public float getScale() {
         return scaleListener.getScale();

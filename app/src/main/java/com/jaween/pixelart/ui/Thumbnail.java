@@ -4,7 +4,9 @@ import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
+import android.graphics.Rect;
 import android.graphics.RectF;
+import android.graphics.drawable.BitmapDrawable;
 
 public class Thumbnail {
 
@@ -12,7 +14,8 @@ public class Thumbnail {
     private boolean enabled = true;
 
     // Thumbnail Metrics
-    private RectF thumbnailRect = new RectF();
+    private RectF thumbnailRectF = new RectF();
+    private Rect thumbnailRect = new Rect();
     private float dp;
 
     // View window
@@ -28,10 +31,10 @@ public class Thumbnail {
     private static final int VIEW_WINDOW_TRANSPARENCY = 130;
     
     public Thumbnail(float left, float top, float width, float height, float dp) {
-        thumbnailRect.left = left;
-        thumbnailRect.top = top;
-        thumbnailRect.right = left + width;
-        thumbnailRect.bottom = top + height;
+        thumbnailRectF.left = left;
+        thumbnailRectF.top = top;
+        thumbnailRectF.right = left + width;
+        thumbnailRectF.bottom = top + height;
 
         this.dp = dp;
 
@@ -49,18 +52,23 @@ public class Thumbnail {
     }
 
     // Draws thumbnail given a canvas to draw on to, the unscaled bitmap and the unscaled viewport
-    public void draw(Canvas canvas, Bitmap bitmap, RectF viewport, Paint bitmapPaint, Paint shadowPaint) {
+    public void draw(Canvas canvas, Bitmap bitmap, RectF viewport, BitmapDrawable checkerboardTile, Paint bitmapPaint, Paint shadowPaint) {
         // Border
-        canvas.drawRect(thumbnailRect, shadowPaint);
+        canvas.drawRect(thumbnailRectF, shadowPaint);
+
+        // Transparency checkerboard
+        thumbnailRectF.round(thumbnailRect);
+        checkerboardTile.setBounds(thumbnailRect);
+        checkerboardTile.draw(canvas);
 
         // Thumbnail
-        canvas.drawBitmap(bitmap, null, thumbnailRect, bitmapPaint);
+        canvas.drawBitmap(bitmap, null, thumbnailRectF, bitmapPaint);
 
         // View Window (portion of the image being viewed)
         if (viewWindowEnabled) {
             scaledViewport.set(viewport.left * dp, viewport.top * dp, viewport.right * dp, viewport.bottom * dp);
-           constrainViewWindow(scaledViewport);
-           drawViewWindow(canvas);
+            constrainViewWindow(scaledViewport);
+            drawViewWindow(canvas);
         }
     }
 
@@ -69,23 +77,23 @@ public class Thumbnail {
     private void drawViewWindow(Canvas canvas) {
         // Top semi-transparent overlay
         canvas.drawRect(
-                thumbnailRect.left,
-                thumbnailRect.top,
-                thumbnailRect.right,
+                thumbnailRectF.left,
+                thumbnailRectF.top,
+                thumbnailRectF.right,
                 viewWindowRect.top,
                 viewWindowPaint);
 
         // Bottom semi-transparent overlay
         canvas.drawRect(
-                thumbnailRect.left,
+                thumbnailRectF.left,
                 viewWindowRect.bottom,
-                thumbnailRect.right,
-                thumbnailRect.bottom,
+                thumbnailRectF.right,
+                thumbnailRectF.bottom,
                 viewWindowPaint);
 
         // Left semi-transparent overlay
         canvas.drawRect(
-                thumbnailRect.left,
+                thumbnailRectF.left,
                 viewWindowRect.top,
                 viewWindowRect.left,
                 viewWindowRect.bottom,
@@ -95,48 +103,48 @@ public class Thumbnail {
         canvas.drawRect(
                 viewWindowRect.right,
                 viewWindowRect.top,
-                thumbnailRect.right,
+                thumbnailRectF.right,
                 viewWindowRect.bottom,
                 viewWindowPaint);
     }
 
     // Determines the viewing area on the thumbnail (viewWindowRect) based on the area displayed on
-    // the screen (viewportRect) and the location of the thumbnail (thumbnailRect)
+    // the screen (viewportRect) and the location of the thumbnail (thumbnailRectF)
     private void constrainViewWindow(RectF viewport) {
         // Left
         if (viewport.left < 0) {
-            viewWindowRect.left = thumbnailRect.left;
-        } else if (viewport.left > thumbnailRect.width()) {
-            viewWindowRect.left = thumbnailRect.right;
+            viewWindowRect.left = thumbnailRectF.left;
+        } else if (viewport.left > thumbnailRectF.width()) {
+            viewWindowRect.left = thumbnailRectF.right;
         } else {
-            viewWindowRect.left = thumbnailRect.left + viewport.left;
+            viewWindowRect.left = thumbnailRectF.left + viewport.left;
         }
 
         // Top
         if (viewport.top < 0) {
-            viewWindowRect.top = thumbnailRect.top;
-        } else if (viewport.top > thumbnailRect.height()) {
-            viewWindowRect.top = thumbnailRect.bottom;
-        } else if (viewport.top < thumbnailRect.height()) {
-            viewWindowRect.top = thumbnailRect.top + viewport.top;
+            viewWindowRect.top = thumbnailRectF.top;
+        } else if (viewport.top > thumbnailRectF.height()) {
+            viewWindowRect.top = thumbnailRectF.bottom;
+        } else if (viewport.top < thumbnailRectF.height()) {
+            viewWindowRect.top = thumbnailRectF.top + viewport.top;
         }
 
         // Right
-        if (viewport.right > thumbnailRect.width()) {
-            viewWindowRect.right = thumbnailRect.right;
+        if (viewport.right > thumbnailRectF.width()) {
+            viewWindowRect.right = thumbnailRectF.right;
         } else if (viewport.right < 0) {
-            viewWindowRect.right = thumbnailRect.left;
+            viewWindowRect.right = thumbnailRectF.left;
         } else {
-            viewWindowRect.right = thumbnailRect.left + viewport.right;
+            viewWindowRect.right = thumbnailRectF.left + viewport.right;
         }
 
         // Bottom
-        if (viewport.bottom > thumbnailRect.height()) {
-            viewWindowRect.bottom = thumbnailRect.bottom;
+        if (viewport.bottom > thumbnailRectF.height()) {
+            viewWindowRect.bottom = thumbnailRectF.bottom;
         } else if (viewport.bottom < 0) {
-            viewWindowRect.bottom = thumbnailRect.top;
+            viewWindowRect.bottom = thumbnailRectF.top;
         } else {
-            viewWindowRect.bottom = thumbnailRect.top + viewport.bottom;
+            viewWindowRect.bottom = thumbnailRectF.top + viewport.bottom;
         }
     }
 

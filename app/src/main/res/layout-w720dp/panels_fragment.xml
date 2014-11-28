@@ -4,13 +4,13 @@
 
     <FrameLayout
         android:id="@+id/fl_container_palette"
-        android:layout_width="@dimen/side_pane_width"
+        android:layout_width="@dimen/panel_width"
         android:layout_height="wrap_content"
         android:layout_alignParentRight="true" />
 
     <View
         android:id="@+id/vw_palette_toolbox_divider"
-        android:layout_width="@dimen/side_pane_width"
+        android:layout_width="@dimen/panel_width"
         android:layout_height="1dp"
         android:layout_alignParentRight="true"
         android:layout_below="@id/fl_container_palette"
@@ -18,10 +18,16 @@
 
     <FrameLayout
         android:id="@+id/fl_container_toolbox"
-        android:layout_width="@dimen/side_pane_width"
+        android:layout_width="@dimen/panel_width"
         android:layout_height="match_parent"
         android:layout_alignParentRight="true"
         android:layout_below="@id/vw_palette_toolbox_divider" />
+
+    <FrameLayout
+        android:id="@+id/fl_container_layers"
+        android:layout_width="@dimen/layer_panel_width"
+        android:layout_height="match_parent"
+        android:layout_alignParentRight="true"/>
 
     <View
         android:layout_width="8dp"

@@ -6,6 +6,7 @@
     <!-- General ActionBar Actions-->
     <string name="action_undo">Undo</string>
     <string name="action_redo">Redo</string>
+    <string name="action_layers">Layers</string>
     <string name="action_grid">Grid</string>
     <string name="action_tool">Tools</string>
     <string name="action_palette">Palette</string>
@@ -52,6 +53,12 @@
     <string name="label_hue">Hue</string>
     <string name="label_saturation">Saturation</string>
     <string name="label_lightness">Lightness</string>
+
+    <!-- Layers -->
+    <string name="layer">Layer</string>
+    <string name="layer_add">Add Layer</string>
+    <string name="layer_remove">Remove Layer</string>
+    <string name="layer_merge">Merge Layer</string>
 
 
 </resources>

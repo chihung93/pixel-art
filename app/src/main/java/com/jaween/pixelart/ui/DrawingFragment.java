@@ -21,7 +21,10 @@ import android.widget.Toast;
 
 import com.jaween.pixelart.R;
 import com.jaween.pixelart.tools.Tool;
+import com.jaween.pixelart.ui.layer.Layer;
 import com.jaween.pixelart.util.ConfigChangeFragment;
+
+import java.util.LinkedList;
 
 public class DrawingFragment extends Fragment implements
         DrawingSurface.OnClearPanelsListener,
@@ -47,6 +50,7 @@ public class DrawingFragment extends Fragment implements
     private static final String KEY_SCALE = "key_scale";
 
     // UI save-state
+    private static final String KEY_CURRENT_LAYER = "key_current_layer";
     private static final String KEY_GRID = "key_grid";
     private static final String TAG_CONFIG_CHANGE_FRAGMENT = "config_change_fragment";
     private ConfigChangeFragment configChangeWorker;
@@ -80,9 +84,13 @@ public class DrawingFragment extends Fragment implements
             fragmentTransaction.commit();
         } else {
             // Restores user drawn layers
-            Bitmap restoredBitmap = configChangeWorker.getLayers();
-            surface.setRestoredLayers(restoredBitmap);
+            LinkedList<Bitmap> layers = configChangeWorker.getLayers();
+            surface.setRestoredLayers(layers);
             configChangeWorker.setLayers(null);
+
+            // Restores he ongoing operation bitmap
+            surface.setRestoredOngoingBitmap(configChangeWorker.getOngoingOperationBitmap());
+            configChangeWorker.setOngoingOperationBitmap(null);
         }
 
         onRestoreInstanceState(savedInstanceState);
@@ -98,6 +106,8 @@ public class DrawingFragment extends Fragment implements
         if (surface.isSurfaceCreated()) {
             // Saves user's drawing
             configChangeWorker.setLayers(surface.getLayers());
+            configChangeWorker.setOngoingOperationBitmap(surface.getOngoingOperationBitmap());
+            outState.putInt(KEY_CURRENT_LAYER, surface.getCurrentLayer());
 
             // Saves viewport
             RectF viewport = surface.getViewport();
@@ -113,6 +123,9 @@ public class DrawingFragment extends Fragment implements
     public void onRestoreInstanceState(Bundle savedInstanceState) {
         if (savedInstanceState != null) {
             surface.setConfigurationChanged(true);
+
+            // Layers
+            setCurrentLayer(savedInstanceState.getInt(KEY_CURRENT_LAYER, DrawingSurface.NULL_CURRENT_LAYER));
 
             // Restores viewport
             float DEFAULT_CENTER_X = 0;
@@ -196,6 +209,38 @@ public class DrawingFragment extends Fragment implements
                 return false;
         }
         return true;
+    }
+
+    public LinkedList<Bitmap> getLayers() {
+        return surface.getLayers();
+    }
+
+    public void setLayerItems(LinkedList<Layer> layerItems) {
+        surface.setLayerItems(layerItems);
+    }
+
+    public void setCurrentLayer(int i) {
+        surface.setCurrentLayer(i);
+    }
+
+    public int getCurrentLayer() {
+        return surface.getCurrentLayer();
+    }
+
+    public Bitmap addLayer(boolean duplicate) {
+        return surface.addLayer(duplicate);
+    }
+
+    public void deleteLayer(int i) {
+        surface.deleteLayer(i);
+    }
+
+    public int getLayerWidth() {
+        return surface.getLayerWidth();
+    }
+
+    public int getLayerHeight() {
+        return surface.getLayerHeight();
     }
 
     public void setOnClearPanelsListener(OnClearPanelsListener onClearPanelsListener) {

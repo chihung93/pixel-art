@@ -17,6 +17,8 @@ import android.widget.RelativeLayout;
 import com.jaween.pixelart.ui.DrawingFragment;
 import com.jaween.pixelart.ui.PaletteFragment;
 import com.jaween.pixelart.ui.ToolboxFragment;
+import com.jaween.pixelart.ui.layer.Layer;
+import com.jaween.pixelart.ui.layer.LayerFragment;
 
 /**
  * Manages the fragments that slide-in and out of the UI ('panels')
@@ -29,14 +31,17 @@ public class PanelManagerFragment extends Fragment implements
     // Child Fragments
     private PaletteFragment paletteFragment;
     private ToolboxFragment toolboxFragment;
+    private LayerFragment layerFragment;
 
     // Fragment tags
     private static final String TAG_PALETTE_FRAGMENT = "tag_palette_fragment";
     private static final String TAG_TOOLBOX_FRAGMENT = "tag_toolbox_fragment";
+    private static final String TAG_LAYER_FRAGMENT = "tag_layer_fragment";
 
     // Save state
     private static final String KEY_PALETTE_VISIBILITY = "key_palette_visibility";
     private static final String KEY_TOOLBOX_VISIBILITY = "key_toolbox_visibility";
+    private static final String KEY_LAYER_VISIBILITY = "key_layer_visibility";
 
     // Layout dimensions
     // TODO: Ensure these are same as layout directories before publishing
@@ -76,14 +81,17 @@ public class PanelManagerFragment extends Fragment implements
         FragmentManager fragmentManager = getChildFragmentManager();
         paletteFragment = (PaletteFragment) fragmentManager.findFragmentByTag(TAG_PALETTE_FRAGMENT);
         toolboxFragment = (ToolboxFragment) fragmentManager.findFragmentByTag(TAG_TOOLBOX_FRAGMENT);
+        layerFragment = (LayerFragment) fragmentManager.findFragmentByTag(TAG_LAYER_FRAGMENT);
 
-        if (paletteFragment == null | toolboxFragment == null) {
+        if (paletteFragment == null | toolboxFragment == null | layerFragment == null) {
             paletteFragment = new PaletteFragment();
             toolboxFragment = new ToolboxFragment();
+            layerFragment = new LayerFragment();
 
             FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
             fragmentTransaction.add(R.id.fl_container_palette, paletteFragment, TAG_PALETTE_FRAGMENT);
             fragmentTransaction.add(R.id.fl_container_toolbox, toolboxFragment, TAG_TOOLBOX_FRAGMENT);
+            fragmentTransaction.add(R.id.fl_container_layers, layerFragment, TAG_LAYER_FRAGMENT);
             fragmentTransaction.commit();
         }
 
@@ -98,6 +106,7 @@ public class PanelManagerFragment extends Fragment implements
             FragmentTransaction fragmentTransaction = getChildFragmentManager().beginTransaction();
             fragmentTransaction.hide(paletteFragment);
             fragmentTransaction.hide(toolboxFragment);
+            fragmentTransaction.hide(layerFragment);
             fragmentTransaction.commit();
         }
 
@@ -113,10 +122,12 @@ public class PanelManagerFragment extends Fragment implements
         if (layoutWidthDp == NARROW_LAYOUT_WIDTH_DP || layoutWidthDp == WIDE_LAYOUT_WIDTH_DP) {
             outState.putBoolean(KEY_PALETTE_VISIBILITY, paletteFragment.isVisible());
             outState.putBoolean(KEY_TOOLBOX_VISIBILITY, toolboxFragment.isVisible());
+            outState.putBoolean(KEY_LAYER_VISIBILITY, layerFragment.isVisible());
         } else {
             // Tall layout
             outState.putBoolean(KEY_PALETTE_VISIBILITY, combinedPanelVisible);
             outState.putBoolean(KEY_TOOLBOX_VISIBILITY, combinedPanelVisible);
+            outState.putBoolean(KEY_LAYER_VISIBILITY, combinedPanelVisible);
         }
     }
 
@@ -125,6 +136,7 @@ public class PanelManagerFragment extends Fragment implements
             // Restores the visibility of panels
             boolean paletteVisible = savedInstanceState.getBoolean(KEY_PALETTE_VISIBILITY, false);
             boolean toolboxVisible = savedInstanceState.getBoolean(KEY_TOOLBOX_VISIBILITY, false);
+            boolean layerVisible = savedInstanceState.getBoolean(KEY_LAYER_VISIBILITY, false);
 
             if (layoutWidthDp == NARROW_LAYOUT_WIDTH_DP || layoutWidthDp == WIDE_LAYOUT_WIDTH_DP) {
                 // The narrow and wide layouts have independent panels that can be shown
@@ -145,10 +157,17 @@ public class PanelManagerFragment extends Fragment implements
                     fragmentTransaction.hide(toolboxFragment);
                 }
 
+                // Layer visibility
+                if (layerVisible) {
+                    fragmentTransaction.show(layerFragment);
+                } else {
+                    fragmentTransaction.hide(layerFragment);
+                }
+
                 fragmentTransaction.commit();
             } else if (layoutHeightDp == TALL_LAYOUT_HEIGHT_DP) {
-                // The tall layout has a single combined panel that can be shown if either panel was visible prior
-                if (paletteVisible || toolboxVisible) {
+                // The tall layout has a single combined panel that can be shown if a panel was visible prior
+                if (paletteVisible || toolboxVisible || layerVisible) {
                     combinedPanelVisible = true;
                     toggleCombinedPanel(true);
                 }
@@ -190,15 +209,22 @@ public class PanelManagerFragment extends Fragment implements
         }
 
         // Dismisses any other panels that are in the way
-        Fragment in, out;
+        Fragment in, outA, outB;
         if (fragment instanceof PaletteFragment) {
             in = paletteFragment;
-            out = toolboxFragment;
-        } else {
+            outA = toolboxFragment;
+            outB = layerFragment;
+        } else if (fragment instanceof ToolboxFragment) {
             in = toolboxFragment;
-            out = paletteFragment;
+            outA = paletteFragment;
+            outB = layerFragment;
+        } else {
+            in = layerFragment;
+            outA = paletteFragment;
+            outB = toolboxFragment;
         }
-        hidePanel(out);
+        hidePanel(outA);
+        hidePanel(outB);
 
         // Slides in the new panel
         if (in.isHidden()) {
@@ -237,7 +263,7 @@ public class PanelManagerFragment extends Fragment implements
 
     @Override
     public boolean onClearPanels() {
-        boolean didHide = hidePanel(paletteFragment) | hidePanel(toolboxFragment);
+        boolean didHide = hidePanel(paletteFragment) | hidePanel(toolboxFragment) | hidePanel(layerFragment);
         return didHide;
     }
 
@@ -245,17 +271,17 @@ public class PanelManagerFragment extends Fragment implements
     private boolean toggleCombinedPanel(boolean show) {
         // Performs an animation if the panel is not already in the requested state
         if (show != combinedPanelVisible) {
-            Animation slidePaletteToolboxPanel;
+            Animation slideCombinedPanel;
             if (show) {
                 combinedPanelVisible = true;
-                slidePaletteToolboxPanel = AnimationUtils.loadAnimation(getActivity().getApplicationContext(), slideInAnimation);
-                slidePaletteToolboxPanel.setAnimationListener(this);
+                slideCombinedPanel = AnimationUtils.loadAnimation(getActivity().getApplicationContext(), slideInAnimation);
+                slideCombinedPanel.setAnimationListener(this);
             } else {
                 combinedPanelVisible = false;
-                slidePaletteToolboxPanel = AnimationUtils.loadAnimation(getActivity().getApplicationContext(), slideOutAnimation);
-                slidePaletteToolboxPanel.setAnimationListener(this);
+                slideCombinedPanel = AnimationUtils.loadAnimation(getActivity().getApplicationContext(), slideOutAnimation);
+                slideCombinedPanel.setAnimationListener(this);
             }
-            combinedPanel.startAnimation(slidePaletteToolboxPanel);
+            combinedPanel.startAnimation(slideCombinedPanel);
         }
 
         return combinedPanelVisible;
@@ -268,6 +294,10 @@ public class PanelManagerFragment extends Fragment implements
 
     public ToolboxFragment getToolboxFragment() {
         return toolboxFragment;
+    }
+
+    public LayerFragment getLayerFragment() {
+        return layerFragment;
     }
 
     @Override

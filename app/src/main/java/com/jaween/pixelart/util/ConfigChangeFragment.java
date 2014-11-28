@@ -4,14 +4,17 @@ import android.graphics.Bitmap;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 
+import java.util.LinkedList;
+
 /**
  * Worker Fragment which holds onto large objects (such as the user Bitmaps or Undo stack) when the
  * device has a configuration change. The Activity will be recreated, but this fragment will be
- * retained and the newly recreated Activity can retrieve the object.
+ * retained and the newly recreated Fragment can retrieve the object.
  */
 public class ConfigChangeFragment extends Fragment {
 
-    private Bitmap layers;
+    private LinkedList<Bitmap> layers;
+    private Bitmap ongoingOperationBitmap;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -21,11 +24,19 @@ public class ConfigChangeFragment extends Fragment {
         setRetainInstance(true);
     }
 
-    public void setLayers(Bitmap data) {
+    public void setLayers(LinkedList<Bitmap> data) {
         this.layers = data;
     }
 
-    public Bitmap getLayers() {
+    public LinkedList<Bitmap> getLayers() {
         return layers;
+    }
+
+    public Bitmap getOngoingOperationBitmap() {
+        return ongoingOperationBitmap;
+    }
+
+    public void setOngoingOperationBitmap(Bitmap ongoingOperationBitmap) {
+        this.ongoingOperationBitmap = ongoingOperationBitmap;
     }
 }

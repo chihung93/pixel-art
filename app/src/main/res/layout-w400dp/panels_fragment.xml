@@ -5,15 +5,22 @@
 
     <FrameLayout
         android:id="@+id/fl_container_palette"
-        android:layout_width="@dimen/side_pane_width"
+        android:layout_width="@dimen/panel_width"
         android:layout_height="fill_parent"
         android:layout_alignParentRight="true" />
 
     <FrameLayout
         android:id="@+id/fl_container_toolbox"
-        android:layout_width="@dimen/side_pane_width"
+        android:layout_width="@dimen/panel_width"
         android:layout_height="fill_parent"
         android:layout_alignParentRight="true"
         tools:layout="@layout/toolbox_fragment" />
+
+    <FrameLayout
+        android:id="@+id/fl_container_layers"
+        android:layout_width="@dimen/layer_panel_width"
+        android:layout_height="fill_parent"
+        android:layout_alignParentRight="true"
+        tools:layout="@layout/layer_fragment" />
 
 </RelativeLayout>
