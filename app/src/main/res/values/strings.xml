@@ -13,16 +13,19 @@
     <string name="action_copy">Copy</string>
     <string name="action_cut">Cut</string>
     <string name="action_rotate">Rotate</string>
+    <string name="action_select_all">Select all</string>
     <string name="action_new_palette">New Palette</string>
     <string name="action_delete_palette">Delete Palette</string>
 
     <!-- Tools -->
     <string name="tool_pen">Pen</string>
     <string name="tool_eraser">Eraser</string>
+    <string name="tool_rect">Rectangle</string>
     <string name="tool_oval">Oval</string>
-    <string name="tool_flood_fill">Flood Fill</string>
     <string name="tool_rect_select">Rectangular Selection</string>
+    <string name="tool_flood_fill">Flood Fill</string>
     <string name="tool_dropper">Colour Dropper</string>
+    <string name="tool_magic_wand">Magic Wand</string>
     <string name="tool_free_select">Free Selection</string>
 
     <!-- Tool Options -->
@@ -31,6 +34,9 @@
     <string name="tool_option_aa">Soften Edges</string>
     <string name="tool_option_circle_lock">Lock to Circle</string>
     <string name="tool_option_inner_fill">Inner Fill</string>
+    <string name="tool_option_square_lock">Lock to Square</string>
+    <string name="tool_option_rounded">Rounded Corners</string>
+    <string name="tool_option_threshold">Threshold</string>
 
     <!-- Palette -->
     <string name="button_customise_palette">Customise</string>

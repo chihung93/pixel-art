@@ -19,7 +19,6 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Toast;
 
-import com.jaween.pixelart.ContainerActivity;
 import com.jaween.pixelart.R;
 import com.jaween.pixelart.tools.Tool;
 import com.jaween.pixelart.util.ConfigChangeFragment;
@@ -250,18 +249,24 @@ public class DrawingFragment extends Fragment implements
     @Override
     public boolean onActionItemClicked(ActionMode actionMode, MenuItem menuItem) {
         switch (menuItem.getItemId()) {
-            case R.id.action_copy:
-                surface.clearSelection();
+            case R.id.action_select_all:
+                surface.selectAll();
                 break;
             case R.id.action_cut:
                 surface.clearSelection();
+                Toast.makeText(getActivity().getApplicationContext(), "TODO: Layer support", Toast.LENGTH_SHORT).show();
+                surface.dismissSelection();
+                actionMode.finish();
+                break;
+            case R.id.action_copy:
+                surface.clearSelection();
+                Toast.makeText(getActivity().getApplicationContext(), "TODO: Layer support", Toast.LENGTH_SHORT).show();
+                surface.dismissSelection();
+                actionMode.finish();
                 break;
             default:
                 return false;
         }
-        Toast.makeText(getActivity().getApplicationContext(), "TODO: Layer support", Toast.LENGTH_SHORT).show();
-        surface.dismissSelection();
-        actionMode.finish();
         return true;
     }
 

@@ -26,7 +26,7 @@
                 android:layout_width="0dp"
                 android:layout_height="60dp"
                 android:layout_weight="1"
-                android:src="@drawable/tool_pen" />
+                android:src="@drawable/tool_eraser" />
 
             <com.jaween.pixelart.ui.ToolButton
                 android:id="@+id/ib_tool_rect"
@@ -71,13 +71,17 @@
                 android:layout_weight="1"
                 android:src="@drawable/tool_dropper" />
 
-            <com.jaween.pixelart.ui.ToolButton
-                android:id="@+id/ib_tool_misingno"
+            <TextView
+                android:id="@+id/ib_tool_text"
                 style="@style/Widget.AppCompat.ActionButton"
                 android:layout_width="0dp"
                 android:layout_height="60dp"
                 android:layout_weight="1"
-                android:src="@drawable/tool_pen" />
+                android:text="T"
+                android:textColor="@android:color/white"
+                android:textSize="48sp"
+                android:textStyle="bold"
+                android:fontFamily="serif"/>
 
             <com.jaween.pixelart.ui.ToolButton
                 android:id="@+id/ib_tool_magic_wand"
@@ -85,7 +89,7 @@
                 android:layout_width="0dp"
                 android:layout_height="60dp"
                 android:layout_weight="1"
-                android:src="@drawable/tool_pen" />
+                android:src="@drawable/tool_magic_wand" />
 
             <com.jaween.pixelart.ui.ToolButton
                 android:id="@+id/ib_tool_free_select"
@@ -100,5 +104,6 @@
         android:id="@+id/fl_container_tool_options"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:background="@color/panel_background" />
+        android:background="@color/panel_background"
+        android:animateLayoutChanges="true"/>
 </LinearLayout>

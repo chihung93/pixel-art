@@ -3,31 +3,13 @@ package com.jaween.pixelart.tools.attributes;
 /**
  * Created by ween on 11/2/14.
  */
-public class PenToolAttributes extends ToolAttributes {
+public class EraserToolAttributes extends ToolAttributes {
 
-    private boolean straight = false;
-    private boolean lockAngles = false;
     private boolean antiAlias = false;
     private int thicknessLevel = MIN_THICKNESS;
 
-    public PenToolAttributes() {
+    public EraserToolAttributes() {
         super();
-    }
-
-    public boolean isStraight() {
-        return straight;
-    }
-
-    public void setStraight(boolean straight) {
-        this.straight = straight;
-    }
-
-    public boolean isLockAngles() {
-        return lockAngles;
-    }
-
-    public void setLockAngles(boolean lockAngles) {
-        this.lockAngles = lockAngles;
     }
 
     public boolean isAntiAlias() {
@@ -47,6 +29,5 @@ public class PenToolAttributes extends ToolAttributes {
     public int getThicknessLevel() {
         return thicknessLevel;
     }
-
 
 }

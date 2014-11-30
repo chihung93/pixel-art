@@ -7,6 +7,8 @@ import android.graphics.Paint;
  */
 public class ToolAttributes {
 
+    public static final int MIN_THICKNESS = 1;
+
     // Paint with which this tool will draw
     protected Paint paint;
 

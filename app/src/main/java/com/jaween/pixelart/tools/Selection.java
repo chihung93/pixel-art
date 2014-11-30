@@ -10,8 +10,8 @@ import com.jaween.pixelart.tools.attributes.ToolAttributes;
  */
 abstract class Selection extends Tool {
 
-    protected Selection(String name, Drawable icon) {
-        super(name, icon);
+    protected Selection(String name, Drawable icon, int toolId) {
+        super(name, icon, toolId);
 
         toolAttributes = new ToolAttributes();
         toolAttributes.setMutator(false);

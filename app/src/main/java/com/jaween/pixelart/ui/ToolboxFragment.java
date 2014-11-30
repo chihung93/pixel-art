@@ -1,7 +1,6 @@
 package com.jaween.pixelart.ui;
 
 import android.graphics.Bitmap;
-import android.graphics.Rect;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.util.Log;
@@ -10,18 +9,24 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.FrameLayout;
+import android.widget.TextView;
 
-import com.jaween.pixelart.ContainerActivity;
 import com.jaween.pixelart.R;
 import com.jaween.pixelart.tools.Dropper;
+import com.jaween.pixelart.tools.Eraser;
 import com.jaween.pixelart.tools.FloodFill;
 import com.jaween.pixelart.tools.FreeSelect;
+import com.jaween.pixelart.tools.MagicWand;
 import com.jaween.pixelart.tools.Oval;
 import com.jaween.pixelart.tools.Pen;
+import com.jaween.pixelart.tools.Rect;
 import com.jaween.pixelart.tools.RectSelect;
 import com.jaween.pixelart.tools.Tool;
+import com.jaween.pixelart.tools.options.EraserOptionsView;
+import com.jaween.pixelart.tools.options.MagicWandOptionsView;
 import com.jaween.pixelart.tools.options.OvalOptionsView;
 import com.jaween.pixelart.tools.options.PenOptionsView;
+import com.jaween.pixelart.tools.options.RectOptionsView;
 import com.jaween.pixelart.tools.options.ToolOptionsView;
 
 import java.util.ArrayList;
@@ -39,7 +44,7 @@ public class ToolboxFragment extends Fragment implements  View.OnClickListener, 
     private ToolButton rectSelectButton;
     private ToolButton floodFillButton;
     private ToolButton dropperButton;
-    private ToolButton misingnoButton;
+    private TextView textButton;
     private ToolButton magicWandButton;
     private ToolButton freeSelectButton;
 
@@ -47,17 +52,23 @@ public class ToolboxFragment extends Fragment implements  View.OnClickListener, 
 
     private Tool selectedTool;
     private Pen penTool;
-    private FloodFill floodFillTool;
+    private Eraser eraserTool;
+    private Rect rectTool;
     private Oval ovalTool;
     private RectSelect rectSelectTool;
+    private FloodFill floodFillTool;
     private Dropper dropperTool;
-    private FreeSelect freeSelect;
+    private MagicWand magicWandTool;
+    private FreeSelect freeSelectTool;
 
     private ArrayList<Tool> tools = new ArrayList<Tool>();
 
     private ToolOptionsView currentToolOptions;
     private PenOptionsView penOptions;
+    private EraserOptionsView eraserOptions;
+    private RectOptionsView rectOptions;
     private OvalOptionsView ovalOptions;
+    private MagicWandOptionsView magicWandOptions;
 
     private FrameLayout optionsFrameLayout;
 
@@ -66,6 +77,7 @@ public class ToolboxFragment extends Fragment implements  View.OnClickListener, 
     private int restoredColour;
 
     private static final String KEY_TOOL = "key_tool";
+    private static final int NULL_TOOL_ID = -1;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -74,29 +86,40 @@ public class ToolboxFragment extends Fragment implements  View.OnClickListener, 
         penTool = new Pen(
                 getString(R.string.tool_pen),
                 getResources().getDrawable(R.drawable.tool_pen));
+        eraserTool = new Eraser(
+                getString(R.string.tool_eraser),
+                getResources().getDrawable(R.drawable.tool_eraser));
+        rectTool = new Rect(
+                getString(R.string.tool_rect),
+                getResources().getDrawable(R.drawable.tool_rect));
         floodFillTool = new FloodFill(
                 getString(R.string.tool_flood_fill),
                 getResources().getDrawable(R.drawable.tool_fill));
-        ovalTool = new Oval(
-                getString(R.string.tool_oval),
-                getResources().getDrawable(R.drawable.tool_oval));
         rectSelectTool = new RectSelect(
                 getString(R.string.tool_rect_select),
                 getResources().getDrawable(R.drawable.tool_rect_select));
+        ovalTool = new Oval(
+                getString(R.string.tool_oval),
+                getResources().getDrawable(R.drawable.tool_oval));
         dropperTool = new Dropper(
                 getString(R.string.tool_dropper),
                 getResources().getDrawable(R.drawable.tool_dropper));
-
-        freeSelect = new FreeSelect(
+        magicWandTool = new MagicWand(
+                getString(R.string.tool_magic_wand),
+                getResources().getDrawable(R.drawable.tool_magic_wand));
+        freeSelectTool = new FreeSelect(
                 getString(R.string.tool_free_select),
                 getResources().getDrawable(R.drawable.tool_free_select));
 
         tools.add(penTool);
-        tools.add(floodFillTool);
+        tools.add(eraserTool);
+        tools.add(rectTool);
         tools.add(ovalTool);
         tools.add(rectSelectTool);
+        tools.add(floodFillTool);
         tools.add(dropperTool);
-        tools.add(freeSelect);
+        tools.add(magicWandTool);
+        tools.add(freeSelectTool);
 
         createToolOptions();
     }
@@ -119,21 +142,21 @@ public class ToolboxFragment extends Fragment implements  View.OnClickListener, 
     public void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
 
-        outState.putString(KEY_TOOL, selectedTool.getName());
+        outState.putInt(KEY_TOOL, selectedTool.getToolId());
     }
 
     public void onRestoreInstanceState(Bundle savedInstanceState) {
         // Restores the selected tool state
         if (savedInstanceState != null) {
-            String toolName = savedInstanceState.getString(KEY_TOOL);
-            if (toolName == null) {
-                toolName = penTool.getName();
+            int toolId = savedInstanceState.getInt(KEY_TOOL, NULL_TOOL_ID);
+            if (toolId == NULL_TOOL_ID) {
+                toolId = penTool.getToolId();
             }
 
             // Searches for the tool name
             int i = 0;
             while (i < tools.size()) {
-                if (tools.get(i).getName() == toolName) {
+                if (tools.get(i).getToolId() == toolId) {
                     selectedTool = tools.get(i);
                     break;
                 }
@@ -142,7 +165,7 @@ public class ToolboxFragment extends Fragment implements  View.OnClickListener, 
 
             // Tool not found
             if (i == tools.size()) {
-                Log.e("ToolboxFragment", "Error: Restoring tool, tool name " + toolName + " not found");
+                Log.e("ToolboxFragment", "Error: Restoring tool, toolId " + toolId + " not found");
 
                 // Default tool
                 selectedTool = penTool;
@@ -171,7 +194,7 @@ public class ToolboxFragment extends Fragment implements  View.OnClickListener, 
         rectSelectButton = (ToolButton) v.findViewById(R.id.ib_tool_rect_select);
         floodFillButton = (ToolButton) v.findViewById(R.id.ib_tool_flood_fill);
         dropperButton = (ToolButton) v.findViewById(R.id.ib_tool_dropper);
-        misingnoButton = (ToolButton) v.findViewById(R.id.ib_tool_misingno);
+        textButton = (TextView) v.findViewById(R.id.ib_tool_text);
         magicWandButton = (ToolButton) v.findViewById(R.id.ib_tool_magic_wand);
         freeSelectButton = (ToolButton) v.findViewById(R.id.ib_tool_free_select);
 
@@ -185,13 +208,16 @@ public class ToolboxFragment extends Fragment implements  View.OnClickListener, 
         rectSelectButton.setOnClickListener(this);
         floodFillButton.setOnClickListener(this);
         dropperButton.setOnClickListener(this);
-        misingnoButton.setOnClickListener(this);
+        textButton.setOnClickListener(this);
         magicWandButton.setOnClickListener(this);
         freeSelectButton.setOnClickListener(this);
 
         // Tool selection
         penOptions.setToolAttributes(penTool.getToolAttributes());
+        eraserOptions.setToolAttributes(eraserTool.getToolAttributes());
+        rectOptions.setToolAttributes(rectTool.getToolAttributes());
         ovalOptions.setToolAttributes(ovalTool.getToolAttributes());
+        magicWandOptions.setToolAttributes(magicWandTool.getToolAttributes());
 
         // Tool options
         currentToolOptions = penOptions;
@@ -203,7 +229,10 @@ public class ToolboxFragment extends Fragment implements  View.OnClickListener, 
 
     private void createToolOptions() {
         penOptions = new PenOptionsView(getActivity());
+        eraserOptions = new EraserOptionsView(getActivity());
+        rectOptions = new RectOptionsView(getActivity());
         ovalOptions = new OvalOptionsView(getActivity());
+        magicWandOptions = new MagicWandOptionsView(getActivity());
     }
 
     @Override
@@ -219,11 +248,13 @@ public class ToolboxFragment extends Fragment implements  View.OnClickListener, 
                 currentToolOptions = penOptions;
                 break;
             case R.id.ib_tool_eraser:
-                // No implementation
-                return;
+                clickedTool = eraserTool;
+                currentToolOptions = eraserOptions;
+                break;
             case R.id.ib_tool_rect:
-                // No implementation
-                return;
+                clickedTool = rectTool;
+                currentToolOptions = rectOptions;
+                break;
             case R.id.ib_tool_oval:
                 clickedTool = ovalTool;
                 currentToolOptions = ovalOptions;
@@ -240,14 +271,15 @@ public class ToolboxFragment extends Fragment implements  View.OnClickListener, 
                 clickedTool = dropperTool;
                 currentToolOptions = null;
                 break;
-            case R.id.ib_tool_misingno:
+            case R.id.ib_tool_text:
                 // No implementation
                 return;
             case R.id.ib_tool_magic_wand:
-                // No implementation
-                return;
+                clickedTool = magicWandTool;
+                currentToolOptions = magicWandOptions;
+                break;
             case R.id.ib_tool_free_select:
-                clickedTool = freeSelect;
+                clickedTool = freeSelectTool;
                 currentToolOptions = null;
                 break;
             default:
@@ -281,10 +313,10 @@ public class ToolboxFragment extends Fragment implements  View.OnClickListener, 
         ToolButton newToolButton = null;
         if (tool instanceof Pen) {
             newToolButton = penButton;
-        //} else if (tool instanceof Eraser) {
-        //    newToolButton = eraserButton;
-        //} else if (tool instanceof Rect) {
-        //    newToolButton = rectButton;
+        } else if (tool instanceof Eraser) {
+            newToolButton = eraserButton;
+        } else if (tool instanceof Rect) {
+            newToolButton = rectButton;
         } else if (tool instanceof Oval) {
             newToolButton = ovalButton;
         } else if (tool instanceof RectSelect) {
@@ -293,10 +325,10 @@ public class ToolboxFragment extends Fragment implements  View.OnClickListener, 
             newToolButton = floodFillButton;
         } else if (tool instanceof Dropper) {
             newToolButton = dropperButton;
-        //} else if (tool instanceof MissingNo) {
-        //    newToolButton = missingNoButton;
-        //} else if (tool instanceof MagicWand) {
-        //    newToolButton = magicWandButton;
+        //} else if (tool instanceof Text) {
+        //    newToolButton = textButton;
+        } else if (tool instanceof MagicWand) {
+            newToolButton = magicWandButton;
         } else if (tool instanceof FreeSelect) {
             newToolButton = freeSelectButton;
         } else {
@@ -323,10 +355,10 @@ public class ToolboxFragment extends Fragment implements  View.OnClickListener, 
     private void setToolOptions(Tool tool) {
         if (tool instanceof Pen) {
             currentToolOptions = penOptions;
-        /*} else if (tool instanceof  Eraser) {
+        } else if (tool instanceof  Eraser) {
             currentToolOptions = eraserOptions;
         } else if (tool instanceof  Rect) {
-            currentToolOptions = rectOptions;*/
+            currentToolOptions = rectOptions;
         } else if (tool instanceof  Oval) {
             currentToolOptions = ovalOptions;
         } else if (tool instanceof  RectSelect) {
@@ -335,10 +367,10 @@ public class ToolboxFragment extends Fragment implements  View.OnClickListener, 
             currentToolOptions = null;
         } else if (tool instanceof  Dropper) {
             currentToolOptions = null;
-        /*} else if (tool instanceof  MissingNo) {
-            currentToolOptions = missingNoOptions;
+        /*} else if (tool instanceof  Text) {
+            currentToolOptions = textOptions;*/
         } else if (tool instanceof  MagicWand) {
-            currentToolOptions = magicWandOptions;*/
+            currentToolOptions = magicWandOptions;
         } else if (tool instanceof  FreeSelect) {
             currentToolOptions = null;
         }
@@ -355,9 +387,8 @@ public class ToolboxFragment extends Fragment implements  View.OnClickListener, 
     }
 
     public void setDimensions(int width, int height) {
-        if (floodFillTool != null) {
-            floodFillTool.setBitmapConfiguration(width, height, Bitmap.Config.ARGB_8888);
-        }
+       floodFillTool.setBitmapConfiguration(width, height);
+       magicWandTool.setBitmapConfiguration(width, height);
     }
 
     public void setOnToolSelectListener(OnToolSelectListener onToolSelectListener) {

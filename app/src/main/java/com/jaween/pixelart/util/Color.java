@@ -1,15 +1,14 @@
-package com.jaween.pixelart.ui.colourpicker;
+package com.jaween.pixelart.util;
 
 import android.graphics.PorterDuff;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.LayerDrawable;
-
-import com.jaween.pixelart.R;
+import android.util.Log;
 
 /**
  * Created by ween on 11/21/14.
  */
-public class Color {
+public class Color extends android.graphics.Color {
 
     private static final int ALPHA_CHANNEL_SHIFT = 24;
     private static final int ALPHA_CHANNEL = 255 << ALPHA_CHANNEL_SHIFT;
@@ -115,9 +114,32 @@ public class Color {
         hsl[2] = l;
     }
 
+    /**
+     * Finds the perceptual difference between two colours and returns a normalised value between
+     * 0.0 and 1.0. Uses the algorithm found here http://www.compuphase.com/cmetric.htm
+     * @param colourA The first colour to compare in packed ARGB format
+     * @param colourB The second colour to compare in packed ARGB format
+     * @return The colour distance from 0.0 to 1.0
+     */
+    public static double colourDistance(int colourA, int colourB) {
+        double averageRed = ((Color.red(colourA) + Color.red(colourB)) / 2)/256.0;
 
+        double deltaRed = Color.red(colourA)/256.0 - Color.red(colourB)/256.0;
+        double deltaGreen = Color.green(colourA)/256.0 - Color.green(colourB)/256.0;
+        double deltaBlue = Color.blue(colourA)/256.0 - Color.blue(colourB)/256.0;
 
+        double weightRed = 2/256.0 + averageRed;
+        double weightGreen = 4.0/256.0;
+        double weightBlue = 2/256.0 + (1.0 - averageRed);
 
+        double componentRed = weightRed * deltaRed * deltaRed;
+        double componentGreen = weightGreen * deltaGreen * deltaGreen;
+        double componentBlue = weightBlue * deltaBlue * deltaBlue;
+
+        double distance = Math.sqrt(componentRed + componentGreen + componentBlue);
+
+        return distance;
+    }
 
     public static LayerDrawable tintAndLayerDrawable(Drawable colouredInnner, Drawable border, int colour) {
         // Tints the inner square to the selected colour

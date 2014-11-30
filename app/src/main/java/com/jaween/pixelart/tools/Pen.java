@@ -3,8 +3,10 @@ package com.jaween.pixelart.tools;
 import android.graphics.Bitmap;
 import android.graphics.PointF;
 import android.graphics.drawable.Drawable;
+import android.util.Log;
 
 import com.jaween.pixelart.tools.attributes.PenToolAttributes;
+import com.jaween.pixelart.tools.attributes.ToolAttributes;
 
 /**
  * Created by ween on 9/28/14.
@@ -12,10 +14,11 @@ import com.jaween.pixelart.tools.attributes.PenToolAttributes;
 // This is a pen
 public class Pen extends Tool {
 
+    private static final int TOOL_ID = 0;
     private PointF start = new PointF();
 
     public Pen(String name, Drawable icon) {
-        super(name, icon);
+        super(name, icon, TOOL_ID);
         toolAttributes = new PenToolAttributes();
     }
 
@@ -59,12 +62,21 @@ public class Pen extends Tool {
         draw(bitmap, event);
     }
 
-
     private void draw(Bitmap bitmap, PointF event) {
         toolReport.getPath().lineTo(event.x, event.y);
-
         canvas.setBitmap(bitmap);
-        canvas.drawPath(toolReport.getPath(), toolAttributes.getPaint());
+
+        // Work around for drawing individual pixels, which Canvas.drawPath() doesn't do well
+        if (((PenToolAttributes) toolAttributes).getThicknessLevel() == ToolAttributes.MIN_THICKNESS
+                && !((PenToolAttributes) toolAttributes).isStraight()) {
+            canvas.drawPoint(start.x, start.y, toolAttributes.getPaint());
+            canvas.drawPath(toolReport.getPath(), toolAttributes.getPaint());
+        } else if (start.x == event.x && start.y == event.y) {
+            canvas.drawPoint(start.x, start.y, toolAttributes.getPaint());
+        } else {
+            // Regular drawing
+            canvas.drawPath(toolReport.getPath(), toolAttributes.getPaint());
+        }
     }
 
     // Locks the line in 11.25 degree (PI/8 radians) increments, so we can have 16 different angles

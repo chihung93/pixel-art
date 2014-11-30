@@ -10,11 +10,12 @@ import com.jaween.pixelart.tools.attributes.ToolAttributes;
 /**
  * To make a Tool:
  *  1) Subclass Tool implementing 'onStart()', 'onMove()', 'onEnd()', draw with canvas.setBitmap(bitmap)
- *  2) If the tool has user configurable attributes, implement a subclass of ToolAttributes and
+ *  2) Give the tool a unique ID in the call to the super constructor
+ *  3) If the tool has user configurable attributes, implement a subclass of ToolAttributes and
  *     create a corresponding XML layout. Subclass ToolOptionsView and linkup the UI.
- *  3) In the constructor of the tool, set the 'toolAttributes' variable to an instance of ToolAttributes
- *  4) In ToolboxFragment, create an instance of your tool, options, attributes and ImageButton.
- *  5) In initialiseViews() of ToolboxFragment, call tool.setToolAttributes(attributes). Done!
+ *  4) In the constructor of the tool, set the 'toolAttributes' variable to an instance of ToolAttributes
+ *  5) In ToolboxFragment, create an instance of your tool, options, attributes and ImageButton.
+ *  6) In initialiseViews() of ToolboxFragment, call tool.setToolAttributes(attributes). Done!
  */
 public abstract class Tool implements Command {
 
@@ -22,15 +23,19 @@ public abstract class Tool implements Command {
     protected final String name;
     protected final Drawable icon;
 
+    // Used to retrieve the tool on config change
+    protected final int toolId;
+
     // Drawing
     protected Canvas canvas = new Canvas();
     protected ToolAttributes toolAttributes;
     protected ToolReport toolReport;
     protected boolean cancelled = false;
 
-    public Tool(String name, Drawable icon) {
+    public Tool(String name, Drawable icon, int toolId) {
         this.name = name;
         this.icon = icon;
+        this.toolId = toolId;
 
         toolReport = new ToolReport();
     }
@@ -41,6 +46,10 @@ public abstract class Tool implements Command {
 
     public Drawable getIcon() {
         return icon;
+    }
+
+    public int getToolId() {
+        return toolId;
     }
 
     @Override

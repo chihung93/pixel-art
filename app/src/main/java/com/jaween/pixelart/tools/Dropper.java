@@ -11,8 +11,10 @@ import com.jaween.pixelart.tools.attributes.ToolAttributes;
  */
 public class Dropper extends Tool {
 
+    private static final int TOOL_ID = 6;
+
     public Dropper(String name, Drawable icon) {
-        super(name, icon);
+        super(name, icon, TOOL_ID);
 
         toolAttributes = new ToolAttributes();
         toolAttributes.setMutator(false);

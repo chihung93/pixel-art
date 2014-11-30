@@ -9,10 +9,11 @@ import android.graphics.drawable.Drawable;
  */
 public class RectSelect extends Selection {
 
+    private static final int TOOL_ID = 4;
     private PointF start = new PointF();
 
     public RectSelect(String name, Drawable icon) {
-        super(name, icon);
+        super(name, icon, TOOL_ID);
     }
 
     @Override

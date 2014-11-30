@@ -15,6 +15,7 @@ import android.widget.TextView;
 
 import com.jaween.pixelart.R;
 import com.jaween.pixelart.util.AbsVerticalSeekBar;
+import com.jaween.pixelart.util.Color;
 
 /**
  * Created by ween on 11/22/14.

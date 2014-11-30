@@ -3,11 +3,8 @@ package com.jaween.pixelart.ui;
 import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Color;
-import android.graphics.ColorFilter;
 import android.graphics.Paint;
-import android.graphics.PorterDuff;
 import android.graphics.Rect;
-import android.graphics.RectF;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.LayerDrawable;
 import android.os.Build;
@@ -112,7 +109,7 @@ public class ColourButton extends Button {
         // Tints the inner square to the selected colour
         Drawable colouredInner = getResources().getDrawable(R.drawable.palette_colour_button);
         Drawable border = getResources().getDrawable(R.drawable.palette_colour_button_border);
-        LayerDrawable layerDrawable = com.jaween.pixelart.ui.colourpicker.Color.tintAndLayerDrawable(colouredInner, border, colour);
+        LayerDrawable layerDrawable = com.jaween.pixelart.util.Color.tintAndLayerDrawable(colouredInner, border, colour);
 
         // Pre-Jellybean doesn't have setBackground()
         int sdk = Build.VERSION.SDK_INT;

@@ -19,7 +19,7 @@ import android.widget.TableRow;
 import android.widget.Toast;
 
 import com.jaween.pixelart.R;
-import com.jaween.pixelart.ui.colourpicker.Color;
+import com.jaween.pixelart.util.Color;
 import com.jaween.pixelart.ui.colourpicker.ColourPickerFragment;
 
 import java.util.ArrayList;

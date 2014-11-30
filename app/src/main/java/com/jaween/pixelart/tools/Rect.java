@@ -6,21 +6,21 @@ import android.graphics.PointF;
 import android.graphics.RectF;
 import android.graphics.drawable.Drawable;
 
-import com.jaween.pixelart.tools.attributes.OvalToolAttributes;
+import com.jaween.pixelart.tools.attributes.RectToolAttributes;
 
 /**
  * Created by ween on 10/19/14.
  */
-public class Oval extends Tool {
+public class Rect extends Tool {
 
-    private static final int TOOL_ID = 3;
-    public Oval(String name, Drawable icon) {
+    private static final int TOOL_ID = 2;
+    public Rect(String name, Drawable icon) {
         super(name, icon, TOOL_ID);
-        toolAttributes = new OvalToolAttributes();
+        toolAttributes = new RectToolAttributes();
     }
 
     private PointF start = new PointF();
-    private RectF ovalBounds = new RectF();
+    private RectF rectBounds = new RectF();
 
     @Override
     protected void onStart(Bitmap bitmap, PointF event) {
@@ -33,8 +33,8 @@ public class Oval extends Tool {
     @Override
     protected void onMove(Bitmap bitmap, PointF event) {
         // Locks the oval to a circle
-        if (((OvalToolAttributes) toolAttributes).isCircleLocked()) {
-            lockCircle(event);
+        if (((RectToolAttributes) toolAttributes).isSquareLocked()) {
+            lockSquare(event);
         }
 
         draw(canvas, bitmap, event);
@@ -44,35 +44,44 @@ public class Oval extends Tool {
     @Override
     protected void onEnd(Bitmap bitmap, PointF event) {
         // Locks the oval to a circle
-        if (((OvalToolAttributes) toolAttributes).isCircleLocked()) {
-            lockCircle(event);
+        if (((RectToolAttributes) toolAttributes).isSquareLocked()) {
+            lockSquare(event);
         }
 
         draw(canvas, bitmap, event);
     }
 
-    // TODO: Allow the coordinates of oval to go less than 0 in both x and y
+    // TODO: Allow the coordinates of rect to go less than 0 in both x and y
     private void draw(Canvas canvas, Bitmap bitmap, PointF end) {
-        ovalBounds.set(start.x, start.y, end.x, end.y);
+        rectBounds.set(start.x, start.y, end.x, end.y);
 
-        // Enables ovals to be drawn past the top and left canvas boundaries by modifying ovalBounds
-        boundaryWorkAround(ovalBounds);
+        // Flips the bounds of the rect if they are inverted
+        roundRectEdgeWorkAround(rectBounds);
+
+        float radius;
+        if (((RectToolAttributes) toolAttributes).isRoundedRect()) {
+            radius = ((RectToolAttributes) toolAttributes).getRoundnessLevel();
+        } else {
+            // Regular rectangles can't be drawn outside the top and left boundaries, but rounded
+            // rectangles can. We can draw a regular rect by using a rounded rect with corners of radius 0
+            radius = 0;
+        }
 
         canvas.setBitmap(bitmap);
-        canvas.drawOval(ovalBounds, toolAttributes.getPaint());
+        canvas.drawRoundRect(rectBounds, radius, radius, toolAttributes.getPaint());
     }
 
-    // Locks the oval to a circle (modifies the input point)
-    private void lockCircle(PointF end) {
+    // Locks the rect to a square (modifies the input point)
+    private void lockSquare(PointF end) {
         float dX = end.x - start.x;
         float dY = end.y - start.y;
 
-        float ovalWidth = Math.abs(dX);
-        float ovalHeight = Math.abs(dY);
+        float rectWidth = Math.abs(dX);
+        float rectHeight = Math.abs(dY);
 
-        float diameter = Math.max(ovalWidth, ovalHeight);
+        float diameter = Math.max(rectWidth, rectHeight);
 
-        // The diameter of the circle is the larger of the oval's width or height
+        // The diameter of the square is the larger of the rect's width or height
         if (dX > 0 && dY > 0) {
             // Lower right quadrant
             end.y = start.y + diameter;
@@ -92,8 +101,8 @@ public class Oval extends Tool {
         }
     }
 
-    // Canvas can't draw oval with edges inverted past the top and left boundaries, flips the edges to make it work
-    private void boundaryWorkAround(RectF bounds) {
+    // Canvas can't draw rounded rectangles with edges inverted, flips the edges to make it work
+    private void roundRectEdgeWorkAround(RectF bounds) {
         if (bounds.right < bounds.left) {
             bounds.set(bounds.right, bounds.top, bounds.left, bounds.bottom);
         }

@@ -3,13 +3,11 @@ package com.jaween.pixelart;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.LayerDrawable;
 import android.os.Bundle;
-import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
 import android.support.v7.app.ActionBarActivity;
 import android.support.v7.view.ActionMode;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -22,7 +20,7 @@ import com.jaween.pixelart.ui.DrawingFragment;
 import com.jaween.pixelart.ui.DrawingSurface;
 import com.jaween.pixelart.ui.PaletteFragment;
 import com.jaween.pixelart.ui.ToolboxFragment;
-import com.jaween.pixelart.ui.colourpicker.Color;
+import com.jaween.pixelart.util.Color;
 
 /**
  * Base container class for the main screen of the app: the drawing canvas and the tool panels.

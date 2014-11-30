@@ -5,23 +5,27 @@ import android.graphics.Paint;
 /**
  * Created by ween on 11/2/14.
  */
-public class OvalToolAttributes extends ToolAttributes {
+public class RectToolAttributes extends ToolAttributes {
 
-    private boolean circleLocked = false;
+    private static final int MIN_ROUNDNESS = 1;
+
+    private boolean squareLocked = false;
     private boolean fill = false;
     private boolean antiAlias = false;
+    private boolean roundedRect = false;
     private int thicknessLevel = MIN_THICKNESS;
+    private int roundnessLevel = MIN_ROUNDNESS;
 
-    public OvalToolAttributes() {
+    public RectToolAttributes() {
         super();
     }
 
-    public boolean isCircleLocked() {
-        return circleLocked;
+    public boolean isSquareLocked() {
+        return squareLocked;
     }
 
-    public void setCircleLocked(boolean circleLocked) {
-        this.circleLocked = circleLocked;
+    public void setSquareLocked(boolean squareLocked) {
+        this.squareLocked = squareLocked;
     }
 
     public boolean isFill() {
@@ -46,6 +50,14 @@ public class OvalToolAttributes extends ToolAttributes {
         this.antiAlias = antiAlias;
     }
 
+    public boolean isRoundedRect() {
+        return roundedRect;
+    }
+
+    public void setRoundedRect(boolean roundedRect) {
+        this.roundedRect = roundedRect;
+    }
+
     public int getThicknessLevel() {
         return thicknessLevel;
     }
@@ -53,5 +65,13 @@ public class OvalToolAttributes extends ToolAttributes {
     public void setThicknessLevel(int thicknessLevel) {
         paint.setStrokeWidth(thicknessLevel);
         this.thicknessLevel = thicknessLevel;
+    }
+
+    public int getRoundnessLevel() {
+        return roundnessLevel;
+    }
+
+    public void setRoundnessLevel(int roundnessLevel) {
+        this.roundnessLevel = roundnessLevel;
     }
 }

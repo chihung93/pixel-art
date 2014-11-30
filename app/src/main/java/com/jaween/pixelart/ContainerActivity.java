@@ -16,6 +16,13 @@ public final class ContainerActivity extends ActionBarActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        // Removes a layer of overdraw (though the background is needed during the starting window)
+        getWindow().setBackgroundDrawable(null);
+
+        // Displays the app icon instead of the title text
+        getSupportActionBar().setDisplayUseLogoEnabled(true);
+
         setContentView(R.layout.container_activity);
 
         FragmentManager fragmentManager = getSupportFragmentManager();

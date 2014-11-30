@@ -72,7 +72,7 @@ public class OvalOptionsView extends ToolOptionsView implements
     public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
         switch (seekBar.getId()) {
             case R.id.sb_option_thickness:
-                // Must offset the progess by 1 as seekbar begins at 0
+                // Must offset the progress by 1 as seekbar begins at 0
                 ((OvalToolAttributes) toolAttributes).setThicknessLevel(progress + 1);
                 break;
         }

@@ -11,6 +11,8 @@ import android.graphics.drawable.Drawable;
  */
 public class FreeSelect extends Selection {
 
+    private static final int TOOL_ID = 9;
+
     // Once we call path.close(), for subsequent lineTo() calls our path would look odd
     // We avoid this by saving the tentative path, copying it to toolRegion.path, then calling close
     private Path tentativePath = new Path();
@@ -18,7 +20,7 @@ public class FreeSelect extends Selection {
     private Matrix identityTransformation = new Matrix();
 
     public FreeSelect(String name, Drawable icon) {
-        super(name, icon);
+        super(name, icon, TOOL_ID);
     }
 
     @Override

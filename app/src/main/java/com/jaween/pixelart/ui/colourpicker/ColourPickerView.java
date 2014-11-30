@@ -11,6 +11,8 @@ import android.util.AttributeSet;
 import android.view.MotionEvent;
 import android.view.View;
 
+import com.jaween.pixelart.util.Color;
+
 import java.util.ArrayList;
 
 /**

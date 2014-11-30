@@ -10,6 +10,8 @@ import android.graphics.Matrix;
 import android.graphics.Paint;
 import android.graphics.Path;
 import android.graphics.PointF;
+import android.graphics.PorterDuff;
+import android.graphics.PorterDuffXfermode;
 import android.graphics.Rect;
 import android.graphics.RectF;
 import android.graphics.Shader;
@@ -42,6 +44,7 @@ public class DrawingSurface extends SurfaceView implements SurfaceHolder.Callbac
 
     // Drawing canvas
     public static final float DEFAULT_SCALE = 4;
+    private int surfaceBackgroundColour;
     private float thumbnailScaleThreshold;
     private Rect displayRect = new Rect();
     private RectF transformedBitmapRect = new RectF();
@@ -56,6 +59,7 @@ public class DrawingSurface extends SurfaceView implements SurfaceHolder.Callbac
     private static final int SELECTION_FILL_ALPHA = 50;
     private Paint selectionBorderPaint = new Paint();
     private Paint selectionInnerPaint = new Paint();
+    private Path selectAllPath = new Path();
 
     // Tool and drawing variables
     private Tool tool;
@@ -112,14 +116,16 @@ public class DrawingSurface extends SurfaceView implements SurfaceHolder.Callbac
     public DrawingSurface(Context context, Tool tool) {
         super(context);
 
-        // Screen density info
-        dp = context.getResources().getDisplayMetrics().density;
-
+        // SurfaceView details
         holder = getHolder();
         holder.addCallback(this);
 
+        // Resources
+        dp = context.getResources().getDisplayMetrics().density;
         selectionColour = context.getResources().getColor(R.color.tool_selection_colour);
+        surfaceBackgroundColour = context.getResources().getColor(R.color.surface_background_colour);
 
+        // Paints
         initialisePaints();
 
         this.context = context;
@@ -157,6 +163,7 @@ public class DrawingSurface extends SurfaceView implements SurfaceHolder.Callbac
         blankOutPaint.setColor(Color.WHITE);
         blankOutPaint.setStyle(Paint.Style.FILL);
         blankOutPaint.setAntiAlias(false);
+        blankOutPaint.setXfermode(new PorterDuffXfermode(PorterDuff.Mode.CLEAR));
 
         // Temporary UI text
         tempTextPaint.setTextSize(30);
@@ -200,11 +207,11 @@ public class DrawingSurface extends SurfaceView implements SurfaceHolder.Callbac
             pixelGrid.setEnabled(restoredGridState);
         }
 
-        surfaceCreated = true;
-
         bitmap = BitmapFactory.decodeResource(context.getResources(), R.drawable.checkerboard);
         checkerboardTile = new BitmapDrawable(bitmap);
         checkerboardTile.setTileModeXY(Shader.TileMode.REPEAT, Shader.TileMode.REPEAT);
+
+        surfaceCreated = true;
     }
 
     @Override
@@ -213,6 +220,13 @@ public class DrawingSurface extends SurfaceView implements SurfaceHolder.Callbac
         if (onDimensionsCalculatedListener != null) {
             onDimensionsCalculatedListener.onDimensionsCalculated(layerWidth, layerHeight);
         }
+
+        // Encompasses the entire layer with path
+        selectedPath.moveTo(0, 0);
+        selectAllPath.lineTo(layerWidth, 0);
+        selectAllPath.lineTo(layerWidth, layerHeight);
+        selectAllPath.lineTo(0, layerHeight);
+        selectAllPath.close();
     }
 
     @Override
@@ -404,18 +418,17 @@ public class DrawingSurface extends SurfaceView implements SurfaceHolder.Callbac
             // Stops drawing if we're performing a gesture
             if (scaleGestureDetector.isInProgress()) {
                 if (System.currentTimeMillis() - touchDownTime < CANCEL_DRAWING_MILLIS) {
-                    // Scaling began soon after the initial touch, cancels the drawing operation
-                    tool.cancel();
+                    // Scaling began soon after the initial touch, rolls back the drawing operation
                     resetOngoingBitmap();
                     requiresUndoStackSaving = false;
                 } else {
                     // Scaling begun long after the initial touch, commits the drawing operation
                     // up until this point, but cancels further drawing
                     toolReport = tool.end(ongoingOperationBitmap, pixelTouch);
-                    tool.cancel();
-
                     commitIfWithinDrawingBounds(toolReport);
                 }
+                tool.cancel();
+                dismissSelection();
                 return true;
             }
 
@@ -431,11 +444,13 @@ public class DrawingSurface extends SurfaceView implements SurfaceHolder.Callbac
                     touchDownTime = System.currentTimeMillis();
                     requiresUndoStackSaving = true;
                     toolReport = tool.start(ongoingOperationBitmap, pixelTouch);
+                    transformRegion(toolReport);
                     dropColour(toolReport);
                     break;
                 case MotionEvent.ACTION_MOVE:
                     resetOngoingBitmap();
                     toolReport = tool.move(ongoingOperationBitmap, pixelTouch);
+                    transformRegion(toolReport);
                     dropColour(toolReport);
                     break;
                 case MotionEvent.ACTION_UP:
@@ -444,6 +459,7 @@ public class DrawingSurface extends SurfaceView implements SurfaceHolder.Callbac
                     toolReport = tool.end(ongoingOperationBitmap, pixelTouch);
 
                     commitIfWithinDrawingBounds(toolReport);
+                    transformRegion(toolReport);
                     selectRegion(toolReport);
                     dropColour(toolReport);
                     break;
@@ -462,6 +478,7 @@ public class DrawingSurface extends SurfaceView implements SurfaceHolder.Callbac
                         tool.cancel();
 
                         commitIfWithinDrawingBounds(toolReport);
+                        transformRegion(toolReport);
                         selectRegion(toolReport);
                         dropColour(toolReport);
                     }
@@ -478,7 +495,7 @@ public class DrawingSurface extends SurfaceView implements SurfaceHolder.Callbac
         if (surfaceCreated) {
             // Background
             //canvas.drawBitmap(checkerboardTile.getBitmap(), 0, 0, bitmapPaint);
-            canvas.drawColor(Color.LTGRAY);
+            canvas.drawColor(surfaceBackgroundColour);
 
             // Calculates the zoom and pan transformation
             transformation.setTranslate(-viewport.left, -viewport.top);
@@ -493,8 +510,8 @@ public class DrawingSurface extends SurfaceView implements SurfaceHolder.Callbac
             canvas.drawBitmap(ongoingOperationBitmap, transformation, bitmapPaint);
 
             // Selection
-            if (toolReport != null && tool.getToolAttributes().isSelector()) {
-                toolReport.getPath().transform(transformation, selectedPath);
+            if (!selectedPath.isEmpty() && tool.getToolAttributes().isSelector()) {
+                //toolReport.getPath().transform(transformation, selectedPath);
                 canvas.drawPath(selectedPath, selectionInnerPaint);
                 canvas.drawPath(selectedPath, selectionBorderPaint);
             }
@@ -540,21 +557,29 @@ public class DrawingSurface extends SurfaceView implements SurfaceHolder.Callbac
         }
     }
 
+    private void transformRegion(ToolReport toolReport) {
+        if (toolReport != null) {
+            toolReport.getPath().transform(transformation, selectedPath);
+        }
+    }
+
+    // To be used when the path is determined by what the user has drawn
     private void selectRegion(ToolReport toolReport) {
         if (tool.getToolAttributes().isSelector() && onSelectRegionListener != null && toolReport != null) {
-            toolReport.getPath().transform(transformation, selectedPath);
             onSelectRegionListener.onSelectRegion(selectedPath);
         }
     }
 
-    private void dropColour(ToolReport toolReport) {
-        if (tool.getToolAttributes().isDropper() && onDropColourListener != null && toolReport != null) {
-            onDropColourListener.onDropColour(toolReport.getDropColour());
+    public void selectAll() {
+        if (toolReport != null) {
+            toolReport.getPath().set(selectAllPath);
+            transformRegion(toolReport);
+            selectRegion(toolReport);
         }
     }
 
     public void dismissSelection() {
-        toolReport = null;
+        selectedPath.reset();;
     }
 
     public void clearSelection() {
@@ -571,9 +596,16 @@ public class DrawingSurface extends SurfaceView implements SurfaceHolder.Callbac
         dismissSelection();
     }
 
+    private void dropColour(ToolReport toolReport) {
+        if (tool.getToolAttributes().isDropper() && onDropColourListener != null && toolReport != null) {
+            onDropColourListener.onDropColour(toolReport.getDropColour());
+        }
+    }
+
     public void setTool(Tool tool) {
         this.tool = tool;
         toolReport = null;
+        selectedPath.reset();
     }
 
     public void undo() {
