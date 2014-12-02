@@ -1,10 +1,8 @@
 package com.jaween.pixelart.ui;
 
 import android.app.Activity;
-import android.graphics.Bitmap;
 import android.graphics.Path;
 import android.graphics.RectF;
-import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
@@ -19,9 +17,11 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Toast;
 
+import com.jaween.pixelart.ContainerFragment;
 import com.jaween.pixelart.R;
 import com.jaween.pixelart.tools.Tool;
 import com.jaween.pixelart.ui.layer.Layer;
+import com.jaween.pixelart.ui.undo.UndoManager;
 import com.jaween.pixelart.util.ConfigChangeFragment;
 
 import java.util.LinkedList;
@@ -52,7 +52,8 @@ public class DrawingFragment extends Fragment implements
     // UI save-state
     private static final String KEY_CURRENT_LAYER = "key_current_layer";
     private static final String KEY_GRID = "key_grid";
-    private static final String TAG_CONFIG_CHANGE_FRAGMENT = "config_change_fragment";
+
+    // Config change
     private ConfigChangeFragment configChangeWorker;
 
     public DrawingFragment() {
@@ -62,7 +63,7 @@ public class DrawingFragment extends Fragment implements
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setHasOptionsMenu(true);
+        //setHasOptionsMenu(true);
     }
 
     @Override
@@ -72,26 +73,27 @@ public class DrawingFragment extends Fragment implements
         surface.setOnDimensionsCalculatedListener(this);
         surface.setOnSelectRegionListener(this);
 
-        // Worker fragment to save data across device configuration changes
         FragmentManager fragmentManager = getActivity().getSupportFragmentManager();
-        configChangeWorker = (ConfigChangeFragment) fragmentManager.findFragmentByTag(TAG_CONFIG_CHANGE_FRAGMENT);
+        configChangeWorker = (ConfigChangeFragment) fragmentManager.
+                findFragmentByTag(ConfigChangeFragment.TAG_CONFIG_CHANGE_FRAGMENT);
 
         if (configChangeWorker == null) {
             // Worker doesn't exist, creates new worker
             configChangeWorker = new ConfigChangeFragment();
             FragmentTransaction fragmentTransaction = getActivity().getSupportFragmentManager().beginTransaction();
-            fragmentTransaction.add(configChangeWorker, TAG_CONFIG_CHANGE_FRAGMENT);
+            fragmentTransaction.add(configChangeWorker, ConfigChangeFragment.TAG_CONFIG_CHANGE_FRAGMENT);
             fragmentTransaction.commit();
         } else {
-            // Restores user drawn layers
-            LinkedList<Bitmap> layers = configChangeWorker.getLayers();
-            surface.setRestoredLayers(layers);
-            configChangeWorker.setLayers(null);
-
-            // Restores he ongoing operation bitmap
-            surface.setRestoredOngoingBitmap(configChangeWorker.getOngoingOperationBitmap());
-            configChangeWorker.setOngoingOperationBitmap(null);
+            // Restores the layers
+            LinkedList<Layer> layers = configChangeWorker.getLayers();
+            if (layers != null) {
+                surface.setLayers(configChangeWorker.getLayers());
+            }
         }
+
+        // Retrieves the undo manager for undoing and redoing drawing commands
+        UndoManager undoManager = ((ContainerFragment) getParentFragment()).getUndoManager();
+        surface.setUndoManager(undoManager);
 
         onRestoreInstanceState(savedInstanceState);
 
@@ -104,10 +106,11 @@ public class DrawingFragment extends Fragment implements
 
         // If state is saved immediately after start up, the surface may not have been created yet
         if (surface.isSurfaceCreated()) {
-            // Saves user's drawing
+            // Saves the layers
             configChangeWorker.setLayers(surface.getLayers());
-            configChangeWorker.setOngoingOperationBitmap(surface.getOngoingOperationBitmap());
-            outState.putInt(KEY_CURRENT_LAYER, surface.getCurrentLayer());
+
+            // Saves the current layer index
+            outState.putInt(KEY_CURRENT_LAYER, surface.getCurrentLayerIndex());
 
             // Saves viewport
             RectF viewport = surface.getViewport();
@@ -124,8 +127,8 @@ public class DrawingFragment extends Fragment implements
         if (savedInstanceState != null) {
             surface.setConfigurationChanged(true);
 
-            // Layers
-            setCurrentLayer(savedInstanceState.getInt(KEY_CURRENT_LAYER, DrawingSurface.NULL_CURRENT_LAYER));
+            // Restores the current layer index
+            surface.setCurrentLayerIndex(savedInstanceState.getInt(KEY_CURRENT_LAYER, 0));
 
             // Restores viewport
             float DEFAULT_CENTER_X = 0;
@@ -177,71 +180,38 @@ public class DrawingFragment extends Fragment implements
         }
     }
 
-    @Override
-    public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
-        // Empties menu of all items (e.g. from before a rotation)
-        //menu.clear();
-
-        inflater.inflate(R.menu.drawing_menu, menu);
-    }
-
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        switch (item.getItemId()) {
-            case R.id.action_undo:
-                surface.undo();
-                break;
-            case R.id.action_redo:
-                surface.redo();
-                break;
-            case R.id.action_grid:
-                // Toggles grid
-                Drawable gridIcon;
-                if (surface.isGridEnabled()) {
-                    gridIcon = getResources().getDrawable(R.drawable.ic_action_grid_off);
-                } else {
-                    gridIcon = getResources().getDrawable(R.drawable.ic_action_grid);
-                }
-                item.setIcon(gridIcon);
-                surface.setGridEnabled(!surface.isGridEnabled());
-                break;
-            default:
-                return false;
-        }
-        return true;
-    }
-
-    public LinkedList<Bitmap> getLayers() {
-        return surface.getLayers();
-    }
-
-    public void setLayerItems(LinkedList<Layer> layerItems) {
-        surface.setLayerItems(layerItems);
+    public void setLayers(LinkedList<Layer> layers) {
+        surface.setLayers(layers);
     }
 
     public void setCurrentLayer(int i) {
-        surface.setCurrentLayer(i);
+        surface.setCurrentLayerIndex(i);
     }
 
-    public int getCurrentLayer() {
-        return surface.getCurrentLayer();
+    public void setUndoManager(UndoManager undoManager) {
+        surface.setUndoManager(undoManager);
     }
 
-    public Bitmap addLayer(boolean duplicate) {
-        return surface.addLayer(duplicate);
+    public void undo(Object undoData) {
+        surface.undo(undoData);
     }
 
-    public void deleteLayer(int i) {
-        surface.deleteLayer(i);
+    public void redo(Object redoData) {
+        surface.redo(redoData);
     }
 
-    public int getLayerWidth() {
-        return surface.getLayerWidth();
+    public void invalidate() {
+        surface.invalidate();
     }
 
-    public int getLayerHeight() {
-        return surface.getLayerHeight();
+    public boolean isGridEnabled() {
+        return surface.isGridEnabled();
     }
+
+    public void setGridEnabled(boolean enabled) {
+        surface.setGridEnabled(enabled);
+    }
+
 
     public void setOnClearPanelsListener(OnClearPanelsListener onClearPanelsListener) {
         this.onClearPanelsListener = onClearPanelsListener;

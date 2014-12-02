@@ -219,16 +219,6 @@ public class PaletteFragment extends Fragment implements
         colourSelector.setLayoutParams(selectorParams);
         //parentLayout.addView(colourSelector);
 
-        /*// Sets the initial primaryColour
-        if (restoredSelectedColour == null) {
-            selectedColourButton = palettes.get(0).get(0);
-            selectedColourButton.setSelected(true);
-            //onPrimaryColourSelectedListener.onPrimaryColourSelected(selectedColourButton.getPrimaryColour(), false, true);
-            //primaryColour = selectedColourButton.getColour();
-        } else {
-            setColourButton(palettes.get(restoredSelectedColour[0]).get(restoredSelectedColour[1]).getColour());
-        }*/
-
         // TODO: This is too hacky, there should be a better way to achieve this
         // In the case that the primaryColour was set before the ColourButtons were created we must update the ColourSelector
         if (colourSetPriorToInitialDraw) {
@@ -236,6 +226,9 @@ public class PaletteFragment extends Fragment implements
         }
     }
 
+    /**
+     * UI indicator of the primary colour when there is no menu item (used in static panel layouts for tablets)
+     */
     private void updatePrimaryColourView() {
         if (primaryColourView != null) {
             Drawable colouredInner = getResources().getDrawable(R.drawable.palette_colour_button);

@@ -24,7 +24,10 @@ import android.view.SurfaceView;
 
 import com.jaween.pixelart.R;
 import com.jaween.pixelart.ui.layer.Layer;
-import com.jaween.pixelart.util.UndoRedoTracker;
+import com.jaween.pixelart.ui.undo.DrawOpManager;
+import com.jaween.pixelart.ui.undo.DrawOpUndoData;
+import com.jaween.pixelart.ui.undo.UndoItem;
+import com.jaween.pixelart.ui.undo.UndoManager;
 import com.jaween.pixelart.tools.ToolReport;
 import com.jaween.pixelart.tools.Tool;
 import com.jaween.pixelart.util.ScaleListener;
@@ -74,8 +77,6 @@ public class DrawingSurface extends SurfaceView implements SurfaceHolder.Callbac
     private OnDropColourListener onDropColourListener = null;
 
     // UI Controls
-    private static final int MAX_UNDOS = 50;
-    private UndoRedoTracker undoRedoTracker;
     private PixelGrid pixelGrid;
     private Thumbnail thumbnail;
     private OnClearPanelsListener onClearPanelsListener = null;
@@ -84,14 +85,16 @@ public class DrawingSurface extends SurfaceView implements SurfaceHolder.Callbac
     private final int selectionColour;
 
     // Layers
-    public static final int NULL_CURRENT_LAYER = -1;
-    private LinkedList<Bitmap> layers;
-    private int currentLayer = NULL_CURRENT_LAYER;
+    private LinkedList<Layer> layers;
+    private Bitmap compositeBitmap;
+    private int currentLayerIndex;
     private int layerWidth;
     private int layerHeight;
-    private Bitmap compositeBitmap;
-    private LinkedList<Layer> layerItems;
     private OnDimensionsCalculatedListener onDimensionsCalculatedListener = null;
+
+    // Undo system
+    private UndoManager undoManager = null;
+    private DrawOpManager drawOpManager;
 
     // Touch variables
     private static final int NULL_POINTER_ID = -1;
@@ -101,7 +104,7 @@ public class DrawingSurface extends SurfaceView implements SurfaceHolder.Callbac
     private PointF pixelTouch = new PointF();
     private boolean requiresUndoStackSaving = false;
 
-    // Configuration Change variables
+    // Configuration change variables
     private boolean configurationChanged = false;
     private RectF viewport = new RectF();
     private float restoredCenterX;
@@ -183,8 +186,6 @@ public class DrawingSurface extends SurfaceView implements SurfaceHolder.Callbac
     @Override
     public void surfaceCreated(SurfaceHolder holder) {
 
-        initialiseLayers();
-
         initialiseViewport();
 
         initialiseGestureDetector();
@@ -203,10 +204,6 @@ public class DrawingSurface extends SurfaceView implements SurfaceHolder.Callbac
                 layerWidth * thumnbnailScale,
                 layerHeight * thumnbnailScale,
                 thumnbnailScale);
-
-        // UI Controls
-        int maxUndos = MAX_UNDOS;
-        undoRedoTracker = new UndoRedoTracker(layers.get(currentLayer), maxUndos);
 
         // Grid
         int majorPixelSpacing = 8;
@@ -241,32 +238,6 @@ public class DrawingSurface extends SurfaceView implements SurfaceHolder.Callbac
     public void surfaceDestroyed(SurfaceHolder holder) {
         surfaceCreated = false;
         onDimensionsCalculatedListener = null;
-    }
-
-    private void initialiseLayers() {
-        if (currentLayer == NULL_CURRENT_LAYER) {
-            // New layers
-            layers = new LinkedList<Bitmap>();
-            layerWidth = 128;//(int) (getWidth() / INITIAL_SCALE);
-            layerHeight = 128;//(int) (getHeight() / INITIAL_SCALE);
-            currentLayer = 0;
-
-            // Bitmap that is used to temporarily store ongoing drawing operations
-            // (e.g. dragging out an oval shape is an ongoing operation that draws many temporary ovals)
-            ongoingOperationBitmap = Bitmap.createBitmap(layerWidth, layerHeight, Bitmap.Config.ARGB_8888);
-
-            addLayer(false);
-            resetOngoingBitmap();
-        } else {
-            // Restored layers
-            layerWidth = layers.get(currentLayer).getWidth();
-            layerHeight = layers.get(currentLayer).getHeight();
-        }
-
-        compositeBitmap = Bitmap.createBitmap(layerWidth, layerHeight, Bitmap.Config.ARGB_8888);
-
-        // Attaches the canvas to a layer
-        reusableCanvas.setBitmap(layers.get(currentLayer));
     }
 
     private void initialiseViewport() {
@@ -407,7 +378,7 @@ public class DrawingSurface extends SurfaceView implements SurfaceHolder.Callbac
             int action = event.getActionMasked();
             int index = event.getActionIndex();
 
-            // Ignores drawing operations that change pointer halfway through
+            // Choosing to ignore drawing operations that use multiple fingers
             if (currentPointerId == NULL_POINTER_ID) {
                 currentPointerId = event.getPointerId(index);
             }
@@ -418,7 +389,7 @@ public class DrawingSurface extends SurfaceView implements SurfaceHolder.Callbac
             }
 
             // Stops drawing if the current layer is locked
-            if (layerItems.get(currentLayer).isLocked()) {
+            if (layers.get(currentLayerIndex).isLocked()) {
                 // Consumes the touch event
                 return true;
             }
@@ -550,22 +521,21 @@ public class DrawingSurface extends SurfaceView implements SurfaceHolder.Callbac
         }
     }
 
-    // Composites layers onto the single compositeBitmap
+    // Composites layerBitmaps onto the single compositeBitmap
     private void compositeLayers() {
         // Blanks out composite bitmap
         compositeBitmap.eraseColor(blankOutPaint.getColor());
-        reusableCanvas.setBitmap(compositeBitmap);
 
-        // Draws each visible layer of the user's image
+        // Draws each visible layer of the user's image (bottom to top)
+        reusableCanvas.setBitmap(compositeBitmap);
         for (int i = layers.size() - 1; i >= 0; i--) {
-            if (layerItems.get(i).isVisible()) {
+            if (layers.get(i).isVisible()) {
                 Bitmap layer;
-                if (i == currentLayer) {
+                if (i == currentLayerIndex) {
                     layer = ongoingOperationBitmap;
                 } else {
-                    layer = layers.get(i);
+                    layer = layers.get(i).getImage();
                 }
-
                 reusableCanvas.drawBitmap(layer, 0, 0, bitmapPaint);
             }
         }
@@ -575,13 +545,14 @@ public class DrawingSurface extends SurfaceView implements SurfaceHolder.Callbac
         // Erases the ongoing operation, then blits the current layer onto it
         ongoingOperationBitmap.eraseColor(blankOutPaint.getColor());
         reusableCanvas.setBitmap(ongoingOperationBitmap);
-        reusableCanvas.drawBitmap(layers.get(currentLayer), 0, 0, bitmapPaint);
+        reusableCanvas.drawBitmap(layers.get(currentLayerIndex).getImage(), 0, 0, bitmapPaint);
     }
 
+    // Updates the current layer
     private void commitOngoingOperation() {
         // Erases the current layer, then blits the ongoing operation onto it
-        layers.get(currentLayer).eraseColor(blankOutPaint.getColor());
-        reusableCanvas.setBitmap(layers.get(currentLayer));
+        layers.get(currentLayerIndex).getImage().eraseColor(blankOutPaint.getColor());
+        reusableCanvas.setBitmap(layers.get(currentLayerIndex).getImage());
         reusableCanvas.drawBitmap(ongoingOperationBitmap, 0, 0, bitmapPaint);
     }
 
@@ -594,7 +565,9 @@ public class DrawingSurface extends SurfaceView implements SurfaceHolder.Callbac
                 transformation.mapRect(toolPathBounds);
                 if (toolPathBounds.intersects(transformedBitmapRectF.left, transformedBitmapRectF.top, transformedBitmapRectF.right, transformedBitmapRectF.bottom)) {
                     commitOngoingOperation();
-                    undoRedoTracker.bitmapModified(layers.get(currentLayer));
+
+                    UndoItem undoItem = drawOpManager.add(layers.get(currentLayerIndex).getImage(), currentLayerIndex);
+                    undoManager.pushUndoItem(undoItem);
                 }
             }
         }
@@ -621,68 +594,43 @@ public class DrawingSurface extends SurfaceView implements SurfaceHolder.Callbac
         }
     }
 
-    public void setLayerItems(LinkedList<Layer> layerItems) {
-        this.layerItems = layerItems;
+    public LinkedList<Layer> getLayers() {
+        return layers;
     }
 
-    public void setCurrentLayer(int i) {
-        currentLayer = i;
+    public void setLayers(LinkedList<Layer> layers) {
+        this.layers = layers;
+
+        Bitmap topLayerBitmap = layers.get(0).getImage();
+        drawOpManager = new DrawOpManager(topLayerBitmap);
+
+        // Retrieves the dimensions of the image
+        layerWidth = topLayerBitmap.getWidth();
+        layerHeight = topLayerBitmap.getHeight();
+
+        // Used for drawing operations that have progress state
+        ongoingOperationBitmap = Bitmap.createBitmap(layerWidth, layerHeight, Bitmap.Config.ARGB_8888);
+
+        // Used to display the layered image to the user
+        compositeBitmap = Bitmap.createBitmap(layerWidth, layerHeight, Bitmap.Config.ARGB_8888);
+
+        // Attaches the canvas to a layer
+        reusableCanvas.setBitmap(layers.get(currentLayerIndex).getImage());
+    }
+
+    public void setCurrentLayerIndex(int index) {
+        currentLayerIndex = index;
         resetOngoingBitmap();
-    }
 
-    public int getCurrentLayer() {
-        return currentLayer;
-    }
-
-    public Bitmap getOngoingOperationBitmap() {
-        return ongoingOperationBitmap;
-    }
-
-    public void setRestoredOngoingBitmap(Bitmap ongoingOperationBitmap) {
-        this.ongoingOperationBitmap = ongoingOperationBitmap;
-    }
-
-    public Bitmap addLayer(boolean duplicate) {
-        Bitmap newLayer;
-        if (duplicate) {
-            // Clones the current layer
-            newLayer = layers.get(currentLayer).copy(layers.get(currentLayer).getConfig(), true);
-        } else {
-            newLayer = Bitmap.createBitmap(
-                    layerWidth,
-                    layerHeight,
-                    Bitmap.Config.ARGB_8888);
-
-            // Blanks out the new layer
-            reusableCanvas.setBitmap(newLayer);
-            newLayer.eraseColor(blankOutPaint.getColor());
+        // Notifies the undo manager to change its 'layerBeforeModification'
+        if (undoManager != null) {
+            drawOpManager.setLayerBeforeModification(layers.get(currentLayerIndex).getImage());
+            //undoManager.switchLayer(layerBitmaps.get(currentLayerIndex));
         }
-
-        layers.addFirst(newLayer);
-
-        setCurrentLayer(0);
-
-        return newLayer;
     }
 
-    public void deleteLayer(int i) {
-        // Current layer must have its index reduced when i is greater than it or if it's at the end of the list
-        if (currentLayer > i || currentLayer == layers.size() - 1) {
-            currentLayer--;
-            setCurrentLayer(currentLayer);
-        }
-
-        layers.remove(i);
-
-
-    }
-
-    public int getLayerWidth() {
-        return layerWidth;
-    }
-
-    public int getLayerHeight() {
-        return layerHeight;
+    public int getCurrentLayerIndex() {
+        return currentLayerIndex;
     }
 
     public void dismissSelection() {
@@ -695,7 +643,9 @@ public class DrawingSurface extends SurfaceView implements SurfaceHolder.Callbac
             reusableCanvas.drawPath(toolReport.getPath(), blankOutPaint);
             commitOngoingOperation();
 
-            undoRedoTracker.bitmapModified(layers.get(currentLayer));
+            //undoManager.layerModified(layerBitmaps.get(currentLayerIndex), currentLayerIndex);
+            UndoItem undoItem = drawOpManager.add(layers.get(currentLayerIndex).getImage(), currentLayerIndex);
+            undoManager.pushUndoItem(undoItem);
         } else {
             Log.e("DrawingSurface", "Error: Clearing section but toolReport was null!");
         }
@@ -715,14 +665,36 @@ public class DrawingSurface extends SurfaceView implements SurfaceHolder.Callbac
         selectedPath.reset();
     }
 
-    public void undo() {
-        undoRedoTracker.undo(layers.get(currentLayer));
-        resetOngoingBitmap();
+    public void setUndoManager(UndoManager undoManager){
+        this.undoManager = undoManager;
     }
 
-    public void redo() {
-        undoRedoTracker.redo(layers.get(currentLayer));
-        resetOngoingBitmap();
+    public void undo(Object undoData) {
+        if (undoData instanceof DrawOpUndoData) {
+            drawOpManager.undo(layers, (DrawOpUndoData) undoData);
+            resetOngoingBitmap();
+        } else {
+            String className = "Null";
+
+            if (undoData != null) {
+                className = undoData.getClass().getName();
+            }
+            Log.e("DrawingSurface", "Undo data wasn't of type DrawOpUndoData, it was of type " + className);
+        }
+    }
+
+    public void redo(Object redoData) {
+        if (redoData instanceof DrawOpUndoData) {
+            drawOpManager.redo(layers, ((DrawOpUndoData) redoData));
+            resetOngoingBitmap();
+        } else {
+            String className = "Null";
+
+            if (redoData != null) {
+                className = redoData.getClass().getName();
+            }
+            Log.e("DrawingSurface", "Redo data wasn't of type DrawOpUndoData, it was of type " + className);
+        }
     }
 
     public void setConfigurationChanged(boolean configurationChanged) {
@@ -754,15 +726,6 @@ public class DrawingSurface extends SurfaceView implements SurfaceHolder.Callbac
         restoredCenterY = centerY;
         restoredScale = scale;
     }
-
-    public LinkedList<Bitmap> getLayers() {
-        return layers;
-    }
-
-    public void setRestoredLayers(LinkedList<Bitmap> restoredLayers) {
-        layers = restoredLayers;
-    }
-
 
     public float getScale() {
         return scaleListener.getScale();

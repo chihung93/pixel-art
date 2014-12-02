@@ -1,6 +1,5 @@
 package com.jaween.pixelart;
 
-import android.graphics.Bitmap;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.LayerDrawable;
 import android.os.Bundle;
@@ -9,6 +8,7 @@ import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
 import android.support.v7.app.ActionBarActivity;
 import android.support.v7.view.ActionMode;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -21,15 +21,14 @@ import com.jaween.pixelart.ui.DrawingFragment;
 import com.jaween.pixelart.ui.DrawingSurface;
 import com.jaween.pixelart.ui.PaletteFragment;
 import com.jaween.pixelart.ui.ToolboxFragment;
-<<<<<<< HEAD
-import com.jaween.pixelart.util.Color;
-=======
-import com.jaween.pixelart.ui.colourpicker.Color;
 import com.jaween.pixelart.ui.layer.Layer;
 import com.jaween.pixelart.ui.layer.LayerFragment;
+import com.jaween.pixelart.ui.undo.UndoItem;
+import com.jaween.pixelart.ui.undo.UndoManager;
+import com.jaween.pixelart.util.Color;
+import com.jaween.pixelart.util.ConfigChangeFragment;
 
 import java.util.LinkedList;
->>>>>>> Add simple layer support
 
 /**
  * Base container class for the main screen of the app: the drawing canvas and the tool panels.
@@ -49,14 +48,37 @@ public class ContainerFragment extends Fragment implements
     private PaletteFragment paletteFragment;
     private ToolboxFragment toolboxFragment;
     private LayerFragment layerFragment;
+    private ConfigChangeFragment configChangeFragment;
 
     // Fragment tags
     private static final String TAG_DRAWING_FRAGMENT = "tag_drawing_fragment";
     private static final String TAG_PANEL_MANAGER_FRAGMENT = "tag_panel_manager_fragment";
 
+    // Undo system
+    private static final int MAX_UNDOS = 50;
+    private UndoManager undoManager = null;
+
     // Contextual ActionBar (for selection and the ColourPicker)
     private ActionMode actionMode = null;
     private ActionMode.Callback actionModeCallback = this;
+
+    @Override
+    public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+
+        // Can't retain nested Fragments so we use the Activity's fragment manager
+        FragmentManager fragmentManager = getActivity().getSupportFragmentManager();
+        configChangeFragment = (ConfigChangeFragment) fragmentManager.findFragmentByTag(ConfigChangeFragment.TAG_CONFIG_CHANGE_FRAGMENT);
+        if (configChangeFragment == null) {
+            configChangeFragment = new ConfigChangeFragment();
+
+            FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
+            fragmentTransaction.add(configChangeFragment, ConfigChangeFragment.TAG_CONFIG_CHANGE_FRAGMENT);
+            fragmentTransaction.commit();
+        }
+
+        onRestoreInstanceState(savedInstanceState);
+    }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -81,12 +103,29 @@ public class ContainerFragment extends Fragment implements
         return view;
     }
 
-    // Called after PanelManagerFragments's child Fragments have been created
+    @Override
+    public void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+
+        // Saves the UndoManager
+        configChangeFragment.setUndoManager(undoManager);
+    }
+
+    private void onRestoreInstanceState(Bundle savedInstanceState) {
+        // Restores the UndoManager
+        undoManager = configChangeFragment.getUndoManager();
+        configChangeFragment.setUndoManager(null);
+        if (undoManager == null) {
+            undoManager = new UndoManager(MAX_UNDOS);
+        }
+    }
+
+    // Called after PanelManagerFragment's child Fragments have been created
     @Override
     public void onStart() {
         super.onStart();
 
-        // Gets fragments from the PanelManagerFragment in order to manage callbacks
+        // Gets Fragments from the PanelManagerFragment in order to manage their callbacks
         paletteFragment = panelManagerFragment.getPaletteFragment();
         toolboxFragment = panelManagerFragment.getToolboxFragment();
         layerFragment = panelManagerFragment.getLayerFragment();
@@ -99,6 +138,10 @@ public class ContainerFragment extends Fragment implements
         toolboxFragment.setOnToolSelectListener(this);
         layerFragment.setLayerListener(this);
 
+        // Fragments with undo capabilities
+        layerFragment.setUndoManager(undoManager);
+        drawingFragment.setUndoManager(undoManager);
+
         // Initial tool
         drawingFragment.setTool(toolboxFragment.getTool());
         toolboxFragment.setColour(paletteFragment.getPrimaryColour());
@@ -108,8 +151,11 @@ public class ContainerFragment extends Fragment implements
     public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
         super.onCreateOptionsMenu(menu, inflater);
 
-        // Inflates the base menu (undo, grid, settings, etc.)
-        inflater.inflate(R.menu.drawing_menu_narrow, menu);
+        // TODO: Load state menu items ONLY when dynamic panels are around
+        inflater.inflate(R.menu.state_menu, menu);
+
+        // Inflates the main actions menu (undo, layers, settings, etc.)
+        inflater.inflate(R.menu.main_actions_menu, menu);
 
         // Sets the icon of the tool menu item
         MenuItem item = menu.findItem(R.id.action_tool);
@@ -127,7 +173,7 @@ public class ContainerFragment extends Fragment implements
         LayerDrawable layerDrawable = Color.tintAndLayerDrawable(colouredInner, border, colour);
 
         // Sets the menu item
-        MenuItem paletteItem = menu.findItem(R.id.action_palette);
+       MenuItem paletteItem = menu.findItem(R.id.action_palette);
         paletteItem.setIcon(layerDrawable);
         getActivity().supportInvalidateOptionsMenu();
     }
@@ -140,6 +186,49 @@ public class ContainerFragment extends Fragment implements
         }
 
         switch (item.getItemId()) {
+            case R.id.action_undo:
+                // Unpacks the UndoItem far enough to determine which Fragment knows how to handle it
+                UndoItem undoItem = undoManager.popUndoItem();
+                if (undoItem != null) {
+                    switch (undoItem.getType()) {
+                        case DRAW_OP:
+                            drawingFragment.undo(undoItem.getData());
+                            layerFragment.invalidate();
+                            break;
+                        case LAYER:
+                            layerFragment.undo(undoItem.getData());
+                            drawingFragment.invalidate();
+                            break;
+                    }
+                }
+                break;
+            case R.id.action_redo:
+                // Unpacks the UndoItem far enough to determine which Fragment knows how to handle it
+                UndoItem redoItem = undoManager.popRedoItem();
+                if (redoItem != null) {
+                    switch (redoItem.getType()) {
+                        case DRAW_OP:
+                            drawingFragment.redo(redoItem.getData());
+                            drawingFragment.invalidate();
+                            break;
+                        case LAYER:
+                            layerFragment.redo(redoItem.getData());
+                            layerFragment.invalidate();
+                            break;
+                    }
+                }
+                break;
+            case R.id.action_grid:
+                // Toggles grid
+                Drawable gridIcon;
+                if (drawingFragment.isGridEnabled()) {
+                    gridIcon = getResources().getDrawable(R.drawable.ic_action_grid_off);
+                } else {
+                    gridIcon = getResources().getDrawable(R.drawable.ic_action_grid);
+                }
+                item.setIcon(gridIcon);
+                drawingFragment.setGridEnabled(!drawingFragment.isGridEnabled());
+                break;
             case R.id.action_tool:
                 panelManagerFragment.togglePanel(toolboxFragment);
                 break;
@@ -191,10 +280,6 @@ public class ContainerFragment extends Fragment implements
     @Override
     public void onDimensionsCalculated(int width, int height) {
         toolboxFragment.setDimensions(width, height);
-
-        // Initial layers
-        layerFragment.setInitialLayers(drawingFragment.getLayers());
-        layerFragment.setCurrentLayer(drawingFragment.getCurrentLayer());
     }
 
     @Override
@@ -232,6 +317,10 @@ public class ContainerFragment extends Fragment implements
         }
     }
 
+    public UndoManager getUndoManager() {
+        return undoManager;
+    }
+
     @Override
     public boolean onCreateActionMode(ActionMode actionMode, Menu menu) {
         MenuInflater inflater = getActivity().getMenuInflater();
@@ -267,24 +356,15 @@ public class ContainerFragment extends Fragment implements
         this.actionMode = null;
     }
 
+    // TODO: Find a lifecycle callback of ContainerFragment between LayerFragment's onCreate() and SurfaceView's onSurfaceCreated(), place this code in that instead
+    @Override
+    public void onLayersInitialised(LinkedList<Layer> layers) {
+        drawingFragment.setLayers(layers);
+    }
+
     @Override
     public void onCurrentLayerChange(int i) {
         drawingFragment.setCurrentLayer(i);
-    }
-
-    @Override
-    public void onLayerStateChange(LinkedList<Layer> layerItems) {
-        drawingFragment.setLayerItems(layerItems);
-    }
-
-    @Override
-    public Bitmap onAddLayer(boolean duplicate) {
-        return drawingFragment.addLayer(duplicate);
-    }
-
-    @Override
-    public void onDeleteLayer(int i) {
-        drawingFragment.deleteLayer(i);
     }
 
     @Override

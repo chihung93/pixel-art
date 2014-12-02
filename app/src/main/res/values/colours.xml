@@ -21,7 +21,7 @@
     </integer-array>
 
 
-    <color name="accent_colour">@color/pink</color>
+    <color name="accent_colour">@color/yellow</color>
     <color name="primary">@color/cerulean</color>
     <color name="primary_dark">@color/cerulean_dark</color>
 
@@ -33,7 +33,7 @@
     <color name="panel_text_colour">#FFFFFF</color>
     <color name="surface_background_colour">#FFCCCCCC</color>
 
-    <color name="pink">#FF5555</color>
+    <color name="yellow">#FFFFDD30</color>
     <color name="cerulean">#007BA7</color>
     <color name="cerulean_dark">#0044AA</color>
     <color name="palette_icon_grey_border">#CCCCCC</color>

@@ -15,6 +15,19 @@ import java.util.Arrays;
 public class Encoder {
 
     private ArrayList<Integer> encodedBitmapList = new ArrayList<Integer>();
+    private int[] pixelsArray;
+
+    private int width = 0;
+    private int height = 0;
+
+    public void setBitmapDimensions(int width, int height) {
+        // Creates a new pixel array if the incoming dimensions are new
+        if (this.width != width || this.height != height) {
+            pixelsArray = new int[width * height];
+            this.width = width;
+            this.height = height;
+        }
+    }
 
     /**
      * Uses run-length encoding to compress a Bitmap
@@ -26,6 +39,9 @@ public class Encoder {
 
         encodedBitmapList.clear();
 
+        // Loads the pixels from the bitmap into pixelsArray
+        source.getPixels(pixelsArray, 0, source.getWidth(), 0, 0, source.getWidth(), source.getHeight());
+
         int currentRunColour = source.getPixel(0, 0);
         int currentRunCount = 0;
 
@@ -34,7 +50,7 @@ public class Encoder {
         while (y < source.getHeight()) {
             int x = 0;
             while (x < source.getWidth()) {
-                int currentPixelColour = source.getPixel(x, y);
+                int currentPixelColour = pixelsArray[x + y * source.getWidth()];
                 if (currentPixelColour == currentRunColour) {
                     // Continues current run
                     currentRunCount += 1;
@@ -92,13 +108,13 @@ public class Encoder {
         int tempLineFeedCount = 0;
         int tempPixelsCount = 0;
 
-        // Iterates over pairs 'run colour's followed by 'run count's
+        // Iterates over pairs of run colours followed by run counts
         for (int i = 0; i < encodedBitmap.length; i += 2) {
             int currentRunColour = encodedBitmap[i];
             int currentRunCount = encodedBitmap[i + 1];
 
             while (currentRunCount > 0) {
-                destination.setPixel(x, y, currentRunColour);
+                pixelsArray[x + y * destination.getHeight()] = currentRunColour;
                 currentRunCount--;
                 tempPixelsCount++;
 
@@ -112,7 +128,7 @@ public class Encoder {
             }
         }
 
-
+        destination.setPixels(pixelsArray, 0, destination.getWidth(), 0, 0, destination.getWidth(), destination.getHeight());
         Log.d("Encoder", "Decoding took " + (System.currentTimeMillis() - startTime) + "ms, (" + (tempPixelsCount/tempLineFeedCount) + ", " + tempLineFeedCount + ")" );
     }
 }

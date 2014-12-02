@@ -3,6 +3,8 @@ package com.jaween.pixelart.ui.layer;
 import android.graphics.Bitmap;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentManager;
+import android.support.v4.app.FragmentTransaction;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -12,6 +14,10 @@ import android.widget.ImageButton;
 import android.widget.ListView;
 
 import com.jaween.pixelart.R;
+import com.jaween.pixelart.ui.undo.LayerUndoData;
+import com.jaween.pixelart.ui.undo.UndoItem;
+import com.jaween.pixelart.ui.undo.UndoManager;
+import com.jaween.pixelart.util.ConfigChangeFragment;
 
 import java.util.LinkedList;
 
@@ -21,10 +27,10 @@ import java.util.LinkedList;
 public class LayerFragment extends Fragment implements
         View.OnClickListener,
         ListView.OnItemClickListener,
-        LayerAdapter.LayerListener {
+        LayerAdapter.LayerListItemListener {
 
     // ListView data
-    private LinkedList<Layer> layers = new LinkedList<Layer>();
+    private LinkedList<Layer> layers = null;
     private LayerAdapter layerAdapter;
 
     // Views
@@ -34,23 +40,22 @@ public class LayerFragment extends Fragment implements
 
     // Layer properties
     private static final int MAX_LAYER_COUNT = 20;
-    private int currentLayer = 0;
+    private int currentLayerIndex = 0;
+    private int layerWidth = 128;
+    private int layerHeight = 128;
+    private Bitmap.Config config = Bitmap.Config.ARGB_8888;
 
     // Layer callbacks
     private LayerListener layerListener;
 
+    // Undo management
+    private UndoManager undoManager;
+
     // Fragment save state
+    private ConfigChangeFragment configChangeWorker;
     private static final String KEY_LAYER_COUNT = "key_layer_count";
     private static final String KEY_SCROLL_INDEX = "key_scroll_index";
     private static final String KEY_SCROLL_OFFSET = "key_scroll_offset";
-    private boolean stateRestored = false;
-
-    @Override
-    public void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        layerAdapter = new LayerAdapter(getActivity(), layers);
-        layerAdapter.setLayerListener(this);
-    }
 
     @Override
     public void onSaveInstanceState(Bundle outState) {
@@ -58,7 +63,7 @@ public class LayerFragment extends Fragment implements
         outState.putInt(KEY_LAYER_COUNT, layers.size());
         outState.putInt(KEY_SCROLL_INDEX, layerListView.getFirstVisiblePosition());
 
-        // Offset of topmost visible child
+        // Offset of top-most visible child
         View item = layerListView.getChildAt(0);
         int offset;
         if (item != null) {
@@ -67,28 +72,47 @@ public class LayerFragment extends Fragment implements
             offset = 0;
         }
         outState.putInt(KEY_SCROLL_OFFSET, offset);
+
+        // To save the large layers object, we store it in the retained worker Fragment
+        configChangeWorker.setLayers(layers);
     }
 
     private void onRestoreInstanceState(Bundle savedInstanceState) {
-        if (savedInstanceState != null) {
-            int layerCount = savedInstanceState.getInt(KEY_LAYER_COUNT, 0);
-            if (layerCount > 0) {
-                stateRestored = true;
-            }
+        // Worker fragment to save data across device configuration changes
+        FragmentManager fragmentManager = getActivity().getSupportFragmentManager();
+        configChangeWorker = (ConfigChangeFragment) fragmentManager.
+                findFragmentByTag(ConfigChangeFragment.TAG_CONFIG_CHANGE_FRAGMENT);
 
-            // TODO: Restore the state of layers (title, visibility, etc),
-            // Layer bitmaps are restored separately in setInitialLayers() as they are large objects
-            for (int i = 0; i < layerCount; i++) {
-                String title = "FAKE RESTORED " + getString(R.string.layer) + " " + (i + 1);
-                Layer layer = new Layer(null, title);
-                layers.addFirst(layer);
-            }
-            layerAdapter.notifyDataSetChanged();
+        if (configChangeWorker == null) {
+            // Worker doesn't exist, creates new worker
+            configChangeWorker = new ConfigChangeFragment();
+            FragmentTransaction fragmentTransaction = getActivity().getSupportFragmentManager().beginTransaction();
+            fragmentTransaction.add(configChangeWorker, ConfigChangeFragment.TAG_CONFIG_CHANGE_FRAGMENT);
+            fragmentTransaction.commit();
+        } else {
+            // TODO: Determine if this is a legitimate way of both the DrawingSurface and LayerFragment referencing the layers
+            // Restores the layers
+            layers = configChangeWorker.getLayers();
+            //configChangeWorker.setLayers(null);
 
-            // List scroll
-            int index = savedInstanceState.getInt(KEY_SCROLL_INDEX, 0);
-            int offset = savedInstanceState.getInt(KEY_SCROLL_OFFSET, 0);
-            layerListView.setSelectionFromTop(index, offset);
+            // Sets the adapter now that we a non-null list
+            layerAdapter = new LayerAdapter(getActivity(), layers);
+        }
+
+        // No layers to be restored, creates the initial layer
+        if (layers == null) {
+            // Creates the list and sets the adapter now that it's no longer null
+            layers = new LinkedList<Layer>();
+            layerAdapter = new LayerAdapter(getActivity(), layers);
+
+            // Adds the initial layer
+            int index = 0;
+            boolean duplicate = false;
+            addLayer(index, duplicate);
+        }
+
+        if (layerListener != null) {
+            layerListener.onLayersInitialised(layers);
         }
     }
 
@@ -100,69 +124,153 @@ public class LayerFragment extends Fragment implements
         layerAdd = (ImageButton) view.findViewById(R.id.ib_layer_add);
         layerDuplicate = (ImageButton) view.findViewById(R.id.ib_layer_duplicate);
 
+        onRestoreInstanceState(savedInstanceState);
+
+        layerAdapter.setLayerListItemListener(this);
         layerListView.setAdapter(layerAdapter);
         layerListView.setOnItemClickListener(this);
         layerAdd.setOnClickListener(this);
         layerDuplicate.setOnClickListener(this);
 
-        onRestoreInstanceState(savedInstanceState);
-
         return view;
     }
 
-    public void setInitialLayers(LinkedList<Bitmap> layers) {
-        // Sets the bitmaps of the restored Layer objects
-        for (int i = 0; i < layers.size(); i++) {
-            if (stateRestored) {
-                this.layers.get(i).setImage(layers.get(i));
-            } else {
-                // Initial startup, must create the layer titles
-                String title = "FAKE " + getString(R.string.layer) + " " + (i + 1);
-                Layer layer = new Layer(layers.get(i), title);
-                this.layers.add(layer);
-            }
+    // Sets the undo manager for undoing and redoing layer commands
+    public void setUndoManager(UndoManager undoManager) {
+        this.undoManager = undoManager;
+    }
+
+    private Layer addLayer(int index, boolean duplicate) {
+        // Creates the bitmap that belongs to the new layer
+        Bitmap image;
+        if (duplicate) {
+            image = layers.get(currentLayerIndex).getImage().copy(config, true);
+        } else {
+            image = Bitmap.createBitmap(layerWidth, layerHeight, config);
         }
 
-        layerAdapter.notifyDataSetChanged();
-
-        // Notifies the DrawingSurface of the visible and locked layers
-        onLayerStateChange();
-    }
-
-    private void addLayer(Bitmap image) {
-        // Updates the UI
+        // Creates the new layer object
         String title = getString(R.string.layer) + " " + (layers.size() + 1);
         Layer layer = new Layer(image, title);
-        layers.addFirst(layer);
+
+        // Pushes the item onto the undo stack if it's not the initial layer (must always have at least one layer)
+        if (layers.size() > 0) {
+            LayerUndoData layerUndoData = new LayerUndoData(LayerUndoData.LayerOperation.ADD, index, layer);
+            UndoItem undoItem = new UndoItem(UndoItem.Type.LAYER, 0, layerUndoData);
+            undoManager.pushUndoItem(undoItem);
+        }
+
+        // Updates the data structure and the UI
+        layers.add(index, layer);
         layerAdapter.notifyDataSetChanged();
 
-        // This scrolls to the of the list on item add similar to using the Transcript mode, but it
-        // also can maintain the scroll position on config change
+        // Scrolls to the top of the layer list. This is similar to using the 'Transcript mode', but
+        // it also can maintain the scroll position on config change
         layerListView.smoothScrollToPosition(0);
+
+        return layer;
     }
 
-    public void setCurrentLayer(int currentLayer) {
-        this.currentLayer = currentLayer;
+    private void deleteLayer(int index) {
+        Layer layer = layers.get(index);
+
+        // Adds the item to the undo stack
+        LayerUndoData layerUndoData = new LayerUndoData(LayerUndoData.LayerOperation.DELETE, index, layer);
+        UndoItem undoItem = new UndoItem(UndoItem.Type.LAYER, 0, layerUndoData);
+        undoManager.pushUndoItem(undoItem);
+
+        // Updates the data structure and the UI
+        layers.remove(layer);
+        layerAdapter.notifyDataSetChanged();
+    }
+
+    public LinkedList<Layer> getLayers() {
+        return layers;
+    }
+
+    public void undo(Object undoData) {
+        if (undoData instanceof LayerUndoData) {
+            switch (((LayerUndoData) undoData).getType()) {
+                case ADD:
+                    // TODO Compress bitmap here
+                    int layerIndex = ((LayerUndoData) undoData).getLayerIndex();
+                    layers.remove(layerIndex);
+                    layerAdapter.notifyDataSetChanged();
+                    break;
+                case DELETE:
+                    // TODO: Decompress bitmap here
+                    layerIndex = ((LayerUndoData) undoData).getLayerIndex();
+                    Layer layer = ((LayerUndoData) undoData).getLayer();
+                    layers.add(layerIndex, layer);
+                    layerAdapter.notifyDataSetChanged();
+                    break;
+                case MOVE:
+                    //TODO: Undo move and merge layers
+                    break;
+                case MERGE:
+                    break;
+            }
+        } else {
+            String className = "Null";
+
+            if (undoData != null) {
+                className = undoData.getClass().getName();
+            }
+            Log.e("DrawingSurface", "Undo data wasn't of type DrawOpUndoData, it was of type " + className);
+        }
+    }
+
+    public void redo(Object redoData) {
+        if (redoData instanceof LayerUndoData) {
+            switch (((LayerUndoData) redoData).getType()) {
+                case ADD:
+                    int layerIndex = ((LayerUndoData) redoData).getLayerIndex();
+                    Layer layer = ((LayerUndoData) redoData).getLayer();
+                    layers.add(layerIndex, layer);
+                    layerAdapter.notifyDataSetChanged();
+                    break;
+                case DELETE:
+                    layerIndex = ((LayerUndoData) redoData).getLayerIndex();
+                    layers.remove(layerIndex);
+                    layerAdapter.notifyDataSetChanged();
+                    break;
+                case MOVE:
+                    //TODO: Redo move and merge layers
+                    break;
+                case MERGE:
+                    break;
+            }
+        } else {
+            String className = "Null";
+
+            if (redoData != null) {
+                className = redoData.getClass().getName();
+            }
+            Log.e("DrawingSurface", "Redo data wasn't of type DrawOpUndoData, it was of type " + className);
+        }
+    }
+
+    public void invalidate() {
+        layerAdapter.notifyDataSetChanged();
     }
 
     @Override
     public void onClick(View view) {
         switch (view.getId()) {
             case R.id.ib_layer_add:
-                if (layerListener != null) {
-                    if (layers.size() < MAX_LAYER_COUNT) {
-                        Bitmap newLayer = layerListener.onAddLayer(false);
-                        addLayer(newLayer);
-                    }
+                if (layers.size() < MAX_LAYER_COUNT) {
+                    int index = 0;
+                    boolean duplicate = false;
+                    addLayer(index, duplicate);
                 }
                 break;
             case R.id.ib_layer_duplicate:
-                if (layerListener != null) {
-                    if (layers.size() < MAX_LAYER_COUNT) {
-                        Bitmap newLayer = layerListener.onAddLayer(true);
-                        addLayer(newLayer);
-                    }
+                if (layers.size() < MAX_LAYER_COUNT) {
+                    int index = currentLayerIndex;
+                    boolean duplicate = true;
+                    addLayer(index, duplicate);
                 }
+                break;
         }
     }
 
@@ -171,10 +279,12 @@ public class LayerFragment extends Fragment implements
         switch (view.getId()) {
             case R.id.rl_layer_item:
                 // TODO: Proper layer selection (currently uses a selector drawable and deselects on layer add)
-                layerListView.setItemChecked(currentLayer, false);
+                layerListView.setItemChecked(currentLayerIndex, false);
                 layerListView.setItemChecked(i, true);
-                currentLayer = i;
-                layerListener.onCurrentLayerChange(currentLayer);
+                currentLayerIndex = i;
+
+                // Notifies the SurfaceView to perform future draw operations on the new current layer
+                layerListener.onCurrentLayerChange(currentLayerIndex);
         }
         layerAdapter.notifyDataSetChanged();
     }
@@ -184,24 +294,13 @@ public class LayerFragment extends Fragment implements
     }
 
     @Override
-    public void onLayerStateChange() {
-        if (layerListener != null) {
-            layerListener.onLayerStateChange(layers);
-        }
-    }
-
-    @Override
-    public void onDeleteLayer(int i) {
-        if (layerListener != null) {
-            layerListener.onDeleteLayer(i);
-        }
+    public void onDeleteLayerFromList(int index) {
+        deleteLayer(index);
     }
 
     public interface LayerListener {
-        public void onCurrentLayerChange(int i);
-        public void onLayerStateChange(LinkedList<Layer> layerItems);
-        public Bitmap onAddLayer(boolean duplicate);
-        public void onDeleteLayer(int i);
-        public void onMergeLayer(int i);
+        public void onLayersInitialised(LinkedList<Layer> layers);
+        public void onCurrentLayerChange(int index);
+        public void onMergeLayer(int index);
     }
 }

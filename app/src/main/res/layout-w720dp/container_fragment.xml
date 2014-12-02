@@ -20,4 +20,10 @@
         android:layout_toLeftOf="@id/fl_container_panels"
         android:background="@drawable/panel_shadow_vertical" />
 
+    <FrameLayout
+        android:id="@+id/fl_container_layers"
+        android:layout_width="@dimen/layer_panel_width"
+        android:layout_height="match_parent"
+        android:layout_toLeftOf="@id/fl_container_panels" />
+
 </RelativeLayout>

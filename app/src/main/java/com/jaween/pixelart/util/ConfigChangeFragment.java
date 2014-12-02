@@ -4,17 +4,22 @@ import android.graphics.Bitmap;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 
+import com.jaween.pixelart.ui.layer.Layer;
+import com.jaween.pixelart.ui.undo.UndoManager;
+
 import java.util.LinkedList;
 
 /**
- * Worker Fragment which holds onto large objects (such as the user Bitmaps or Undo stack) when the
+ * Worker Fragment which holds onto large objects (such as the layers or undo stack) when the
  * device has a configuration change. The Activity will be recreated, but this fragment will be
  * retained and the newly recreated Fragment can retrieve the object.
  */
 public class ConfigChangeFragment extends Fragment {
 
-    private LinkedList<Bitmap> layers;
-    private Bitmap ongoingOperationBitmap;
+    public static final String TAG_CONFIG_CHANGE_FRAGMENT = "config_change_fragment";
+
+    private LinkedList<Layer> layers;
+    private UndoManager undoManager;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -24,19 +29,19 @@ public class ConfigChangeFragment extends Fragment {
         setRetainInstance(true);
     }
 
-    public void setLayers(LinkedList<Bitmap> data) {
-        this.layers = data;
-    }
-
-    public LinkedList<Bitmap> getLayers() {
+    public LinkedList<Layer> getLayers() {
         return layers;
     }
 
-    public Bitmap getOngoingOperationBitmap() {
-        return ongoingOperationBitmap;
+    public void setLayers(LinkedList<Layer> layers) {
+        this.layers = layers;
     }
 
-    public void setOngoingOperationBitmap(Bitmap ongoingOperationBitmap) {
-        this.ongoingOperationBitmap = ongoingOperationBitmap;
+    public UndoManager getUndoManager() {
+        return undoManager;
+    }
+
+    public void setUndoManager(UndoManager undoManager) {
+        this.undoManager = undoManager;
     }
 }

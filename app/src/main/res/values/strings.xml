@@ -60,5 +60,13 @@
     <string name="layer_remove">Remove Layer</string>
     <string name="layer_merge">Merge Layer</string>
 
+    <!-- Undo title strings -->
+    <array name="undo_titles">
+        <item>@string/tool_pen</item>
+        <item>"Add layer"</item>
+        <item>"Delete layer"</item>
+        <item>"Merge layer"</item>
+    </array>
+
 
 </resources>

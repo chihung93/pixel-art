@@ -35,7 +35,7 @@ public class LayerAdapter extends BaseAdapter implements View.OnClickListener {
     private BitmapDrawable checkerboardTile;
 
     // Layer deletion callback
-    private LayerListener layerListener = null;
+    private LayerListItemListener layerListItemListener = null;
 
     public LayerAdapter(Context context, LinkedList<Layer> data) {
         inflater = LayoutInflater.from(context);
@@ -141,24 +141,20 @@ public class LayerAdapter extends BaseAdapter implements View.OnClickListener {
             return;
         }
 
+        // TODO: Modifications to layer properties (such as visibility) aren't restored on undo/redo
         switch (view.getId()) {
             case R.id.iv_layer_visibility:
                 data.get(position).setVisible(!data.get(position).isVisible());
-                if (layerListener != null) {
-                    layerListener.onLayerStateChange();;
-                }
                 break;
             case R.id.iv_layer_lock:
                 data.get(position).setLocked(!data.get(position).isLocked());
-                if (layerListener != null) {
-                    layerListener.onLayerStateChange();;
-                }
                 break;
             case R.id.iv_layer_delete:
-                if (layerListener != null) {
-                    if (data.size() > 1) {
-                        layerListener.onDeleteLayer(position);
-                        data.remove(position);
+                if (data.size() > 1) {
+                    // Deletion occurs in the fragment to avoid accidentally deleting two items,
+                    // once from this adapter and once from LayerFragment.deleteLayer()
+                    if (layerListItemListener != null) {
+                        layerListItemListener.onDeleteLayerFromList(position);
                     }
                 }
                 break;
@@ -176,12 +172,11 @@ public class LayerAdapter extends BaseAdapter implements View.OnClickListener {
         ImageView delete;
     }
 
-    public void setLayerListener(LayerListener layerListener) {
-        this.layerListener = layerListener;
+    public void setLayerListItemListener(LayerListItemListener layerListItemListener) {
+        this.layerListItemListener = layerListItemListener;
     }
 
-    public interface LayerListener {
-        public void onLayerStateChange();
-        public void onDeleteLayer(int i);
+    public interface LayerListItemListener {
+        public void onDeleteLayerFromList(int i);
     }
 }
