@@ -5,7 +5,7 @@ android {
 	buildToolsVersion "21.0.0"
 
 	defaultConfig {
-		minSdkVersion 9
+		minSdkVersion 11
 		targetSdkVersion 21
 
         versionCode 0
@@ -19,8 +19,12 @@ android {
 		}
 	}
 
+    repositories {
+        mavenCentral()
+    }
+
     dependencies {
         compile "com.android.support:appcompat-v7:21.0.+"
-        compile "com.android.support:gridlayout-v7:21.0.+"
+        compile project(':libraries:drag-sort-listview:library')
     }
 }

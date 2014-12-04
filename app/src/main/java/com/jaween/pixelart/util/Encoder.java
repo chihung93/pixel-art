@@ -1,56 +1,68 @@
 package com.jaween.pixelart.util;
 
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
-import android.graphics.Color;
-import android.graphics.drawable.BitmapDrawable;
 import android.util.Log;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 
 /**
  * Compresses bitmaps
  */
 public class Encoder {
 
+    private static final String LOG_TAG = Encoder.class.getSimpleName();
+
     private ArrayList<Integer> encodedBitmapList = new ArrayList<Integer>();
-    private int[] pixelsArray;
+    private int[] pixelArray;
 
     private int width = 0;
     private int height = 0;
 
+    /**
+     * Allocates memory for temporary data structures. Must be set prior to calling an encode or
+     * decode function.
+     * @param width The width of Bitmaps that will be used
+     * @param height The height of Bitmaps that will be used
+     */
     public void setBitmapDimensions(int width, int height) {
         // Creates a new pixel array if the incoming dimensions are new
         if (this.width != width || this.height != height) {
-            pixelsArray = new int[width * height];
+            pixelArray = new int[width * height];
             this.width = width;
             this.height = height;
         }
     }
 
     /**
-     * Uses run-length encoding to compress a Bitmap
-     * @param source The bitmap to compress
-     * @return An array of Integers in pairs of 'run colour' followed by 'run count'
+     * Uses run-length encoding to compress a Bitmap.
+     * @param source The Bitmap to compress
+     * @return An array in pairs of 'run colour' followed by 'run count'
      */
     public Integer[] encodeRunLength(Bitmap source) {
-        long startTime = System.currentTimeMillis();
+        // Loads the pixels from the bitmap into pixelArray
+        source.getPixels(pixelArray, 0, source.getWidth(), 0, 0, source.getWidth(), source.getHeight());
+        return encodeRunLength(pixelArray);
+    }
+
+    /**
+     * Uses run-length encoding to compress an array.
+     * @param pixels The array of pixels to compress
+     * @return An array in pairs of 'run colour' followed by 'run count'
+     */
+    public Integer[] encodeRunLength(int[] pixels) {
 
         encodedBitmapList.clear();
 
-        // Loads the pixels from the bitmap into pixelsArray
-        source.getPixels(pixelsArray, 0, source.getWidth(), 0, 0, source.getWidth(), source.getHeight());
-
-        int currentRunColour = source.getPixel(0, 0);
+        // Initial run
+        int currentRunColour = pixels[0];
         int currentRunCount = 0;
 
         // Iterates over all the pixels in the bitmap
         int y = 0;
-        while (y < source.getHeight()) {
+        while (y < height) {
             int x = 0;
-            while (x < source.getWidth()) {
-                int currentPixelColour = pixelsArray[x + y * source.getWidth()];
+            while (x < width) {
+                int currentPixelColour = pixels[x + y * width];
                 if (currentPixelColour == currentRunColour) {
                     // Continues current run
                     currentRunCount += 1;
@@ -72,41 +84,46 @@ public class Encoder {
         encodedBitmapList.add(currentRunColour);
         encodedBitmapList.add(currentRunCount);
 
-        // Statistics
-        float newSize = (float) encodedBitmapList.size();
-        float oldSize = (float) (source.getWidth() * source.getHeight());
-        float ratioDecreased = 1f - newSize / oldSize;
-        float percentage = ratioDecreased * 100f;
-
+        // Converts the ArrayList to an array
         Integer[] encodedBitmapArray = new Integer[encodedBitmapList.size()];
         encodedBitmapList.toArray(encodedBitmapArray);
-
-        Log.d("Encoder", "Compressed by " + percentage + "% (" + (System.currentTimeMillis() - startTime) + "ms)");
 
         return encodedBitmapArray;
     }
 
     /**
-     * Decodes a run-length encoded array of Integers into a Bitmap
-     * @param encodedBitmap The Bitmap to decompress in pairs of 'run colour' followed by 'run count'
+     * Decodes a run-length encoded Bitmap.
+     * @param encodedBitmap The array to decompress, in pairs of 'run colour' followed by 'run count'
      * @param destination The Bitmap in which to store the decompressed data
      */
     public void decodeRunLength(Integer[] encodedBitmap, Bitmap destination) {
-        long startTime = System.currentTimeMillis();
+        decodeRunLength(encodedBitmap, pixelArray);
+        destination.setPixels(pixelArray, 0, width, 0, 0, width, height);
+    }
 
+    /**
+     * Decodes a run-length encoded Bitmap.
+     * @param encodedBitmap The array to decompress, in pairs of 'run colour' followed by 'run count'
+     * @param destination The array in which to store the decompressed data
+     */
+    public void decodeRunLength(Integer[] encodedBitmap, int[] destination) {
         if (encodedBitmap == null || destination == null) {
+            if (encodedBitmap == null) {
+                Log.e(LOG_TAG, "Decoding error: Encoded bitmap was null");
+            }
+            if (destination == null) {
+                Log.e(LOG_TAG, "Decoding error: Encoded bitmap was null");
+            }
             return;
         }
 
         if (encodedBitmap.length <= 0) {
+            Log.e(LOG_TAG, "Decoding error: Encoded bitmap length was " + encodedBitmap.length);
             return;
         }
 
         int x = 0;
         int y = 0;
-
-        int tempLineFeedCount = 0;
-        int tempPixelsCount = 0;
 
         // Iterates over pairs of run colours followed by run counts
         for (int i = 0; i < encodedBitmap.length; i += 2) {
@@ -114,21 +131,16 @@ public class Encoder {
             int currentRunCount = encodedBitmap[i + 1];
 
             while (currentRunCount > 0) {
-                pixelsArray[x + y * destination.getHeight()] = currentRunColour;
+                destination[x + y * height] = currentRunColour;
                 currentRunCount--;
-                tempPixelsCount++;
 
                 // Wraps x when it reaches the edge of the image
                 x++;
-                if (x >= destination.getWidth()) {
-                    tempLineFeedCount++;
+                if (x >= width) {
                     x = 0;
                     y++;
                 }
             }
         }
-
-        destination.setPixels(pixelsArray, 0, destination.getWidth(), 0, 0, destination.getWidth(), destination.getHeight());
-        Log.d("Encoder", "Decoding took " + (System.currentTimeMillis() - startTime) + "ms, (" + (tempPixelsCount/tempLineFeedCount) + ", " + tempLineFeedCount + ")" );
     }
 }

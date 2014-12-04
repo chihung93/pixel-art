@@ -14,7 +14,6 @@ import android.widget.SeekBar;
 import android.widget.TextView;
 
 import com.jaween.pixelart.R;
-import com.jaween.pixelart.util.AbsVerticalSeekBar;
 import com.jaween.pixelart.util.Color;
 
 /**
@@ -34,7 +33,7 @@ public class ColourPickerFragment extends Fragment implements
     private SeekBar hueBar;
     private SeekBar saturationBar;
     private SeekBar lightnessBar;
-    private AbsVerticalSeekBar opacityBar;
+    //private AbsVerticalSeekBar opacityBar;
 
     private int opacity;
     private int colour;
@@ -61,7 +60,7 @@ public class ColourPickerFragment extends Fragment implements
         hueBar = (SeekBar) v.findViewById(R.id.sb_hue);
         saturationBar = (SeekBar) v.findViewById(R.id.sb_saturation);
         lightnessBar = (SeekBar) v.findViewById(R.id.sb_lightness);
-        opacityBar = (AbsVerticalSeekBar) v.findViewById(R.id.sb_opacity);
+        //opacityBar = (AbsVerticalSeekBar) v.findViewById(R.id.sb_opacity);
         hueText = (EditText) v.findViewById(R.id.et_hue);
         saturationText = (EditText) v.findViewById(R.id.et_saturation);
         lightnessText = (EditText) v.findViewById(R.id.et_lightness);
@@ -82,7 +81,7 @@ public class ColourPickerFragment extends Fragment implements
         //addTextWatchers();
 
         // Sets the initial colours
-        opacity = opacityBar.getProgress();
+        opacity = 255;//opacityBar.getProgress();
 
         if (hasRestoredColour) {
             colourPickerView.setHSL(restoredColour[0], restoredColour[1], restoredColour[2], true);
@@ -145,7 +144,7 @@ public class ColourPickerFragment extends Fragment implements
         hueText.setText(Integer.valueOf(hueBar.getProgress()).toString());
         saturationText.setText(Integer.valueOf(saturationBar.getProgress()).toString());
         lightnessText.setText(Integer.valueOf(lightnessBar.getProgress()).toString());
-        opacityText.setText(Integer.valueOf(opacityBar.getProgress()).toString());
+        //opacityText.setText(Integer.valueOf(opacityBar.getProgress()).toString());
     }
 
     @Override
@@ -276,7 +275,7 @@ public class ColourPickerFragment extends Fragment implements
                 if (charSequence == "") {
                     opacityText.setText("0");
                 } else {
-                    opacityBar.setProgress(Integer.parseInt(charSequence.toString()));
+                    //opacityBar.setProgress(Integer.parseInt(charSequence.toString()));
                 }
             }
 

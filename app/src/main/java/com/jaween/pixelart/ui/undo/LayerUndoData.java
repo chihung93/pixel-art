@@ -32,7 +32,8 @@ public class LayerUndoData {
     private Bitmap.Config config;
 
     /**
-     * Used when adding or deleting a layer
+     * Used when adding or deleting a layer. Stores the layer's bitmap in a compressed form.
+     * @param type Use either LayerOperaiton.ADD or LayerOperation.DELETE
      * @param layerIndex The index of the layer
      * @param layer The layer being added or deleted
      */
@@ -54,7 +55,7 @@ public class LayerUndoData {
     }
 
     /**
-     * Used when repositioning a layer in the layer list
+     * Used when repositioning a layer in the layer list. Implicitly of type LayerOperation.MOVE.
      * @param fromIndex The index in the list that the layer is coming from
      * @param toIndex The index in the list that the layer is moving to
      */
@@ -80,6 +81,10 @@ public class LayerUndoData {
         return toIndex;
     }
 
+    /**
+     * Retrieves the Layer object with the bitmap its decompressed state.
+     * @return The recomposed Layer instance
+     */
     public Layer getLayer() {
         // Decompresses the bitmap
         Bitmap layerImage = Bitmap.createBitmap(layerWidth, layerHeight, config);

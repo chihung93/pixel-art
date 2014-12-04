@@ -24,6 +24,7 @@
     <color name="accent_colour">@color/yellow</color>
     <color name="primary">@color/cerulean</color>
     <color name="primary_dark">@color/cerulean_dark</color>
+    <color name="highlight">#40BBBBBB</color>
 
     <color name="actionbar_text_colour">#FFFFFF</color>
     <color name="actionbar_background_colour">@color/primary</color>

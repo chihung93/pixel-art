@@ -5,15 +5,22 @@
     android:layout_height="match_parent"
     android:background="@color/panel_background">
 
-    <ListView
-        android:id="@+id/lv_layer_list"
+    <com.mobeta.android.dslv.DragSortListView xmlns:dslv="http://schemas.android.com/apk/res-auto"
+        android:id="@+id/dslv_layer_list"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_above="@+id/vw_layer_button_bar_separator"
         android:layout_alignParentTop="true"
         android:choiceMode="singleChoice"
         android:clipToPadding="false"
-        android:scrollbarStyle="outsideOverlay" />
+        android:scrollbarStyle="outsideOverlay"
+        dslv:drag_enabled="true"
+        dslv:drag_handle_id="@+id/iv_layer_handle"
+        dslv:max_drag_scroll_speed="1"
+        dslv:remove_enabled="false"
+        dslv:slide_shuffle_speed="0.3"
+        dslv:use_default_controller="true"
+        dslv:float_background_color="@color/primary_dark"/>
 
     <View
         android:id="@+id/vw_layer_button_bar_separator"

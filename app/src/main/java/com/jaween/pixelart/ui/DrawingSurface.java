@@ -67,7 +67,6 @@ public class DrawingSurface extends SurfaceView implements SurfaceHolder.Callbac
 
     // Tool and drawing variables
     private Tool tool;
-    private Paint toolPaint = new Paint();
     private Paint bitmapPaint;
     private PointF displayTouch = new PointF();
     private float dp;
@@ -83,6 +82,8 @@ public class DrawingSurface extends SurfaceView implements SurfaceHolder.Callbac
     private ToolReport toolReport;
     private RectF toolPathBounds = new RectF();
     private final int selectionColour;
+    private Paint blankOutPaint = new Paint();
+    private Path selectedPath = new Path();
 
     // Layers
     private LinkedList<Layer> layers;
@@ -114,8 +115,6 @@ public class DrawingSurface extends SurfaceView implements SurfaceHolder.Callbac
 
     // Temporary UI variables
     private Paint tempTextPaint = new Paint();
-    private Paint blankOutPaint = new Paint();
-    private Path selectedPath = new Path();
     private BitmapDrawable checkerboardTile;
     private Rect transformedBitmapRect = new Rect();
 
@@ -135,8 +134,8 @@ public class DrawingSurface extends SurfaceView implements SurfaceHolder.Callbac
         initialisePaints();
 
         // Transparency checkerboard background
-        Bitmap checkerboardBitmap = BitmapFactory.decodeResource(context.getResources(), R.drawable.checkerboard);
-        checkerboardTile = new BitmapDrawable(getResources(), checkerboardBitmap);
+        Bitmap bitmap = BitmapFactory.decodeResource(context.getResources(), R.drawable.checkerboard);
+        checkerboardTile = new BitmapDrawable(getResources(), bitmap);
         checkerboardTile.setTileModeXY(Shader.TileMode.REPEAT, Shader.TileMode.REPEAT);
 
         this.context = context;
@@ -144,11 +143,6 @@ public class DrawingSurface extends SurfaceView implements SurfaceHolder.Callbac
     }
 
     private void initialisePaints() {
-        // Tool paint defaults
-        toolPaint.setAntiAlias(false);
-        toolPaint.setStyle(Paint.Style.STROKE);
-        toolPaint.setColor(Color.DKGRAY);
-
         // Purely used to blit bitmaps
         bitmapPaint = new Paint();
         bitmapPaint.setStyle(Paint.Style.STROKE);
@@ -157,7 +151,7 @@ public class DrawingSurface extends SurfaceView implements SurfaceHolder.Callbac
         shadowWidthDp = 4 * dp;
         shadowPaint.setShadowLayer(shadowWidthDp, 0, shadowWidthDp / 2, Color.DKGRAY);
 
-        // Region selection
+        // Region selection 'marching ants' dotted border
         selectionBorderPaint.setStrokeWidth(2 * dp);
         selectionBorderPaint.setColor(selectionColour);
         selectionBorderPaint.setAlpha(SELECTION_BORDER_ALPHA);
@@ -165,6 +159,7 @@ public class DrawingSurface extends SurfaceView implements SurfaceHolder.Callbac
         selectionBorderPaint.setPathEffect(new DashPathEffect(new float[]{ 8 * dp, 8 * dp }, 0));
         selectionBorderPaint.setStyle(Paint.Style.STROKE);
 
+        // Region selection inner transparent solid colour
         selectionInnerPaint.setColor(selectionColour);
         selectionInnerPaint.setAlpha(SELECTION_FILL_ALPHA);
         selectionInnerPaint.setAntiAlias(true);
@@ -213,7 +208,7 @@ public class DrawingSurface extends SurfaceView implements SurfaceHolder.Callbac
         }
 
         Bitmap bitmap = BitmapFactory.decodeResource(context.getResources(), R.drawable.checkerboard);
-        checkerboardTile = new BitmapDrawable(bitmap);
+        checkerboardTile = new BitmapDrawable(context.getResources(), bitmap);
         checkerboardTile.setTileModeXY(Shader.TileMode.REPEAT, Shader.TileMode.REPEAT);
 
         surfaceCreated = true;
@@ -226,7 +221,7 @@ public class DrawingSurface extends SurfaceView implements SurfaceHolder.Callbac
             onDimensionsCalculatedListener.onDimensionsCalculated(layerWidth, layerHeight);
         }
 
-        // Encompasses the entire layer with path
+        // Encompasses the entire layer with a path used to select all
         selectedPath.moveTo(0, 0);
         selectAllPath.lineTo(layerWidth, 0);
         selectAllPath.lineTo(layerWidth, layerHeight);
@@ -313,21 +308,6 @@ public class DrawingSurface extends SurfaceView implements SurfaceHolder.Callbac
                     draw(canvas);
                 }
             } finally {
-                // TODO Fix IllegalArgumentException at the unlockCanvasAndPost line on app startup
-                //E/IMGSRV﹕ :0: gralloc_unregister_buffer: Cannot unregister a locked buffer (ID=27812)
-                //W/GraphicBufferMapper﹕ unregisterBuffer(0x417f7360) failed -22 (Invalid argument)
-                //E/Surface﹕ Surface::unlockAndPost failed, no locked buffer
-                //W/dalvikvm﹕ threadid=11: thread exiting with uncaught exception (group=0x41900700)
-                //E/AndroidRuntime﹕ FATAL EXCEPTION: Thread-65118
-
-                // TODO Fix similar IllegalArgumentException on app startup
-                //11-21 14:56:03.900  26409-26436/com.jaween.pixelart E/AndroidRuntime﹕ FATAL EXCEPTION: Thread-6285
-                //java.lang.IllegalArgumentException
-                //at android.view.Surface.nativeUnlockCanvasAndPost(Native Method)
-                //at android.view.Surface.unlockCanvasAndPost(Surface.java:255)
-                //at android.view.SurfaceView$4.unlockCanvasAndPost(SurfaceView.java:844)
-                //at com.jaween.pixelart.ui.DrawingSurface.run(DrawingSurface.java:333)
-                //at java.lang.Thread.run(Thread.java:841)
                 if (canvas != null) {
                     try {
                         holder.unlockCanvasAndPost(canvas);
@@ -490,7 +470,11 @@ public class DrawingSurface extends SurfaceView implements SurfaceHolder.Callbac
             canvas.drawRect(transformedBitmapRectF, shadowPaint);
 
             // Transparency checkerboard
-            transformedBitmapRect.set((int) transformedBitmapRectF.left, (int) transformedBitmapRectF.top, (int) transformedBitmapRectF.right, (int) transformedBitmapRectF.bottom);
+            transformedBitmapRect.set(
+                    (int) transformedBitmapRectF.left,
+                    (int) transformedBitmapRectF.top,
+                    (int) transformedBitmapRectF.right,
+                    (int) transformedBitmapRectF.bottom);
             checkerboardTile.setBounds(transformedBitmapRect);
             checkerboardTile.draw(canvas);
 
@@ -521,7 +505,7 @@ public class DrawingSurface extends SurfaceView implements SurfaceHolder.Callbac
         }
     }
 
-    // Composites layerBitmaps onto the single compositeBitmap
+    // Composites layers onto the single compositeBitmap
     private void compositeLayers() {
         // Blanks out composite bitmap
         compositeBitmap.eraseColor(blankOutPaint.getColor());
@@ -556,14 +540,18 @@ public class DrawingSurface extends SurfaceView implements SurfaceHolder.Callbac
         reusableCanvas.drawBitmap(ongoingOperationBitmap, 0, 0, bitmapPaint);
     }
 
-    private void commitIfWithinDrawingBounds(ToolReport toolToolReport) {
+    private void commitIfWithinDrawingBounds(ToolReport toolReport) {
         if (requiresUndoStackSaving) {
             requiresUndoStackSaving = false;
 
             if (tool.getToolAttributes().isMutator()) {
-                toolToolReport.getPath().computeBounds(toolPathBounds, false);
+                toolReport.getPath().computeBounds(toolPathBounds, false);
                 transformation.mapRect(toolPathBounds);
-                if (toolPathBounds.intersects(transformedBitmapRectF.left, transformedBitmapRectF.top, transformedBitmapRectF.right, transformedBitmapRectF.bottom)) {
+                if (toolPathBounds.intersects(
+                        transformedBitmapRectF.left,
+                        transformedBitmapRectF.top,
+                        transformedBitmapRectF.right,
+                        transformedBitmapRectF.bottom)) {
                     commitOngoingOperation();
 
                     UndoItem undoItem = drawOpManager.add(layers.get(currentLayerIndex).getImage(), currentLayerIndex);
@@ -623,10 +611,7 @@ public class DrawingSurface extends SurfaceView implements SurfaceHolder.Callbac
         resetOngoingBitmap();
 
         // Notifies the undo manager to change its 'layerBeforeModification'
-        if (undoManager != null) {
-            drawOpManager.setLayerBeforeModification(layers.get(currentLayerIndex).getImage());
-            //undoManager.switchLayer(layerBitmaps.get(currentLayerIndex));
-        }
+        drawOpManager.switchLayer(layers.get(currentLayerIndex).getImage());
     }
 
     public int getCurrentLayerIndex() {
@@ -643,7 +628,6 @@ public class DrawingSurface extends SurfaceView implements SurfaceHolder.Callbac
             reusableCanvas.drawPath(toolReport.getPath(), blankOutPaint);
             commitOngoingOperation();
 
-            //undoManager.layerModified(layerBitmaps.get(currentLayerIndex), currentLayerIndex);
             UndoItem undoItem = drawOpManager.add(layers.get(currentLayerIndex).getImage(), currentLayerIndex);
             undoManager.pushUndoItem(undoItem);
         } else {
@@ -671,7 +655,7 @@ public class DrawingSurface extends SurfaceView implements SurfaceHolder.Callbac
 
     public void undo(Object undoData) {
         if (undoData instanceof DrawOpUndoData) {
-            drawOpManager.undo(layers, (DrawOpUndoData) undoData);
+            drawOpManager.undo(layers, currentLayerIndex, (DrawOpUndoData) undoData);
             resetOngoingBitmap();
         } else {
             String className = "Null";
@@ -685,7 +669,7 @@ public class DrawingSurface extends SurfaceView implements SurfaceHolder.Callbac
 
     public void redo(Object redoData) {
         if (redoData instanceof DrawOpUndoData) {
-            drawOpManager.redo(layers, ((DrawOpUndoData) redoData));
+            drawOpManager.redo(layers, currentLayerIndex, ((DrawOpUndoData) redoData));
             resetOngoingBitmap();
         } else {
             String className = "Null";

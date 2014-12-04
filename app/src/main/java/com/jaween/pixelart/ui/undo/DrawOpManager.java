@@ -1,11 +1,6 @@
 package com.jaween.pixelart.ui.undo;
 
 import android.graphics.Bitmap;
-import android.graphics.Canvas;
-import android.graphics.Color;
-import android.graphics.Paint;
-import android.graphics.PorterDuff;
-import android.graphics.PorterDuffXfermode;
 import android.util.Log;
 
 import com.jaween.pixelart.ui.layer.Layer;
@@ -14,194 +9,171 @@ import com.jaween.pixelart.util.Encoder;
 import java.util.List;
 
 /**
- * Created by ween on 11/29/14.
+ * Used by first constructing the object with the initial state Bitmap. Prior to an undoable
+ * drawing occurring you must pass the Bitmap in switchLayer(). After the drawing
+ * call add(), this will find the differences between the new frame and the previous frame and store
+ * the compressed result. The undo() function will then decompress that result and modify the input
+ * to return it to what it was before the drawing operation.
  */
 public class DrawOpManager {
 
-    private static final int BITS_PER_CHANNEL = 8;
-    private static final int ALPHA_CHANNEL_SHIFT = 3 * BITS_PER_CHANNEL;
-    private static final int OPAQUE_ALPHA_CHANNEL = 255 << ALPHA_CHANNEL_SHIFT;
+    // Bitmaps and compression
+    private Bitmap layerBeforeModification = null;
+    private final Encoder encoder = new Encoder();
 
-    private static final Encoder encoder = new Encoder();
+    // Bitmap pixel arrays
+    private int[] lhsPixelArray = null;
+    private int[] rhsPixelArray = null;
+    private int[] xorArray = null;
 
-    private static Bitmap layerBeforeModification;
-    private static Bitmap xorBitmap;
-    private static Bitmap decompressedChanges;
-    
-    private static int[] lhsPixelsArray;
-    private static int[] rhsPixelsArray;
-
-    private static Canvas sharedCanvas;
-    private static Paint xorPaint;
-    private static Paint bitmapPaint;
+    // Layer dimensions
+    private int layerWidth;
+    private int layerHeight;
 
     public DrawOpManager(Bitmap initialBitmap) {
+        // Layer dimensions
+        layerWidth = initialBitmap.getWidth();
+        layerHeight = initialBitmap.getHeight();
+
         // Used for storing a copy of the previous frame
-        layerBeforeModification = Bitmap.createBitmap(
-                initialBitmap.getWidth(),
-                initialBitmap.getHeight(),
-                initialBitmap.getConfig()
-        );
+        layerBeforeModification = initialBitmap.copy(initialBitmap.getConfig(), true);
 
-        // Used for XOR'ing bitmaps together
-        xorBitmap = Bitmap.createBitmap(
-                initialBitmap.getWidth(),
-                initialBitmap.getHeight(),
-                initialBitmap.getConfig()
-        );
-
-        // Used for temporarily storing decompressed changes from last frame or to next frame
-        decompressedChanges = Bitmap.createBitmap(
-                initialBitmap.getWidth(),
-                initialBitmap.getHeight(),
-                initialBitmap.getConfig()
-        );
-
-        // Used to retrieve and set pixel data in the xor() function (faster than Bitmap.setPixel())
-        lhsPixelsArray = new int[initialBitmap.getWidth() * initialBitmap.getHeight()];
-        rhsPixelsArray = new int[initialBitmap.getWidth() * initialBitmap.getHeight()];
+        // Holds pixel data (manipulations are faster than individual Bitmap.setPixel() calls)
+        lhsPixelArray = new int[layerWidth * layerHeight];
+        rhsPixelArray = new int[layerWidth * layerHeight];
+        xorArray = new int[layerWidth * layerHeight];
 
         // Allocates memory for pixel data in the compression function
-        encoder.setBitmapDimensions(initialBitmap.getWidth(), initialBitmap.getHeight());
-
-        sharedCanvas = new Canvas();
-
-        initialisePaints();
-
-        bitmapCopy(initialBitmap, layerBeforeModification);
+        encoder.setBitmapDimensions(layerWidth, layerHeight);
     }
 
-    private void initialisePaints() {
-        bitmapPaint = new Paint();
-
-        xorPaint = new Paint();
-        xorPaint.setXfermode(new PorterDuffXfermode(PorterDuff.Mode.XOR));
+    /**
+     * Keeps a pre-draw snapshot of the layer
+     * @param currentLayer The new current layer
+     */
+    public void switchLayer(Bitmap currentLayer) {
+        bitmapCopy(currentLayer, layerBeforeModification);
     }
 
-    public void setLayerBeforeModification(Bitmap layerBeforeModification) {
-        bitmapCopy(layerBeforeModification, this.layerBeforeModification);
-    }
-
-    public UndoItem add(Bitmap currentFrame, int layerIndex) {
+    public UndoItem add(Bitmap currentLayer, int layerIndex) {
         // Finds the changes between the bitmaps
-        Bitmap changes = xor(currentFrame, layerBeforeModification);
+        xorArray = xor(layerBeforeModification, currentLayer);
 
         // Compresses these differences
-        Integer[] encodedChanges = encoder.encodeRunLength(changes);
+        Integer[] encodedChanges = encoder.encodeRunLength(xorArray);
+
+        // Creates an UndoItem
+        DrawOpUndoData undoData = new DrawOpUndoData(encodedChanges, layerIndex);
+        UndoItem undoItem = new UndoItem(UndoItem.Type.DRAW_OP, 0, undoData);
 
         // Keeps a copy of this frame for future undos/redos
-        bitmapCopy(currentFrame, layerBeforeModification);
+        bitmapCopy(currentLayer, layerBeforeModification);
 
-        DrawOpUndoData undoData = new DrawOpUndoData(encodedChanges, layerIndex);
-        return new UndoItem(UndoItem.Type.DRAW_OP, 0, undoData);
+        return undoItem;
     }
 
-    public void undo(List<Layer> layers, DrawOpUndoData undoData) {
+    public void undo(List<Layer> layers, int currentLayerIndex, DrawOpUndoData undoData) {
         // The changes to be undone
         Integer[] previousChanges = undoData.getCompressedChanges();
 
-        // The layer which was modified
-        int layerIndex = undoData.getLayerIndex();
-        Bitmap modifiedLayer = layers.get(layerIndex).getImage();
+        // Retrieves the layer which was modified
+        int modifiedLayerIndex = undoData.getLayerIndex();
+        Bitmap modifiedLayer = layers.get(modifiedLayerIndex).getImage();
 
         // Rolls back the change
         performUpdate(previousChanges, modifiedLayer);
+
+        // Keeps a copy of the currently selected layer for future undos/redos
+        Bitmap currentLayer = layers.get(currentLayerIndex).getImage();
+        bitmapCopy(currentLayer, layerBeforeModification);
     }
 
-    public void redo(List<Layer> layers, DrawOpUndoData redoData) {
-        // The layer to be redone
-        int layerIndex = redoData.getLayerIndex();
-        Bitmap layerBeforeRollforward = layers.get(layerIndex).getImage();
-
-        // This frame will become the previous frame since it's as if the user is drawing on screen
-        bitmapCopy(layerBeforeRollforward, layerBeforeModification);
+    public void redo(List<Layer> layers, int currentLayerIndex, DrawOpUndoData redoData) {
+        // Retrieves the layer which needs to be modified
+        int layerToModifyIndex = redoData.getLayerIndex();
+        Bitmap layerToModify = layers.get(layerToModifyIndex).getImage();
 
         // Returns this change to the undo stack
         Integer[] nextChanges = redoData.getCompressedChanges();
 
         // Performs the redo operation to the current frame
-        performUpdate(nextChanges, layerBeforeRollforward);
+        performUpdate(nextChanges, layerToModify);
+
+        // Keeps a copy of the currently selected layer for future undos/redos
+        Bitmap currentLayer = layers.get(currentLayerIndex).getImage();
+        bitmapCopy(currentLayer, layerBeforeModification);
     }
 
     /**
      * Updates a bitmap based on an array of compressed changes
      * This can be an undo change or a redo change
      **/
-    private static void performUpdate(Integer[] compressedChanges, Bitmap destination) {
+    private void performUpdate(Integer[] compressedChanges, Bitmap destination) {
         // Decodes the uncompressed changes
-        encoder.decodeRunLength(compressedChanges, decompressedChanges);
+        encoder.decodeRunLength(compressedChanges, xorArray);
 
         // Retrieves the new frame
-        Bitmap newFrameBitmap = xor(destination, decompressedChanges);
-
-        // Updates the current frame
-        bitmapCopy(newFrameBitmap, destination);
+        xor(destination, xorArray);
 
         // Updates the previous frame (for use with the next drawing operation)
-        bitmapCopy(newFrameBitmap, layerBeforeModification);
+        bitmapCopy(destination, layerBeforeModification);
     }
 
     /**
-     * Copies the pixels from a source bitmap onto a destination bitmap
+     * Copies the pixels from a source Bitmap into a destination Bitmap.
      **/
-    private static void bitmapCopy(Bitmap source, Bitmap destination) {
-        sharedCanvas.setBitmap(destination);
-        sharedCanvas.drawBitmap(source, 0, 0, bitmapPaint);
+    private void bitmapCopy(Bitmap source, Bitmap destination) {
+        source.getPixels(lhsPixelArray, 0, layerWidth, 0, 0, layerWidth, layerHeight);
+        destination.setPixels(lhsPixelArray, 0, layerWidth, 0, 0, layerWidth, layerHeight);
     }
 
     /**
-     * Returns the bitwise XOR of the lhs and rhs (i.e. the differences between the two bitmaps)
-     * // TODO: Ensure bitmap configurations are also the same.
+     * Finds the bitwise XOR of the two bitmaps (i.e. the differences between them).
+     * @param lhs The left hand side Bitmap
+     * @param rhs The right hand side Bitmap
+     * @return An array containing the XOR'd pixels
      **/
-    private static Bitmap xor(Bitmap lhs, Bitmap rhs) {
-        long startTime = System.currentTimeMillis();
-
-        // Doesn't seem to work due to special case with non-opaque pixels (see PorterDuff docs)
-        /*xorBitmap.eraseColor(Color.TRANSPARENT);
-        sharedCanvas.setBitmap(xorBitmap);
-        sharedCanvas.drawBitmap(lhs, 0, 0, bitmapPaint);
-        sharedCanvas.drawBitmap(rhs, 0, 0, xorPaint);*/
-
-        //int alphaXor = Color.alpha(lhs.getPixel(0, 0)) ^ Color.alpha(rhs.getPixel(0, 0));
-        //Log.d("DrawOpManager", "top left alpha was " + Color.alpha(rhs.getPixel(0, 0)) + ", is now " + Color.alpha(lhs.getPixel(0, 0)) + ", alphaXor is " + alphaXor);
-
+    private int[] xor(Bitmap lhs, Bitmap rhs) {
         // Retrieves the pixel data of both bitmaps into the two pixel arrays
-        lhs.getPixels(lhsPixelsArray, 0, lhs.getWidth(), 0, 0, lhs.getWidth(), lhs.getHeight());
-        rhs.getPixels(rhsPixelsArray, 0, rhs.getWidth(), 0, 0, rhs.getWidth(), rhs.getHeight());
+        lhs.getPixels(lhsPixelArray, 0, layerWidth, 0, 0, layerWidth, layerHeight);
+        rhs.getPixels(rhsPixelArray, 0, layerWidth, 0, 0, layerWidth, layerHeight);
 
-        /*int leftPixel = lhsPixelsArray[0];
-        int rightPixel = rhsPixelsArray[0];
+        // XOR's the bitmaps together
+        return xor(lhsPixelArray, rhsPixelArray);
+    }
 
-        int leftAlpha = Color.alpha(leftPixel);
-        int rightAlpha = Color.alpha(rightPixel);
 
-        int xor = leftPixel ^ rightPixel;
-        int xorAlpha = leftAlpha ^ rightAlpha;
+    /**
+     * Finds the bitwise XOR of the two parameters (i.e. the differences between them) and stores
+     * the result in the lhs Bitmap.
+     * @param lhs The left hand side Bitmap and destination of the result
+     * @param rhs The right hand side's pixels
+     **/
+    private void xor(Bitmap lhs, int[] rhs) {
+        // Retrieves the pixel data of the bitmap
+        lhs.getPixels(lhsPixelArray, 0, layerWidth, 0, 0, layerWidth, layerHeight);
 
-        int xorShift = xor >>> 24;
+        // XOR's the parameters together
+        xorArray = xor(lhsPixelArray, rhs);
 
-        Log.d("DrawOpManager", "xor is " + xor + ", rightAlpha is " + rightAlpha + ", leftAlpha is " + leftAlpha + ", xorAlpha is " + xorAlpha + ", xorShift is " + xorShift);*/
+        // Loads the result into the Bitmap
+        lhs.setPixels(xorArray, 0, layerWidth, 0, 0, layerWidth, layerHeight);
+    }
 
-        for (int y = 0; y < xorBitmap.getHeight(); y++) {
-            for (int x = 0; x < xorBitmap.getWidth(); x++) {
-                // XORs the two pixels together
-                int lhsPixel = lhsPixelsArray[x + y * lhs.getWidth()];
-                int rhsPixel = rhsPixelsArray[x + y * rhs.getWidth()];
-                int xorColour = lhsPixel ^ rhsPixel;
-
-                int alphaXor = Color.alpha(lhsPixel) ^ Color.alpha(rhsPixel);
-                int alphaXorColour = xorColour + OPAQUE_ALPHA_CHANNEL;
-
-                // Sets the pixel in the array to the XOR'd result of the pixels from the two bitmaps
-                lhsPixelsArray[x + y * lhs.getWidth()] = alphaXorColour;
+    /**
+     * Performs a bitwise XOR on the elements of two arrays.
+     * @param lhs The left hand side operand
+     * @param rhs The right hand side operand
+     * @return An array containing the XOR'd values
+     */
+    private int[] xor(int[] lhs, int[] rhs) {
+        // Iterates over the pixels and XORs them together
+        for (int y = 0; y < layerHeight; y++) {
+            for (int x = 0; x < layerWidth; x++) {
+                int index = x + y * layerWidth;
+                xorArray[index] = lhs[index] ^ rhs[index];
             }
         }
-
-        // Finally we load the pixels into the resultant bitmap
-        xorBitmap.setPixels(lhsPixelsArray, 0, lhs.getWidth(), 0, 0, lhs.getWidth(), lhs.getHeight());
-
-        Log.d("UndoRedoTracker", "XOR took " + (System.currentTimeMillis() - startTime) + "ms");
-
-        return xorBitmap;
+        return xorArray;
     }
 }

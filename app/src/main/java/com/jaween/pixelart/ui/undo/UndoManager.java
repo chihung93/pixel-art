@@ -3,15 +3,16 @@ package com.jaween.pixelart.ui.undo;
 import java.util.LinkedList;
 
 /**
- * Manages the undo and redo lists.
+ * Manages the undo and redo stacks.
  *
- * Used by first constructing the object with the initial state Bitmap and the max undo limit.
- * The user draws on the Bitmap and passes that bitmap to modifiedBitmap().
- * It XORs the Bitmap with the previous frame and stores the compressed the result.
- * The undo() function will then decompress that result, XOR it with the given bitmap to retrieve
- * the previous frame. Finally it blits that bitmap back onto the given Bitmap.
- *
- * TODO: Run in separate thread
+ * Used by first constructing an instance with a max undo stack size. When the user performs an
+ * undoable operation, an instance of UndoItem must be created that contains both the type of
+ * operation and the data needed to undo the operation. This is passed the function pushUndoItem().
+ * When performing the undo, call the function popUndoItem() which will first push the UndoItem to
+ * the redo stack and also return it to the caller. The details of unrolling an action is left up to
+ * the receiver. To redo an action, call popRedoItem() to have it pushed to the UndoStack and have
+ * it returned.
+
  */
 public class UndoManager {
 
@@ -20,86 +21,9 @@ public class UndoManager {
 
     private int maxUndos;
 
-    //private static UndoLayerListener undoLayerListener = null;
-
     public UndoManager(int maxUndos) {
-        //drawOpManager = new DrawOpManager(initialBitmap);
         this.maxUndos = maxUndos;
     }
-
-   /* public static void undo(List<Bitmap> layers) {
-        long startTime = System.currentTimeMillis();
-
-        // There must be an item to undo
-        if (undoItems.size() <= 0) {
-            return;
-        }
-
-        UndoItem undoItem = undoItems.pop();
-        redoItems.push(undoItem);
-
-        switch (undoItem.getType()) {
-            case DRAW_OP:
-                drawOpManager.undo(layers, undoItem);
-                break;
-            case LAYER:
-                LayerUndoData layerUndoData = (LayerUndoData) undoItem.getData();
-                switch (layerUndoData.getType()) {
-                    case ADD:
-                        if (undoLayerListener != null) {
-                            Log.d("UndoManager", "Undoing addition of layer (deleting)");
-                            undoLayerListener.onDeleteLayerFromUndo(layerUndoData.getLayerIndex());
-                        }
-                        break;
-                    case DELETE:
-                        if (undoLayerListener != null) {
-                            Log.d("UndoManager", "Undoing deletion of layer (adding)");
-                            undoLayerListener.onAddLayerFromUndo(layerUndoData.getLayerIndex(), layerUndoData.getDeletedLayer());
-                        }
-                        break;
-                }
-                break;
-        }
-
-        Log.d("UndoRedoTracker", "Undo took " + (System.currentTimeMillis() - startTime) + "ms");
-    }
-
-    public static void redo(List<Bitmap> layers) {
-        long startTime = System.currentTimeMillis();
-
-        // There must be an item to redo
-        if (redoItems.size() <= 0) {
-            return;
-        }
-
-        UndoItem redoItem = redoItems.pop();
-        undoItems.push(redoItem);
-
-        switch (redoItem.getType()) {
-            case DRAW_OP:
-                drawOpManager.redo(layers, redoItem);
-                break;
-            case LAYER:
-                LayerUndoData layerUndoData = (LayerUndoData) redoItem.getData();
-                switch (layerUndoData.getType()) {
-                    case ADD:
-                        if (undoLayerListener != null) {
-                            Log.d("UndoManager", "Redoing addition of layer");
-                            undoLayerListener.onAddLayerFromUndo(layerUndoData.getLayerIndex(), layerUndoData.getDeletedLayer());
-                        }
-                        break;
-                    case DELETE:
-                        if (undoLayerListener != null) {
-                            Log.d("UndoManager", "Redoing deletion of layer");
-                            undoLayerListener.onDeleteLayerFromUndo(layerUndoData.getLayerIndex());
-                        }
-                        break;
-                }
-                break;
-        }
-
-        Log.d("UndoRedoTracker", "Redo took " + (System.currentTimeMillis() - startTime) + "ms");
-    }*/
 
     /**
      * Pushes an item onto the undo stack. If there isn't enough space, removes the first/oldest item
@@ -115,7 +39,7 @@ public class UndoManager {
         // Maintains the maximum number of undos (and hence the maximum number of redos)
         undoItems.push(undoItem);
         if (undoItems.size() > maxUndos) {
-            undoItems.removeFirst();
+            undoItems.pollLast();
         }
     }
 
@@ -124,7 +48,7 @@ public class UndoManager {
      * @return The UndoItem on the top of the stack or null if there was no such element
      */
     public UndoItem popUndoItem() {
-        UndoItem undoItem = undoItems.poll();
+        UndoItem undoItem = undoItems.pollFirst();
 
         // Pushes item onto redo stack
         if (undoItem != null) {
@@ -138,7 +62,7 @@ public class UndoManager {
      * @return The UndoItem on the top of the stack or null if there was no such element
      */
     public UndoItem popRedoItem() {
-        UndoItem redoItem = redoItems.poll();
+        UndoItem redoItem = redoItems.pollFirst();
 
         // Pushes item onto undo stack
         if (redoItem != null) {
@@ -146,38 +70,4 @@ public class UndoManager {
         }
         return redoItem;
     }
-
-    /*public void layerModified(Bitmap layer, int layerIndex) {
-        long startTime = System.currentTimeMillis();
-
-        UndoItem undoItem = drawOpManager.add(layer, layerIndex);
-        pushUndoItem(undoItem);
-
-        Log.d("UndoRedoTracker", "Modification took " + (System.currentTimeMillis() - startTime) + "ms");
-    }
-
-    public void switchLayer(Bitmap newLayer) {
-        drawOpManager.setLayerBeforeModification(newLayer);
-    }*/
-
-    /*public void addLayer(int layerIndex) {
-        LayerUndoData layerUndoData = new LayerUndoData(layerIndex);
-        UndoItem undoItem = new UndoItem(UndoItem.Type.LAYER, 1, layerUndoData);
-        pushUndoItem(undoItem);
-    }
-
-    public void deleteLayer(int layerIndex) {
-        LayerUndoData layerUndoData = new LayerUndoData(layerIndex, layers);
-        UndoItem undoItem = new UndoItem(UndoItem.Type.LAYER, 2, layerUndoData);
-        pushUndoItem(undoItem);
-    }
-
-    public void setUndoLayerListener(UndoLayerListener undoLayerListener) {
-        this.undoLayerListener = undoLayerListener;
-    }
-
-    public interface UndoLayerListener {
-        public void onAddLayerFromUndo(int layerIndex, Bitmap layer);
-        public void onDeleteLayerFromUndo(int layerIndex);
-    }*/
 }

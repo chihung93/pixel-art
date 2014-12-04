@@ -6,7 +6,9 @@ import android.graphics.BitmapFactory;
 import android.graphics.Shader;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
+import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
@@ -20,7 +22,8 @@ import java.util.LinkedList;
 /**
  * Created by ween on 11/27/14.
  */
-public class LayerAdapter extends BaseAdapter implements View.OnClickListener {
+public class LayerAdapter extends BaseAdapter implements
+        View.OnClickListener {
 
     private LinkedList<Layer> data;
     private LayoutInflater inflater;
@@ -37,6 +40,9 @@ public class LayerAdapter extends BaseAdapter implements View.OnClickListener {
     // Layer deletion callback
     private LayerListItemListener layerListItemListener = null;
 
+    // List selection
+    private int currentLayerIndex = 0;
+
     public LayerAdapter(Context context, LinkedList<Layer> data) {
         inflater = LayoutInflater.from(context);
 
@@ -52,6 +58,10 @@ public class LayerAdapter extends BaseAdapter implements View.OnClickListener {
         checkerboardTile.setTileModeXY(Shader.TileMode.REPEAT, Shader.TileMode.REPEAT);
 
         this.data = data;
+    }
+
+    public void setCurrentLayerIndex(int currentLayerIndex) {
+        this.currentLayerIndex = currentLayerIndex;
     }
 
     @Override
@@ -80,7 +90,6 @@ public class LayerAdapter extends BaseAdapter implements View.OnClickListener {
             // Links to XML
             holder = new ViewHolder();
             holder.title = (TextView) convertView.findViewById(R.id.tv_layer_title);
-            holder.handle = (ImageView) convertView.findViewById(R.id.iv_layer_handle);
             holder.image = (ImageView) convertView.findViewById(R.id.iv_layer_image);
             holder.visibility = (ImageView) convertView.findViewById(R.id.iv_layer_visibility);
             holder.lock = (ImageView) convertView.findViewById(R.id.iv_layer_lock);
@@ -96,6 +105,11 @@ public class LayerAdapter extends BaseAdapter implements View.OnClickListener {
             holder = (ViewHolder) convertView.getTag();
         }
 
+        if (position == currentLayerIndex) {
+            convertView.setBackgroundResource(R.color.highlight);
+        } else {
+            convertView.setBackgroundResource(0);
+        }
         initialiseViews(holder, position);
 
         return convertView;
@@ -126,6 +140,7 @@ public class LayerAdapter extends BaseAdapter implements View.OnClickListener {
         }
 
         // Stores this view's position in the list within the View tag (for use with onClick())
+        holder.title.setTag(position);
         holder.visibility.setTag(position);
         holder.lock.setTag(position);
         holder.delete.setTag(position);
@@ -165,7 +180,6 @@ public class LayerAdapter extends BaseAdapter implements View.OnClickListener {
 
     static class ViewHolder {
         TextView title;
-        ImageView handle;
         ImageView image;
         ImageView visibility;
         ImageView lock;

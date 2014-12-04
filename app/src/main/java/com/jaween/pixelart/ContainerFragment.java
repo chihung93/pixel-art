@@ -55,7 +55,7 @@ public class ContainerFragment extends Fragment implements
     private static final String TAG_PANEL_MANAGER_FRAGMENT = "tag_panel_manager_fragment";
 
     // Undo system
-    private static final int MAX_UNDOS = 50;
+    private static final int MAX_UNDOS = 200;
     private UndoManager undoManager = null;
 
     // Contextual ActionBar (for selection and the ColourPicker)
