@@ -31,7 +31,7 @@
     <color name="tool_selection_colour">@color/primary</color>
     <color name="selectable_item_background">#444444</color>
     <color name="panel_background">@color/primary</color>
-    <color name="panel_text_colour">#FFFFFF</color>
+    <color name="panel_content_colour">#FFFFFF</color>
     <color name="surface_background_colour">#FFCCCCCC</color>
 
     <color name="yellow">#FFFFDD30</color>

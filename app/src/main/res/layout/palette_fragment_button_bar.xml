@@ -14,7 +14,7 @@
         android:layout_below="@+id/gridLayout"
         android:layout_weight="2"
         android:text="@string/button_customise_palette"
-        android:textColor="@color/panel_text_colour" />
+        android:textColor="@color/panel_content_colour" />
 
     <View
         android:layout_width="1dp"
@@ -31,6 +31,6 @@
         android:layout_below="@+id/gridLayout"
         android:layout_weight="2"
         android:text="@string/button_next_palette"
-        android:textColor="@color/panel_text_colour" />
+        android:textColor="@color/panel_content_colour" />
 
 </LinearLayout>

@@ -17,7 +17,7 @@
         android:textIsSelectable="false"
         android:maxLines="2"
         android:text="@string/layer"
-        android:textColor="@color/panel_text_colour"
+        android:textColor="@color/panel_content_colour"
         android:textSize="20sp" />
 
     <ImageView

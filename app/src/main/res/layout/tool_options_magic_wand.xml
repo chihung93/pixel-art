@@ -10,7 +10,7 @@
         android:layout_height="wrap_content"
         android:layout_margin="@dimen/view_margin"
         android:text="@string/tool_option_threshold"
-        android:textColor="@color/panel_text_colour"
+        android:textColor="@color/panel_content_colour"
         android:textSize="16sp" />
 
     <EditText
@@ -24,7 +24,7 @@
         android:gravity="center_horizontal"
         android:inputType="number"
         android:maxLength="2"
-        android:textColor="@color/panel_text_colour" />
+        android:textColor="@color/panel_content_colour" />
 
     <SeekBar
         android:id="@+id/sb_threshold"
@@ -36,7 +36,7 @@
         android:layout_toLeftOf="@id/et_threshold"
         android:layout_weight="1"
         android:max="@integer/max_tool_threshold"
-        android:textColor="@color/panel_text_colour" />
+        android:textColor="@color/panel_content_colour" />
 
 
 </RelativeLayout>

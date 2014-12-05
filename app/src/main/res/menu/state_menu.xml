@@ -4,16 +4,16 @@
 
     <item
         android:id="@+id/action_tool"
-        android:icon="@drawable/tool_pen"
         android:orderInCategory="1"
         android:title="@string/action_tool"
-        app:showAsAction="always" />
+        app:showAsAction="always"
+        android:icon="@drawable/tool_pen"/>
 
     <item
         android:id="@+id/action_palette"
-        android:icon="@drawable/palette_colour_button"
         android:orderInCategory="2"
         android:title="@string/action_palette"
-        app:showAsAction="always" />
+        app:showAsAction="always"
+        android:icon="@drawable/palette_colour_button"/>
 
 </menu>

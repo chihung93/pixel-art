@@ -1,27 +1,34 @@
 package com.jaween.pixelart;
 
+import android.content.res.Configuration;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.LayerDrawable;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
+import android.support.v4.widget.DrawerLayout;
+import android.support.v7.app.ActionBar;
+import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.ActionBarActivity;
 import android.support.v7.view.ActionMode;
-import android.util.Log;
+import android.support.v7.widget.Toolbar;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ListView;
 
 import com.jaween.pixelart.tools.Tool;
 import com.jaween.pixelart.ui.DrawingFragment;
 import com.jaween.pixelart.ui.DrawingSurface;
 import com.jaween.pixelart.ui.PaletteFragment;
 import com.jaween.pixelart.ui.ToolboxFragment;
+import com.jaween.pixelart.ui.animation.AnimationFragment;
 import com.jaween.pixelart.ui.layer.Layer;
+import com.jaween.pixelart.ui.layer.LayerAdapter;
 import com.jaween.pixelart.ui.layer.LayerFragment;
 import com.jaween.pixelart.ui.undo.UndoItem;
 import com.jaween.pixelart.ui.undo.UndoManager;
@@ -44,23 +51,29 @@ public class ContainerFragment extends Fragment implements
 
     // Child Fragments
     private DrawingFragment drawingFragment;
-    private PanelManagerFragment panelManagerFragment;
     private PaletteFragment paletteFragment;
     private ToolboxFragment toolboxFragment;
     private LayerFragment layerFragment;
+    private AnimationFragment animationFragment;
+    private PanelManagerFragment panelManagerFragment;
     private ConfigChangeFragment configChangeFragment;
 
     // Fragment tags
     private static final String TAG_DRAWING_FRAGMENT = "tag_drawing_fragment";
+    private static final String TAG_ANIMATION_FRAGMENT = "tag_animation_fragment";
     private static final String TAG_PANEL_MANAGER_FRAGMENT = "tag_panel_manager_fragment";
 
     // Undo system
     private static final int MAX_UNDOS = 200;
     private UndoManager undoManager = null;
 
-    // Contextual ActionBar (for selection and the ColourPicker)
+    // Toolbar and ActionMode
+    private ActionBarDrawerToggle drawerToggle;
     private ActionMode actionMode = null;
     private ActionMode.Callback actionModeCallback = this;
+
+    // Colour menu item
+    LayerDrawable layerDrawable;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -86,21 +99,37 @@ public class ContainerFragment extends Fragment implements
 
         FragmentManager fragmentManager = getChildFragmentManager();
         drawingFragment = (DrawingFragment) fragmentManager.findFragmentByTag(TAG_DRAWING_FRAGMENT);
+        animationFragment = (AnimationFragment) fragmentManager.findFragmentByTag(TAG_ANIMATION_FRAGMENT);
         panelManagerFragment = (PanelManagerFragment) fragmentManager.findFragmentByTag(TAG_PANEL_MANAGER_FRAGMENT);
 
-        if (drawingFragment == null | panelManagerFragment == null) {
+        if (drawingFragment == null | animationFragment == null | panelManagerFragment == null) {
             // Fragments don't yet exist, creates them
             drawingFragment = new DrawingFragment();
+            animationFragment = new AnimationFragment();
             panelManagerFragment = new PanelManagerFragment();
 
             FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
             fragmentTransaction.add(R.id.fl_container_drawing, drawingFragment, TAG_DRAWING_FRAGMENT);
+            fragmentTransaction.add(R.id.fl_container_animation, animationFragment, TAG_ANIMATION_FRAGMENT);
             fragmentTransaction.add(R.id.fl_container_panels, panelManagerFragment, TAG_PANEL_MANAGER_FRAGMENT);
 
             fragmentTransaction.commit();
         }
 
+        setupDrawer(view);
+
         return view;
+    }
+
+    private void setupDrawer(View v) {
+        // Sets up the animation drawer
+        Toolbar toolbar = ((ContainerActivity) getActivity()).getToolbar();
+        DrawerLayout drawerLayout = (DrawerLayout) v.findViewById(R.id.drawer_layout);
+        drawerLayout.setStatusBarBackground(R.color.primary_dark);
+        drawerToggle = new ActionBarDrawerToggle(getActivity(), drawerLayout, toolbar, 0, 0);
+        drawerToggle.setDrawerIndicatorEnabled(true);
+        drawerToggle.setHomeAsUpIndicator(R.drawable.ic_action_drawer);
+        drawerLayout.setDrawerListener(drawerToggle);
     }
 
     @Override
@@ -118,6 +147,12 @@ public class ContainerFragment extends Fragment implements
         if (undoManager == null) {
             undoManager = new UndoManager(MAX_UNDOS);
         }
+    }
+
+    @Override
+    public void onConfigurationChanged(Configuration newConfig) {
+        super.onConfigurationChanged(newConfig);
+        drawerToggle.onConfigurationChanged(newConfig);
     }
 
     // Called after PanelManagerFragment's child Fragments have been created
@@ -165,17 +200,9 @@ public class ContainerFragment extends Fragment implements
     @Override
     public void onPrepareOptionsMenu(Menu menu) {
         super.onPrepareOptionsMenu(menu);
-
-        // Tints the inner square to the selected colour
-        Drawable colouredInner = getResources().getDrawable(R.drawable.palette_menu_item);
-        Drawable border = getResources().getDrawable(R.drawable.palette_menu_item_border);
-        int colour = paletteFragment.getPrimaryColour();
-        LayerDrawable layerDrawable = Color.tintAndLayerDrawable(colouredInner, border, colour);
-
         // Sets the menu item
-       MenuItem paletteItem = menu.findItem(R.id.action_palette);
+        MenuItem paletteItem = menu.findItem(R.id.action_palette);
         paletteItem.setIcon(layerDrawable);
-        getActivity().supportInvalidateOptionsMenu();
     }
 
     @Override
@@ -244,6 +271,10 @@ public class ContainerFragment extends Fragment implements
         return true;
     }
 
+    public void syncState() {
+        drawerToggle.syncState();
+    }
+
     @Override
     public void onPrimaryColourSelected(int colour, boolean done, boolean fromPalette) {
         // The tool must be notified of the colour change in order to have any effect
@@ -254,6 +285,9 @@ public class ContainerFragment extends Fragment implements
         if (!fromPalette) {
             paletteFragment.setColourButton(colour);
         }
+
+        // Recolours the palette menu item
+        updateColourMenuItem();
 
         // Hides the panels on narrow and wide layouts and updates the menu item
         getActivity().supportInvalidateOptionsMenu();
@@ -319,6 +353,16 @@ public class ContainerFragment extends Fragment implements
 
     public UndoManager getUndoManager() {
         return undoManager;
+    }
+
+    private void updateColourMenuItem() {
+            // Tints the inner square to the selected colour
+            Drawable colouredInner = getResources().getDrawable(R.drawable.palette_menu_item);
+            Drawable border = getResources().getDrawable(R.drawable.palette_menu_item_border);
+            int colour = paletteFragment.getPrimaryColour();
+            layerDrawable = Color.tintAndLayerDrawable(colouredInner, border, colour);
+
+            getActivity().supportInvalidateOptionsMenu();
     }
 
     @Override

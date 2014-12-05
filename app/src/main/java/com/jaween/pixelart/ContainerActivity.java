@@ -4,6 +4,8 @@ import android.os.Bundle;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
 import android.support.v7.app.ActionBarActivity;
+import android.support.v7.widget.Toolbar;
+import android.view.MenuItem;
 
 /**
  * Decides which ContainerFragment to add.
@@ -13,17 +15,25 @@ public final class ContainerActivity extends ActionBarActivity {
     private ContainerFragment containerFragment;
     private static final String TAG_CONTAINER_FRAGMENT = "tag_container_fragment";
 
+    private Toolbar toolbar;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        setContentView(R.layout.container_activity);
 
         // Removes a layer of overdraw (though the background is needed during the starting window)
         getWindow().setBackgroundDrawable(null);
 
-        // Displays the app icon instead of the title text
-        getSupportActionBar().setDisplayUseLogoEnabled(true);
-
-        setContentView(R.layout.container_activity);
+        // Retrieves our Toolbar and sets it to be our ActionBar
+        toolbar = (Toolbar) findViewById(R.id.tb_toolbar);
+        toolbar.setLogo(R.drawable.ic_logo);
+        toolbar.setNavigationIcon(R.drawable.ic_action_drawer);
+        setSupportActionBar(toolbar);
+        getSupportActionBar().setDisplayShowTitleEnabled(false);
+        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+        getSupportActionBar().setHomeButtonEnabled(true);
+        getSupportActionBar().setDisplayShowHomeEnabled(true);
 
         FragmentManager fragmentManager = getSupportFragmentManager();
         containerFragment = (ContainerFragment) fragmentManager.findFragmentByTag(TAG_CONTAINER_FRAGMENT);
@@ -38,9 +48,27 @@ public final class ContainerActivity extends ActionBarActivity {
     }
 
     @Override
+    protected void onPostCreate(Bundle savedInstanceState) {
+        super.onPostCreate(savedInstanceState);
+        containerFragment.syncState();
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        if (containerFragment.onOptionsItemSelected(item)) {
+            return true;
+        }
+        return super.onOptionsItemSelected(item);
+    }
+
+    @Override
     public void onBackPressed() {
         if (containerFragment.onBackPressed() == false) {
             super.onBackPressed();
         }
+    }
+
+    public Toolbar getToolbar() {
+        return toolbar;
     }
 }

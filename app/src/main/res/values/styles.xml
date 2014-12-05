@@ -1,33 +1,24 @@
 <resources>
 
     <!-- Base application theme. -->
-    <style name="AppTheme" parent="Theme.AppCompat.Light">
+    <style name="AppTheme" parent="Theme.AppCompat.Light.NoActionBar">
         <item name="android:windowBackground">@color/surface_background_colour</item>
-        <item name="android:colorPrimary">@color/primary</item>
-        <item name="android:colorPrimaryDark">@color/primary_dark</item>
-        <item name="android:colorAccent">@color/accent_colour</item>
 
         <!-- Support library compatibility -->
-        <item name="actionBarStyle">@style/MyActionBar</item>
         <item name="colorPrimary">@color/primary</item>
         <item name="colorPrimaryDark">@color/primary_dark</item>
         <item name="colorAccent">@color/accent_colour</item>
+        <item name="windowActionModeOverlay">true</item>
     </style>
 
     <!-- ActionBar theme -->
-    <style name="MyActionBar" parent="Widget.AppCompat.Light.ActionBar">
-        <item name="android:logo">@drawable/ic_logo</item>
-        <item name="android:displayOptions">showHome|useLogo</item>
+    <style name="MyActionBar" parent="@style/ThemeOverlay.AppCompat.Dark.ActionBar">
         <item name="android:background">@color/actionbar_background_colour</item>
-        <item name="android:titleTextStyle">@style/MyActionBarTextStyle</item>
-        <item name="android:actionModeStyle">@style/MyActionMode</item>
 
         <!-- Support library compatibility -->
         <item name="logo">@drawable/ic_logo</item>
         <item name="displayOptions">showHome|useLogo</item>
         <item name="background">@color/actionbar_background_colour</item>
-        <item name="titleTextStyle">@style/MyActionBarTextStyle</item>
-        <item name="actionModeBackground">@style/MyActionMode</item>
     </style>
 
     <style name="MyActionBarTextStyle" parent="@style/TextAppearance.AppCompat.Widget.ActionBar.Title">
@@ -41,7 +32,5 @@
         <!-- Support library compatibility -->
         <item name="actionModeBackground">@color/primary_dark</item>
     </style>
-
-
 
 </resources>

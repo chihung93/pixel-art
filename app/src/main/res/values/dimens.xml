@@ -13,5 +13,6 @@
 
     <dimen name="panel_width">350dp</dimen>
     <dimen name="layer_panel_width">300dp</dimen>
+    <dimen name="animation_panel_width">300dp</dimen>
 
 </resources>

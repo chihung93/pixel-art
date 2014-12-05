@@ -1,14 +1,12 @@
 package com.jaween.pixelart.ui;
 
-import android.app.Activity;
 import android.graphics.Path;
 import android.graphics.RectF;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
-import android.support.v7.app.ActionBarActivity;
-import android.support.v7.view.ActionMode;
+import android.view.ActionMode;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -17,6 +15,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Toast;
 
+import com.jaween.pixelart.ContainerActivity;
 import com.jaween.pixelart.ContainerFragment;
 import com.jaween.pixelart.R;
 import com.jaween.pixelart.tools.Tool;
@@ -58,12 +57,6 @@ public class DrawingFragment extends Fragment implements
 
     public DrawingFragment() {
         // Required empty public constructor
-    }
-
-    @Override
-    public void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        //setHasOptionsMenu(true);
     }
 
     @Override
@@ -146,16 +139,6 @@ public class DrawingFragment extends Fragment implements
     }
 
     @Override
-    public void onAttach(Activity activity) {
-        super.onAttach(activity);
-    }
-
-    @Override
-    public void onDetach() {
-        super.onDetach();
-    }
-
-    @Override
     public void onResume() {
         super.onResume();
         surface.onResume();
@@ -235,7 +218,7 @@ public class DrawingFragment extends Fragment implements
     public void onSelectRegion(Path selectedRegion) {
         // Starts the Contextual Action Bar if there isn't one already there (i.e. actionMode == null)
         if (actionMode == null) {
-            ((ActionBarActivity) getActivity()).startSupportActionMode(actionModeCallback);
+            ((ContainerActivity) getActivity()).getToolbar().startActionMode(actionModeCallback);
         }
     }
 

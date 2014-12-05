@@ -6,7 +6,7 @@
         android:icon="@drawable/ic_action_layers"
         android:orderInCategory="3"
         android:title="@string/action_layers"
-        app:showAsAction="always" />
+        app:showAsAction="ifRoom" />
 
     <item
         android:id="@+id/action_undo"
@@ -20,7 +20,7 @@
         android:icon="@drawable/ic_action_redo"
         android:orderInCategory="5"
         android:title="@string/action_redo"
-        app:showAsAction="always" />
+        app:showAsAction="ifRoom" />
 
     <item
         android:id="@+id/action_grid"

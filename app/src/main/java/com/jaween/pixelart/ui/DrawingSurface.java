@@ -484,7 +484,6 @@ public class DrawingSurface extends SurfaceView implements SurfaceHolder.Callbac
 
             // Selection
             if (!selectedPath.isEmpty() && tool.getToolAttributes().isSelector()) {
-                //toolReport.getPath().transform(transformation, selectedPath);
                 canvas.drawPath(selectedPath, selectionInnerPaint);
                 canvas.drawPath(selectedPath, selectionBorderPaint);
             }

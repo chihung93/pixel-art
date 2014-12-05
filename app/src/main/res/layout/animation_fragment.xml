@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/panel_background"
+    android:orientation="vertical">
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:layout_gravity="top"
+        android:background="?attr/dividerHorizontal" />
+
+    <TextView
+        android:id="@+id/textView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_margin="@dimen/view_margin"
+        android:text="Preview"
+        android:textColor="@color/panel_content_colour" />
+
+    <include layout="@layout/animation_preview" />
+
+    <GridView
+        android:id="@+id/lv_animation_list"
+        android:layout_width="match_parent"
+        android:layout_height="fill_parent"
+        android:numColumns="2"
+        android:padding="@dimen/view_margin"
+        tools:listitem="@layout/animation_item" />
+
+</LinearLayout>

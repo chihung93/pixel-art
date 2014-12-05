@@ -14,7 +14,7 @@ android {
 
 	buildTypes {
 		release {
-			runProguard false
+			minifyEnabled false
 			proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.txt'
 		}
 	}
@@ -24,6 +24,7 @@ android {
     }
 
     dependencies {
+        compile 'com.android.support:support-v4:21.0.+'
         compile "com.android.support:appcompat-v7:21.0.+"
         compile project(':libraries:drag-sort-listview:library')
     }
