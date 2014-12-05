@@ -1,4 +1,4 @@
-A pixel art drawing application for Android.
+A pixel art drawing application for the Android OS.
 
 Copyright 2014 Jaween Ediriweera
 
