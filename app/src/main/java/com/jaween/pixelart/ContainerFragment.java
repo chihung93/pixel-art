@@ -8,9 +8,8 @@ import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
 import android.support.v4.widget.DrawerLayout;
-import android.support.v7.app.ActionBar;
-import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.ActionBarActivity;
+import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.view.ActionMode;
 import android.support.v7.widget.Toolbar;
 import android.view.LayoutInflater;
@@ -19,7 +18,6 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ListView;
 
 import com.jaween.pixelart.tools.Tool;
 import com.jaween.pixelart.ui.DrawingFragment;
@@ -27,8 +25,8 @@ import com.jaween.pixelart.ui.DrawingSurface;
 import com.jaween.pixelart.ui.PaletteFragment;
 import com.jaween.pixelart.ui.ToolboxFragment;
 import com.jaween.pixelart.ui.animation.AnimationFragment;
+import com.jaween.pixelart.ui.animation.Frame;
 import com.jaween.pixelart.ui.layer.Layer;
-import com.jaween.pixelart.ui.layer.LayerAdapter;
 import com.jaween.pixelart.ui.layer.LayerFragment;
 import com.jaween.pixelart.ui.undo.UndoItem;
 import com.jaween.pixelart.ui.undo.UndoManager;
@@ -47,6 +45,7 @@ public class ContainerFragment extends Fragment implements
         DrawingSurface.OnDropColourListener,
         PaletteFragment.OnShowPaletteListener,
         LayerFragment.LayerListener,
+        AnimationFragment.FrameListener,
         ActionMode.Callback {
 
     // Child Fragments
@@ -63,6 +62,10 @@ public class ContainerFragment extends Fragment implements
     private static final String TAG_ANIMATION_FRAGMENT = "tag_animation_fragment";
     private static final String TAG_PANEL_MANAGER_FRAGMENT = "tag_panel_manager_fragment";
 
+    // Drawing dimensions
+    private static final int layerWidth = 128;
+    private static final int layerHeight = 128;
+
     // Undo system
     private static final int MAX_UNDOS = 200;
     private UndoManager undoManager = null;
@@ -72,8 +75,12 @@ public class ContainerFragment extends Fragment implements
     private ActionMode actionMode = null;
     private ActionMode.Callback actionModeCallback = this;
 
+    // Animation drawer
+    private View animationDrawerView;
+    private DrawerLayout drawerLayout;
+
     // Colour menu item
-    LayerDrawable layerDrawable;
+    private LayerDrawable layerDrawable;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -116,6 +123,8 @@ public class ContainerFragment extends Fragment implements
             fragmentTransaction.commit();
         }
 
+        animationDrawerView = view.findViewById(R.id.fl_container_animation);
+
         setupDrawer(view);
 
         return view;
@@ -124,11 +133,22 @@ public class ContainerFragment extends Fragment implements
     private void setupDrawer(View v) {
         // Sets up the animation drawer
         Toolbar toolbar = ((ContainerActivity) getActivity()).getToolbar();
-        DrawerLayout drawerLayout = (DrawerLayout) v.findViewById(R.id.drawer_layout);
+        drawerLayout = (DrawerLayout) v.findViewById(R.id.drawer_layout);
         drawerLayout.setStatusBarBackground(R.color.primary_dark);
-        drawerToggle = new ActionBarDrawerToggle(getActivity(), drawerLayout, toolbar, 0, 0);
+        drawerToggle = new ActionBarDrawerToggle(getActivity(), drawerLayout, toolbar, 0, 0) {
+            public void onDrawerClosed(View view) {
+                super.onDrawerClosed(view);
+                getActivity().supportInvalidateOptionsMenu();
+            }
+
+            public void onDrawerOpened(View drawerView) {
+                super.onDrawerOpened(drawerView);
+                getActivity().supportInvalidateOptionsMenu();
+            }
+        };
+
+
         drawerToggle.setDrawerIndicatorEnabled(true);
-        drawerToggle.setHomeAsUpIndicator(R.drawable.ic_action_drawer);
         drawerLayout.setDrawerListener(drawerToggle);
     }
 
@@ -172,14 +192,38 @@ public class ContainerFragment extends Fragment implements
         paletteFragment.setOnPrimaryColourSelectedListener(this);
         toolboxFragment.setOnToolSelectListener(this);
         layerFragment.setLayerListener(this);
+        animationFragment.setFrameListener(this);
 
         // Fragments with undo capabilities
-        layerFragment.setUndoManager(undoManager);
         drawingFragment.setUndoManager(undoManager);
+        layerFragment.setUndoManager(undoManager);
+        animationFragment.setUndoManager(undoManager);
 
         // Initial tool
         drawingFragment.setTool(toolboxFragment.getTool());
         toolboxFragment.setColour(paletteFragment.getPrimaryColour());
+
+        // Allocates memory
+        drawingFragment.setDimensions(layerWidth, layerHeight);
+        layerFragment.setDimensions(layerWidth, layerHeight);
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        // Initiates the process of creating the first animation frame
+        animationFragment.notifyFragmentsReady();
+
+        // TODO: Pass the restored frame and layer index to the Drawing and Layer Fragments
+        // (ideally done in the AnimationFragment via a call to AnimationFragment.onCurrentFrameChange())
+
+        // Passes the initial frame to the DrawingFragment and LayerFragment
+        LinkedList<Frame> frames = animationFragment.getFrames();
+        drawingFragment.setFrames(frames);
+        layerFragment.setFrames(frames);
+
+        // Allocates memory for some Tools here, as onResume() is called after they are initiated
+        toolboxFragment.setDimensions(layerWidth, layerHeight);
     }
 
     @Override
@@ -192,16 +236,28 @@ public class ContainerFragment extends Fragment implements
         // Inflates the main actions menu (undo, layers, settings, etc.)
         inflater.inflate(R.menu.main_actions_menu, menu);
 
-        // Sets the icon of the tool menu item
-        MenuItem item = menu.findItem(R.id.action_tool);
-        item.setIcon(toolboxFragment.getTool().getIcon());
+        updateStateMenuIcons(menu);
     }
 
     @Override
     public void onPrepareOptionsMenu(Menu menu) {
         super.onPrepareOptionsMenu(menu);
-        // Sets the menu item
+
+        if (drawerLayout.isDrawerOpen(animationDrawerView)) {
+            menu.setGroupVisible(R.id.menu_group_state, false);
+            menu.setGroupVisible(R.id.menu_group_main, false);
+        } else {
+            menu.setGroupVisible(R.id.menu_group_animation, false);
+        }
+
+        updateStateMenuIcons(menu);
+    }
+
+    private void updateStateMenuIcons(Menu menu) {
+        // Updates the state icons
+        MenuItem item = menu.findItem(R.id.action_tool);
         MenuItem paletteItem = menu.findItem(R.id.action_palette);
+        item.setIcon(toolboxFragment.getTool().getIcon());
         paletteItem.setIcon(layerDrawable);
     }
 
@@ -226,6 +282,9 @@ public class ContainerFragment extends Fragment implements
                             layerFragment.undo(undoItem.getData());
                             drawingFragment.invalidate();
                             break;
+                        case FRAME:
+                            animationFragment.undo(undoItem.getData());
+                            break;
                     }
                 }
                 break;
@@ -241,6 +300,9 @@ public class ContainerFragment extends Fragment implements
                         case LAYER:
                             layerFragment.redo(redoItem.getData());
                             layerFragment.invalidate();
+                            break;
+                        case FRAME:
+                            animationFragment.redo(redoItem.getData());
                             break;
                     }
                 }
@@ -311,9 +373,9 @@ public class ContainerFragment extends Fragment implements
         }
     }
 
+    // TODO: Maybe I don't need this callback, when is this called? If fragments are ready here it's useful for animationFragment.notifyFragmentsReady()
     @Override
-    public void onDimensionsCalculated(int width, int height) {
-        toolboxFragment.setDimensions(width, height);
+    public void onSurfaceCreated(int width, int height) {
     }
 
     @Override
@@ -400,19 +462,26 @@ public class ContainerFragment extends Fragment implements
         this.actionMode = null;
     }
 
-    // TODO: Find a lifecycle callback of ContainerFragment between LayerFragment's onCreate() and SurfaceView's onSurfaceCreated(), place this code in that instead
     @Override
-    public void onLayersInitialised(LinkedList<Layer> layers) {
-        drawingFragment.setLayers(layers);
-    }
-
-    @Override
-    public void onCurrentLayerChange(int i) {
-        drawingFragment.setCurrentLayer(i);
+    public void onCurrentLayerChange(int index) {
+        drawingFragment.setCurrentLayerIndex(index);
+        animationFragment.setCurrentLayerIndex(index);
     }
 
     @Override
     public void onMergeLayer(int i) {
         // TODO: Implement layer merging
+    }
+
+    @Override
+    public void onCurrentFrameChange(Frame frame, int frameIndex) {
+        drawingFragment.setCurrentFrameIndex(frameIndex);
+        layerFragment.setCurrentFrameIndex(frameIndex);
+    }
+
+    @Override
+    public Frame requestFrame(boolean duplicate) {
+        // LayerFragment constructs an Animation frame
+        return layerFragment.requestFrame(duplicate);
     }
 }

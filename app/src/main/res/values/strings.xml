@@ -15,8 +15,10 @@
     <string name="action_cut">Cut</string>
     <string name="action_rotate">Rotate</string>
     <string name="action_select_all">Select all</string>
-    <string name="action_new_palette">New Palette</string>
-    <string name="action_delete_palette">Delete Palette</string>
+    <string name="action_new_palette">New palette</string>
+    <string name="action_delete_palette">Delete palette</string>
+    <string name="action_add_frame">Add frame</string>
+    <string name="action_duplicate_frame">Duplicate frame</string>
 
     <!-- Tools -->
     <string name="tool_pen">Pen</string>

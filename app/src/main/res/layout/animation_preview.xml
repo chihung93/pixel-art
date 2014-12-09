@@ -1,44 +1,61 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/ll_animation_preview"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="horizontal"
-    android:padding="@dimen/view_margin">
+    android:paddingLeft="@dimen/left_keyline">
 
     <ImageView
         android:id="@+id/iv_preview_image"
         android:layout_width="96dp"
         android:layout_height="96dp"
         android:layout_centerHorizontal="true"
-        android:layout_gravity="left" />
+        android:layout_gravity="left"
+        android:layout_marginBottom="@dimen/view_margin"
+        android:layout_marginRight="@dimen/view_margin"
+        android:layout_marginTop="@dimen/view_margin"
+        android:background="@drawable/checkerboard" />
 
-    <EditText
-        android:id="@+id/et_frames_per_second"
+    <LinearLayout
         android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="center_vertical"
-        android:ems="2"
-        android:gravity="center_horizontal"
-        android:inputType="number"
-        android:maxLength="2"
-        android:text="30"
-        android:textColor="@color/panel_content_colour" />
+        android:layout_height="match_parent"
+        android:layout_margin="@dimen/view_margin"
+        android:gravity="center_vertical"
+        android:orientation="vertical">
 
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="center_vertical"
-        android:gravity="center_horizontal"
-        android:text="Frames\nper second"
-        android:textColor="@color/panel_content_colour" />
+        <EditText
+            android:id="@+id/et_frames_per_second"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_horizontal"
+            android:ems="2"
+            android:gravity="center_horizontal"
+            android:inputType="number"
+            android:maxLength="2"
+            android:text="30"
+            android:textColor="@color/drawer_content_colour" />
+
+        <TextView
+            style="@style/Body"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_vertical"
+            android:gravity="center_horizontal"
+            android:text="Frames per second"
+            android:textColor="@color/drawer_content_colour" />
+    </LinearLayout>
 
     <ImageView
         android:id="@+id/iv_preview_collapse"
         style="@style/Base.Widget.AppCompat.ActionButton"
-        android:layout_width="fill_parent"
+        android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_gravity="center_vertical"
+        android:layout_marginLeft="@dimen/view_margin"
+        android:clickable="true"
         android:gravity="center"
-        android:src="@drawable/ic_drag_handle" />
+        android:paddingRight="@dimen/left_keyline"
+        android:src="@drawable/ic_action_collapse" />
 
 </LinearLayout>

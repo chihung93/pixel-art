@@ -18,6 +18,7 @@ public class LayerUndoData {
     private static Encoder encoder = new Encoder();
 
     private LayerOperation type = null;
+    private int frameIndex = NULL_INDEX;
     private int layerIndex = NULL_INDEX;
     private int fromIndex = NULL_INDEX;
     private int toIndex = NULL_INDEX;
@@ -34,12 +35,14 @@ public class LayerUndoData {
     /**
      * Used when adding or deleting a layer. Stores the layer's bitmap in a compressed form.
      * @param type Use either LayerOperaiton.ADD or LayerOperation.DELETE
+     * @param frameIndex The index of the frame
      * @param layerIndex The index of the layer
      * @param layer The layer being added or deleted
      */
-    public LayerUndoData(LayerOperation type, int layerIndex, Layer layer) {
+    public LayerUndoData(LayerOperation type, int frameIndex, int layerIndex, Layer layer) {
         this.type = type;
         this.layerIndex = layerIndex;
+        this.frameIndex = frameIndex;
 
         // Gets the properties of the layer image
         layerWidth = layer.getImage().getWidth();
@@ -56,17 +59,23 @@ public class LayerUndoData {
 
     /**
      * Used when repositioning a layer in the layer list. Implicitly of type LayerOperation.MOVE.
+     * @param frameIndex The index of the frame that this operation is taking place
      * @param fromIndex The index in the list that the layer is coming from
      * @param toIndex The index in the list that the layer is moving to
      */
-    public LayerUndoData(int fromIndex, int toIndex) {
+    public LayerUndoData(int frameIndex, int fromIndex, int toIndex) {
         this.type = LayerOperation.MOVE;
+        this.frameIndex = frameIndex;
         this.fromIndex = fromIndex;
         this.toIndex = toIndex;
     }
 
     public LayerOperation getType() {
         return type;
+    }
+
+    public int getFrameIndex() {
+        return frameIndex;
     }
 
     public int getLayerIndex() {

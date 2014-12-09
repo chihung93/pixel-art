@@ -4,8 +4,6 @@ import android.graphics.Path;
 import android.graphics.RectF;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
-import android.support.v4.app.FragmentManager;
-import android.support.v4.app.FragmentTransaction;
 import android.view.ActionMode;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -19,9 +17,8 @@ import com.jaween.pixelart.ContainerActivity;
 import com.jaween.pixelart.ContainerFragment;
 import com.jaween.pixelart.R;
 import com.jaween.pixelart.tools.Tool;
-import com.jaween.pixelart.ui.layer.Layer;
+import com.jaween.pixelart.ui.animation.Frame;
 import com.jaween.pixelart.ui.undo.UndoManager;
-import com.jaween.pixelart.util.ConfigChangeFragment;
 
 import java.util.LinkedList;
 
@@ -49,11 +46,7 @@ public class DrawingFragment extends Fragment implements
     private static final String KEY_SCALE = "key_scale";
 
     // UI save-state
-    private static final String KEY_CURRENT_LAYER = "key_current_layer";
     private static final String KEY_GRID = "key_grid";
-
-    // Config change
-    private ConfigChangeFragment configChangeWorker;
 
     public DrawingFragment() {
         // Required empty public constructor
@@ -65,24 +58,6 @@ public class DrawingFragment extends Fragment implements
         surface.setOnClearPanelsListener(this);
         surface.setOnDimensionsCalculatedListener(this);
         surface.setOnSelectRegionListener(this);
-
-        FragmentManager fragmentManager = getActivity().getSupportFragmentManager();
-        configChangeWorker = (ConfigChangeFragment) fragmentManager.
-                findFragmentByTag(ConfigChangeFragment.TAG_CONFIG_CHANGE_FRAGMENT);
-
-        if (configChangeWorker == null) {
-            // Worker doesn't exist, creates new worker
-            configChangeWorker = new ConfigChangeFragment();
-            FragmentTransaction fragmentTransaction = getActivity().getSupportFragmentManager().beginTransaction();
-            fragmentTransaction.add(configChangeWorker, ConfigChangeFragment.TAG_CONFIG_CHANGE_FRAGMENT);
-            fragmentTransaction.commit();
-        } else {
-            // Restores the layers
-            LinkedList<Layer> layers = configChangeWorker.getLayers();
-            if (layers != null) {
-                surface.setLayers(configChangeWorker.getLayers());
-            }
-        }
 
         // Retrieves the undo manager for undoing and redoing drawing commands
         UndoManager undoManager = ((ContainerFragment) getParentFragment()).getUndoManager();
@@ -99,12 +74,6 @@ public class DrawingFragment extends Fragment implements
 
         // If state is saved immediately after start up, the surface may not have been created yet
         if (surface.isSurfaceCreated()) {
-            // Saves the layers
-            configChangeWorker.setLayers(surface.getLayers());
-
-            // Saves the current layer index
-            outState.putInt(KEY_CURRENT_LAYER, surface.getCurrentLayerIndex());
-
             // Saves viewport
             RectF viewport = surface.getViewport();
             outState.putFloat(KEY_CENTER_X, viewport.left + viewport.width() / 2);
@@ -119,9 +88,6 @@ public class DrawingFragment extends Fragment implements
     public void onRestoreInstanceState(Bundle savedInstanceState) {
         if (savedInstanceState != null) {
             surface.setConfigurationChanged(true);
-
-            // Restores the current layer index
-            surface.setCurrentLayerIndex(savedInstanceState.getInt(KEY_CURRENT_LAYER, 0));
 
             // Restores viewport
             float DEFAULT_CENTER_X = 0;
@@ -163,12 +129,20 @@ public class DrawingFragment extends Fragment implements
         }
     }
 
-    public void setLayers(LinkedList<Layer> layers) {
-        surface.setLayers(layers);
+    public void setDimensions(int layerWidth, int layerHeight) {
+        surface.setDimensions(layerWidth, layerHeight);
     }
 
-    public void setCurrentLayer(int i) {
-        surface.setCurrentLayerIndex(i);
+    public void setFrames(LinkedList<Frame> frames) {
+        surface.setFrames(frames);
+    }
+
+    public void setCurrentFrameIndex(int index) {
+        surface.setCurrentFrameIndex(index);
+    }
+
+    public void setCurrentLayerIndex(int index) {
+        surface.setCurrentLayerIndex(index);
     }
 
     public void setUndoManager(UndoManager undoManager) {
@@ -195,7 +169,6 @@ public class DrawingFragment extends Fragment implements
         surface.setGridEnabled(enabled);
     }
 
-
     public void setOnClearPanelsListener(OnClearPanelsListener onClearPanelsListener) {
         this.onClearPanelsListener = onClearPanelsListener;
     }
@@ -210,7 +183,7 @@ public class DrawingFragment extends Fragment implements
     @Override
     public void onDimensionsCalculated(int width, int height) {
         if (onDimensionsCalculatedListener != null) {
-            onDimensionsCalculatedListener.onDimensionsCalculated(width, height);
+            onDimensionsCalculatedListener.onSurfaceCreated(width, height);
         }
     }
 
@@ -275,7 +248,7 @@ public class DrawingFragment extends Fragment implements
     }
 
     public interface OnDimensionsCalculatedListener {
-        public void onDimensionsCalculated(int width, int height);
+        public void onSurfaceCreated(int width, int height);
     }
 
     public interface OnClearPanelsListener {

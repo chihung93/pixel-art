@@ -3,7 +3,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/panel_background"
+    android:background="@color/drawer_background_colour"
     android:orientation="vertical">
 
     <View
@@ -13,21 +13,37 @@
         android:background="?attr/dividerHorizontal" />
 
     <TextView
-        android:id="@+id/textView"
+        style="@style/Subhead"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_margin="@dimen/view_margin"
+        android:paddingLeft="@dimen/left_keyline"
+        android:paddingRight="@dimen/left_keyline"
         android:text="Preview"
-        android:textColor="@color/panel_content_colour" />
+        android:textColor="@color/drawer_content_colour" />
 
     <include layout="@layout/animation_preview" />
 
-    <GridView
-        android:id="@+id/lv_animation_list"
-        android:layout_width="match_parent"
-        android:layout_height="fill_parent"
-        android:numColumns="2"
-        android:padding="@dimen/view_margin"
-        tools:listitem="@layout/animation_item" />
+    <FrameLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content">
+
+        <GridView
+            android:id="@+id/gv_frame_list"
+            android:layout_width="match_parent"
+            android:layout_height="fill_parent"
+            android:clipToPadding="false"
+            android:horizontalSpacing="@dimen/view_margin"
+            android:numColumns="2"
+            android:padding="@dimen/left_keyline"
+            android:scrollbarStyle="outsideOverlay"
+            android:verticalSpacing="@dimen/view_margin"
+            tools:listitem="@layout/frame_item" />
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="8dp"
+            android:background="@drawable/panel_shadow_horizontal" />"
+    </FrameLayout>
 
 </LinearLayout>

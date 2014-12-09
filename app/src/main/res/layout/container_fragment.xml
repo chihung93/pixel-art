@@ -15,7 +15,7 @@
 
     <FrameLayout
         android:id="@+id/fl_container_animation"
-        android:layout_width="@dimen/animation_panel_width" 
+        android:layout_width="@dimen/animation_panel_width"
         android:layout_height="match_parent"
         android:layout_gravity="left|start"
         android:orientation="vertical" />

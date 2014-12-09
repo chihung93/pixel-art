@@ -3,6 +3,7 @@ package com.jaween.pixelart.ui.undo;
 import android.graphics.Bitmap;
 import android.util.Log;
 
+import com.jaween.pixelart.ui.animation.Frame;
 import com.jaween.pixelart.ui.layer.Layer;
 import com.jaween.pixelart.util.Encoder;
 
@@ -30,13 +31,9 @@ public class DrawOpManager {
     private int layerWidth;
     private int layerHeight;
 
-    public DrawOpManager(Bitmap initialBitmap) {
-        // Layer dimensions
-        layerWidth = initialBitmap.getWidth();
-        layerHeight = initialBitmap.getHeight();
-
+    public DrawOpManager(int layerWidth, int layerHeight, Bitmap.Config config) {
         // Used for storing a copy of the previous frame
-        layerBeforeModification = initialBitmap.copy(initialBitmap.getConfig(), true);
+        layerBeforeModification = Bitmap.createBitmap(layerWidth, layerHeight, config);
 
         // Holds pixel data (manipulations are faster than individual Bitmap.setPixel() calls)
         lhsPixelArray = new int[layerWidth * layerHeight];
@@ -45,6 +42,10 @@ public class DrawOpManager {
 
         // Allocates memory for pixel data in the compression function
         encoder.setBitmapDimensions(layerWidth, layerHeight);
+
+        // Layer dimensions
+        this.layerWidth = layerWidth;
+        this.layerHeight = layerHeight;
     }
 
     /**
@@ -55,7 +56,7 @@ public class DrawOpManager {
         bitmapCopy(currentLayer, layerBeforeModification);
     }
 
-    public UndoItem add(Bitmap currentLayer, int layerIndex) {
+    public UndoItem add(Bitmap currentLayer, int frameIndex, int layerIndex) {
         // Finds the changes between the bitmaps
         xorArray = xor(layerBeforeModification, currentLayer);
 
@@ -63,7 +64,7 @@ public class DrawOpManager {
         Integer[] encodedChanges = encoder.encodeRunLength(xorArray);
 
         // Creates an UndoItem
-        DrawOpUndoData undoData = new DrawOpUndoData(encodedChanges, layerIndex);
+        DrawOpUndoData undoData = new DrawOpUndoData(encodedChanges, frameIndex, layerIndex);
         UndoItem undoItem = new UndoItem(UndoItem.Type.DRAW_OP, 0, undoData);
 
         // Keeps a copy of this frame for future undos/redos
@@ -72,26 +73,40 @@ public class DrawOpManager {
         return undoItem;
     }
 
-    public void undo(List<Layer> layers, int currentLayerIndex, DrawOpUndoData undoData) {
+    public void undo(List<Frame> frames, int currentFrameIndex, int currentLayerIndex, DrawOpUndoData undoData) {
         // The changes to be undone
         Integer[] previousChanges = undoData.getCompressedChanges();
 
         // Retrieves the layer which was modified
+        int modifiedFrameIndex = undoData.getFrameIndex();
         int modifiedLayerIndex = undoData.getLayerIndex();
-        Bitmap modifiedLayer = layers.get(modifiedLayerIndex).getImage();
+        Bitmap modifiedLayer = frames
+                .get(modifiedFrameIndex)
+                .getLayers()
+                .get(modifiedLayerIndex)
+                .getImage();
 
         // Rolls back the change
         performUpdate(previousChanges, modifiedLayer);
 
         // Keeps a copy of the currently selected layer for future undos/redos
-        Bitmap currentLayer = layers.get(currentLayerIndex).getImage();
+        Bitmap currentLayer = frames
+                .get(currentFrameIndex)
+                .getLayers()
+                .get(currentLayerIndex)
+                .getImage();
         bitmapCopy(currentLayer, layerBeforeModification);
     }
 
-    public void redo(List<Layer> layers, int currentLayerIndex, DrawOpUndoData redoData) {
+    public void redo(List<Frame> frames, int currentFrameIndex, int currentLayerIndex, DrawOpUndoData redoData) {
         // Retrieves the layer which needs to be modified
+        int frameToModifyIndex = redoData.getFrameIndex();
         int layerToModifyIndex = redoData.getLayerIndex();
-        Bitmap layerToModify = layers.get(layerToModifyIndex).getImage();
+        Bitmap layerToModify = frames
+                .get(frameToModifyIndex)
+                .getLayers()
+                .get(layerToModifyIndex)
+                .getImage();
 
         // Returns this change to the undo stack
         Integer[] nextChanges = redoData.getCompressedChanges();
@@ -100,7 +115,11 @@ public class DrawOpManager {
         performUpdate(nextChanges, layerToModify);
 
         // Keeps a copy of the currently selected layer for future undos/redos
-        Bitmap currentLayer = layers.get(currentLayerIndex).getImage();
+        Bitmap currentLayer = frames
+                .get(currentFrameIndex)
+                .getLayers()
+                .get(currentLayerIndex)
+                .getImage();
         bitmapCopy(currentLayer, layerBeforeModification);
     }
 

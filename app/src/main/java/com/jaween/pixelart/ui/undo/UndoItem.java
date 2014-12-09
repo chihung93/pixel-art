@@ -5,7 +5,7 @@ package com.jaween.pixelart.ui.undo;
  */
 public class UndoItem {
     public static enum Type {
-        DRAW_OP, LAYER
+        DRAW_OP, LAYER, FRAME
     }
 
     private Type type;

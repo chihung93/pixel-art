@@ -1,5 +1,7 @@
 package com.jaween.pixelart.ui.animation;
 
+import android.graphics.Bitmap;
+
 import com.jaween.pixelart.ui.layer.Layer;
 
 import java.util.LinkedList;
@@ -10,10 +12,12 @@ import java.util.LinkedList;
 public class Frame {
 
     private LinkedList<Layer> layers;
+    private Bitmap compositeBitmap;
     private int currentLayerIndex;
 
-    public Frame(LinkedList<Layer> layers, int currentLayerIndex) {
+    public Frame(LinkedList<Layer> layers, Bitmap compositeBitmap, int currentLayerIndex) {
         this.layers = layers;
+        this.compositeBitmap = compositeBitmap;
         this.currentLayerIndex = currentLayerIndex;
     }
 
@@ -31,5 +35,13 @@ public class Frame {
 
     public void setCurrentLayerIndex(int currentLayerIndex) {
         this.currentLayerIndex = currentLayerIndex;
+    }
+
+    public Bitmap getCompositeBitmap() {
+        return compositeBitmap;
+    }
+
+    public void setCompositeBitmap(Bitmap compositeBitmap) {
+        this.compositeBitmap = compositeBitmap;
     }
 }

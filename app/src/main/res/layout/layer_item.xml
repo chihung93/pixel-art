@@ -17,7 +17,7 @@
         android:textIsSelectable="false"
         android:maxLines="2"
         android:text="@string/layer"
-        android:textColor="@color/panel_content_colour"
+        android:textColor="@color/drawer_content_colour"
         android:textSize="20sp" />
 
     <ImageView
@@ -28,7 +28,7 @@
         android:layout_alignLeft="@+id/iv_layer_visibility"
         android:layout_alignRight="@+id/iv_layer_visibility"
         android:layout_marginBottom="@dimen/view_margin"
-        android:src="@drawable/ic_layer_delete" />
+        android:src="@drawable/ic_layer_delete_dark" />
 
 
     <ImageView
@@ -70,5 +70,5 @@
         android:layout_alignBottom="@id/iv_layer_image"
         android:layout_alignParentRight="true"
         android:clickable="true"
-        android:src="@drawable/tool_pen" />
+        android:src="@drawable/ic_action_layer_lock" />
 </RelativeLayout>

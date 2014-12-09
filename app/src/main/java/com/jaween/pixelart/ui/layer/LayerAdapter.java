@@ -6,6 +6,7 @@ import android.graphics.BitmapFactory;
 import android.graphics.Shader;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
+import android.os.Build;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
@@ -117,8 +118,15 @@ public class LayerAdapter extends BaseAdapter implements
 
     private void initialiseViews(ViewHolder holder, int position) {
         holder.title.setText(data.get(position).getTitile());
-        holder.image.setBackgroundDrawable(checkerboardTile);
         holder.image.setImageBitmap(data.get(position).getImage());
+
+        // Pre-Jellybean doesn't have setBackground()
+        int sdk = Build.VERSION.SDK_INT;
+        if (sdk < Build.VERSION_CODES.JELLY_BEAN) {
+            holder.image.setBackgroundDrawable(checkerboardTile);
+        } else {
+            holder.image.setBackground(checkerboardTile);
+        }
 
         if (data.get(position).isVisible()) {
             holder.visibility.setImageDrawable(layerVisible);
@@ -166,7 +174,7 @@ public class LayerAdapter extends BaseAdapter implements
                 break;
             case R.id.iv_layer_delete:
                 if (data.size() > 1) {
-                    // Deletion occurs in the fragment to avoid accidentally deleting two items,
+                    // Deletion occurs in the Fragment to avoid accidentally deleting two items,
                     // once from this adapter and once from LayerFragment.deleteLayer()
                     if (layerListItemListener != null) {
                         layerListItemListener.onDeleteLayerFromList(position);

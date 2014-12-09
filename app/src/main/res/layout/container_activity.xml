@@ -7,8 +7,7 @@
         android:id="@+id/tb_toolbar"
         android:layout_width="match_parent"
         android:layout_height="?attr/actionBarSize"
-        app:theme="@style/MyActionBar"
-        app:popupTheme="@style/ThemeOverlay.AppCompat.Light"/>
+        app:theme="@style/MyActionBar" />
 
     <FrameLayout
         android:id="@+id/fl_main_container"

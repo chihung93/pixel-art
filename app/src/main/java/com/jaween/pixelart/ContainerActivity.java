@@ -28,7 +28,6 @@ public final class ContainerActivity extends ActionBarActivity {
         // Retrieves our Toolbar and sets it to be our ActionBar
         toolbar = (Toolbar) findViewById(R.id.tb_toolbar);
         toolbar.setLogo(R.drawable.ic_logo);
-        toolbar.setNavigationIcon(R.drawable.ic_action_drawer);
         setSupportActionBar(toolbar);
         getSupportActionBar().setDisplayShowTitleEnabled(false);
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
