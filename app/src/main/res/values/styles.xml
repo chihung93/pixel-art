@@ -1,7 +1,7 @@
 <resources>
 
     <!-- Base application theme. -->
-    <style name="AppTheme" parent="Theme.AppCompat.NoActionBar">
+    <style name="AppTheme" parent="Theme.AppCompat.Light.NoActionBar">
         <item name="android:windowBackground">@color/surface_background_colour</item>
 
         <!-- Support library compatibility -->
@@ -14,11 +14,13 @@
     <!-- ActionBar theme -->
     <style name="MyActionBar" parent="@style/ThemeOverlay.AppCompat.ActionBar">
         <item name="android:background">@color/actionbar_background_colour</item>
+        <item name="android:textColorPrimary">@color/actionbar_text_colour</item>
 
         <!-- Support library compatibility -->
         <item name="logo">@drawable/ic_logo</item>
         <item name="displayOptions">showHome|useLogo</item>
         <item name="background">@color/actionbar_background_colour</item>
+        <item name="popupTheme">@style/MyPopupMenu</item>
     </style>
 
     <style name="MyActionBarTextStyle" parent="@style/TextAppearance.AppCompat.Widget.ActionBar.Title">
@@ -33,7 +35,9 @@
         <item name="actionModeBackground">@color/primary_dark</item>
     </style>
 
+    <style name="MyPopupMenu" parent="Widget.AppCompat.Light.PopupMenu">
 
+    </style>
 
     <!-- View Styles -->
     <style name="TextSmall">

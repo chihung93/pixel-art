@@ -92,7 +92,6 @@ public class DrawingSurface extends SurfaceView implements SurfaceHolder.Callbac
     private int currentLayerIndex;
     private int layerWidth;
     private int layerHeight;
-    private OnDimensionsCalculatedListener onDimensionsCalculatedListener = null;
 
     // Undo system
     private UndoManager undoManager = null;
@@ -218,11 +217,6 @@ public class DrawingSurface extends SurfaceView implements SurfaceHolder.Callbac
 
     @Override
     public void surfaceChanged(SurfaceHolder holder, int format, int width, int height) {
-        // Notifies the owner fragment that the size has been calculated
-        if (onDimensionsCalculatedListener != null) {
-            onDimensionsCalculatedListener.onDimensionsCalculated(layerWidth, layerHeight);
-        }
-
         // Encompasses the entire layer with a path used to select all
         selectedPath.moveTo(0, 0);
         selectAllPath.lineTo(layerWidth, 0);
@@ -234,7 +228,6 @@ public class DrawingSurface extends SurfaceView implements SurfaceHolder.Callbac
     @Override
     public void surfaceDestroyed(SurfaceHolder holder) {
         surfaceCreated = false;
-        onDimensionsCalculatedListener = null;
     }
 
     private void initialiseViewport() {
@@ -460,7 +453,7 @@ public class DrawingSurface extends SurfaceView implements SurfaceHolder.Callbac
     public void draw(Canvas canvas) {
         if (surfaceCreated) {
             // Background
-            //canvas.drawBitmap(checkerboardTile.getBitmap(), 0, 0, bitmapPaint);
+            //canvas.drawBitmap(checkerboardTile.getFrames(), 0, 0, bitmapPaint);
             canvas.drawColor(surfaceBackgroundColour);
 
             // Calculates the zoom and pan transformation
@@ -740,10 +733,6 @@ public class DrawingSurface extends SurfaceView implements SurfaceHolder.Callbac
         this.onClearPanelsListener = onClearPanelsListener;
     }
 
-    public void setOnDimensionsCalculatedListener(OnDimensionsCalculatedListener onDimensionsCalculatedListener) {
-        this.onDimensionsCalculatedListener = onDimensionsCalculatedListener;
-    }
-
     public void setOnSelectRegionListener(OnSelectRegionListener onSelectRegionListener) {
         this.onSelectRegionListener = onSelectRegionListener;
     }
@@ -754,10 +743,6 @@ public class DrawingSurface extends SurfaceView implements SurfaceHolder.Callbac
 
     public interface OnClearPanelsListener {
         public void onClearPanels();
-    }
-
-    public interface OnDimensionsCalculatedListener {
-        public void onDimensionsCalculated(int width, int height);
     }
 
     public interface OnSelectRegionListener {

@@ -24,7 +24,9 @@
     <color name="accent_colour">@color/yellow</color>
     <color name="primary">@color/purple</color>
     <color name="primary_dark">@color/purple_700</color>
-    <color name="highlight">#40BBBBBB</color>
+    <color name="primary_light">@color/purple_300</color>
+    <color name="highlight">#70BBBBBB</color>
+    <color name="list_item_selected_colour">@color/holo_blue_light</color>
 
     <color name="actionbar_text_colour">#FFFFFF</color>
     <color name="actionbar_background_colour">@color/primary</color>
@@ -37,11 +39,13 @@
     <color name="surface_background_colour">#F5F5F5</color>
 
     <color name="yellow">#FFEE58</color>
+    <color name="holo_blue_light">#FF33B5E5</color>
     <color name="teal">#E0F2F1</color>
     <color name="light_blue">#03A9F4</color>
     <color name="light_green">#8BC34A</color>
     <color name="cerulean">#007BA7</color>
     <color name="cerulean_dark">#0044AA</color>
+    <color name="purple_300">#BA68C8</color>
     <color name="purple">#9C27B0</color>
     <color name="purple_700">#7B1FA2</color>
     <color name="palette_icon_grey_border">#CCCCCC</color>

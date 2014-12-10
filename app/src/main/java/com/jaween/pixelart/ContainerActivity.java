@@ -30,9 +30,11 @@ public final class ContainerActivity extends ActionBarActivity {
         toolbar.setLogo(R.drawable.ic_logo);
         setSupportActionBar(toolbar);
         getSupportActionBar().setDisplayShowTitleEnabled(false);
-        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+
+        // TODO: Animation disabled until issues resolved
+        /*getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         getSupportActionBar().setHomeButtonEnabled(true);
-        getSupportActionBar().setDisplayShowHomeEnabled(true);
+        getSupportActionBar().setDisplayShowHomeEnabled(true);*/
 
         FragmentManager fragmentManager = getSupportFragmentManager();
         containerFragment = (ContainerFragment) fragmentManager.findFragmentByTag(TAG_CONTAINER_FRAGMENT);
@@ -49,7 +51,8 @@ public final class ContainerActivity extends ActionBarActivity {
     @Override
     protected void onPostCreate(Bundle savedInstanceState) {
         super.onPostCreate(savedInstanceState);
-        containerFragment.syncState();
+        // TODO: Animation disabled until issues resolved
+        //containerFragment.syncState();
     }
 
     @Override

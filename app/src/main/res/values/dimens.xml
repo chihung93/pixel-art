@@ -6,12 +6,15 @@
     <dimen name="left_keyline">16dp</dimen>
 
     <dimen name="view_margin">4dp</dimen>
+    <dimen name="file_item_padding">8dp</dimen>
     <dimen name="canvas_margin">16dp</dimen>
 
     <dimen name="palette_colour_button_inner_margin">8dp</dimen>
     <dimen name="palette_colour_button_border_margin">4dp</dimen>
 
     <dimen name="tool_options_column_2_margin">175dp</dimen>
+
+    <dimen name="load_dialog_height">300dp</dimen>
 
     <dimen name="panel_width">350dp</dimen>
     <dimen name="layer_panel_width">300dp</dimen>

@@ -1,6 +1,7 @@
 package com.jaween.pixelart;
 
 import android.content.res.Configuration;
+import android.graphics.Bitmap;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.LayerDrawable;
 import android.os.Bundle;
@@ -12,13 +13,18 @@ import android.support.v7.app.ActionBarActivity;
 import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.view.ActionMode;
 import android.support.v7.widget.Toolbar;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Toast;
 
+import com.jaween.pixelart.io.AnimationFile;
+import com.jaween.pixelart.io.ImportExport;
+import com.jaween.pixelart.io.LoadFileDialog;
 import com.jaween.pixelart.tools.Tool;
 import com.jaween.pixelart.ui.DrawingFragment;
 import com.jaween.pixelart.ui.DrawingSurface;
@@ -26,13 +32,16 @@ import com.jaween.pixelart.ui.PaletteFragment;
 import com.jaween.pixelart.ui.ToolboxFragment;
 import com.jaween.pixelart.ui.animation.AnimationFragment;
 import com.jaween.pixelart.ui.animation.Frame;
-import com.jaween.pixelart.ui.layer.Layer;
 import com.jaween.pixelart.ui.layer.LayerFragment;
 import com.jaween.pixelart.ui.undo.UndoItem;
 import com.jaween.pixelart.ui.undo.UndoManager;
+import com.jaween.pixelart.util.AutoSaver;
 import com.jaween.pixelart.util.Color;
 import com.jaween.pixelart.util.ConfigChangeFragment;
+import com.jaween.pixelart.util.PreferenceManager;
 
+import java.util.Date;
+import java.util.GregorianCalendar;
 import java.util.LinkedList;
 
 /**
@@ -41,11 +50,11 @@ import java.util.LinkedList;
 public class ContainerFragment extends Fragment implements
         PaletteFragment.OnPrimaryColourSelectedListener,
         ToolboxFragment.OnToolSelectListener,
-        DrawingFragment.OnDimensionsCalculatedListener,
         DrawingSurface.OnDropColourListener,
         PaletteFragment.OnShowPaletteListener,
         LayerFragment.LayerListener,
         AnimationFragment.FrameListener,
+        LoadFileDialog.LoadFileDialogListener,
         ActionMode.Callback {
 
     // Child Fragments
@@ -66,6 +75,11 @@ public class ContainerFragment extends Fragment implements
     private static final int layerWidth = 128;
     private static final int layerHeight = 128;
 
+    // Saving
+    private static final String KEY_FILENAME = "key_filename";
+    private AutoSaver autoSaver;
+    private String filename;
+
     // Undo system
     private static final int MAX_UNDOS = 200;
     private UndoManager undoManager = null;
@@ -82,6 +96,9 @@ public class ContainerFragment extends Fragment implements
     // Colour menu item
     private LayerDrawable layerDrawable;
 
+    // Settings
+    private PreferenceManager preferenceManager;
+
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -96,6 +113,8 @@ public class ContainerFragment extends Fragment implements
             fragmentTransaction.add(configChangeFragment, ConfigChangeFragment.TAG_CONFIG_CHANGE_FRAGMENT);
             fragmentTransaction.commit();
         }
+
+        preferenceManager = new PreferenceManager(getActivity());
 
         onRestoreInstanceState(savedInstanceState);
     }
@@ -125,7 +144,7 @@ public class ContainerFragment extends Fragment implements
 
         animationDrawerView = view.findViewById(R.id.fl_container_animation);
 
-        setupDrawer(view);
+        //setupDrawer(view);
 
         return view;
     }
@@ -158,6 +177,9 @@ public class ContainerFragment extends Fragment implements
 
         // Saves the UndoManager
         configChangeFragment.setUndoManager(undoManager);
+
+        // Saves the filename
+        outState.putString(KEY_FILENAME, filename);
     }
 
     private void onRestoreInstanceState(Bundle savedInstanceState) {
@@ -167,6 +189,12 @@ public class ContainerFragment extends Fragment implements
         if (undoManager == null) {
             undoManager = new UndoManager(MAX_UNDOS);
         }
+
+        if (savedInstanceState != null) {
+            // Restores the filename (don't call setFilename() here, Toolbar hasn't initialised)
+            filename = savedInstanceState.getString(KEY_FILENAME, null);
+        }
+
     }
 
     @Override
@@ -186,7 +214,6 @@ public class ContainerFragment extends Fragment implements
         layerFragment = panelManagerFragment.getLayerFragment();
 
         // Fragment callbacks
-        drawingFragment.setOnDimensionsCalculatedListener(this);
         drawingFragment.setOnDropColourListener(this);
         drawingFragment.setOnClearPanelsListener(panelManagerFragment);
         paletteFragment.setOnPrimaryColourSelectedListener(this);
@@ -211,19 +238,61 @@ public class ContainerFragment extends Fragment implements
     @Override
     public void onResume() {
         super.onResume();
-        // Initiates the process of creating the first animation frame
-        animationFragment.notifyFragmentsReady();
 
-        // TODO: Pass the restored frame and layer index to the Drawing and Layer Fragments
+        // TODO: Passes the frames and layer index to the Drawing and Layer Fragments
         // (ideally done in the AnimationFragment via a call to AnimationFragment.onCurrentFrameChange())
-
-        // Passes the initial frame to the DrawingFragment and LayerFragment
-        LinkedList<Frame> frames = animationFragment.getFrames();
+        LinkedList<Frame> frames = loadAnimation();
         drawingFragment.setFrames(frames);
         layerFragment.setFrames(frames);
 
         // Allocates memory for some Tools here, as onResume() is called after they are initiated
         toolboxFragment.setDimensions(layerWidth, layerHeight);
+        setFilename(filename);
+
+        // Begins auto-saving at regular intervals
+        autoSaver = new AutoSaver(this);
+        autoSaver.begin();
+    }
+
+    @Override
+    public void onPause() {
+        super.onPause();
+        // Stops the AutoSaver
+        autoSaver.stop();
+    }
+
+    @Override
+    public void onStop() {
+        super.onStop();
+        // Saves when we change apps
+        save();
+    }
+
+    private LinkedList<Frame> loadAnimation() {
+        // After a config change, the AnimationFragment retains its Frames
+        LinkedList<Frame> frames = animationFragment.getFrames();
+
+        // No Frames restores, app launch
+        if (frames == null) {
+            // Loads the last drawing
+            AnimationFile lastUsedFile = null;
+            String lastUsedFilename = preferenceManager.getLastUsedFilename();
+            if (lastUsedFilename != null) {
+                lastUsedFile = ImportExport.load(getActivity(), lastUsedFilename);
+            }
+
+            if (lastUsedFile != null) {
+                // Loads the Frames from the last used file
+                frames = lastUsedFile.getFrames();
+                setFilename(lastUsedFile.getFilename());
+            } else {
+                // No last used drawing, initiates the process of creating the first animation frame
+                animationFragment.notifyFragmentsReady();
+                frames = animationFragment.getFrames();
+            }
+            animationFragment.setFrames(frames);
+        }
+        return frames;
     }
 
     @Override
@@ -243,12 +312,13 @@ public class ContainerFragment extends Fragment implements
     public void onPrepareOptionsMenu(Menu menu) {
         super.onPrepareOptionsMenu(menu);
 
-        if (drawerLayout.isDrawerOpen(animationDrawerView)) {
+        // TODO: Animation disabled until issues resolved
+        /*if (drawerLayout.isDrawerOpen(animationDrawerView)) {
             menu.setGroupVisible(R.id.menu_group_state, false);
             menu.setGroupVisible(R.id.menu_group_main, false);
         } else {
             menu.setGroupVisible(R.id.menu_group_animation, false);
-        }
+        }*/
 
         updateStateMenuIcons(menu);
     }
@@ -324,8 +394,22 @@ public class ContainerFragment extends Fragment implements
             case R.id.action_palette:
                 panelManagerFragment.togglePanel(paletteFragment);
                 break;
-            case R.id.action_layers:
+            // TODO: Layers disabled until issues resolved
+            /*case R.id.action_layers:
                 panelManagerFragment.togglePanel(layerFragment);
+                break;*/
+            case R.id.action_new_drawing:
+                save();
+                LoadFileDialog loadFileDialog = new LoadFileDialog();
+                loadFileDialog.setCurrentFilename(filename);
+                loadFileDialog.setTargetFragment(this, 0);
+                loadFileDialog.show(getActivity().getSupportFragmentManager(), "dialog");
+                break;
+            case R.id.action_export:
+                exportAnimation();
+                break;
+            case android.R.id.home:
+                Log.d("ContainerFragment", "Home clicked");
                 break;
             default:
                 return false;
@@ -371,11 +455,6 @@ public class ContainerFragment extends Fragment implements
         if (done) {
             panelManagerFragment.onClearPanels();
         }
-    }
-
-    // TODO: Maybe I don't need this callback, when is this called? If fragments are ready here it's useful for animationFragment.notifyFragmentsReady()
-    @Override
-    public void onSurfaceCreated(int width, int height) {
     }
 
     @Override
@@ -425,6 +504,53 @@ public class ContainerFragment extends Fragment implements
             layerDrawable = Color.tintAndLayerDrawable(colouredInner, border, colour);
 
             getActivity().supportInvalidateOptionsMenu();
+    }
+
+    private void exportAnimation() {
+        // Retrieves the animation
+        LinkedList<Frame> frames = animationFragment.getFrames();
+        Bitmap bitmap = frames.get(0).getLayers().get(0).getImage();
+
+        // Performs the export procedure
+        Date date = new GregorianCalendar().getTime();
+        String filename = date.toString() + ".png";
+        int fps = 30;
+        boolean success = ImportExport.export(bitmap, filename, fps, ImportExport.Format.PNG);
+
+        // Feedback to user
+        String message;
+        if (success) {
+            message = getString(R.string.text_export_success);
+        } else {
+            message = getString(R.string.text_export_failure);
+        }
+        Toast.makeText(getActivity(), message, Toast.LENGTH_SHORT).show();
+    }
+
+    public void save() {
+        Log.d("AutoSaver", "Saved!");
+
+        // Retrieves the animation
+        LinkedList<Frame> frames = animationFragment.getFrames();
+        Bitmap bitmap = frames.get(0).getLayers().get(0).getImage();
+
+        // Performs the export procedure
+        if (filename == null) {
+            Date date = new GregorianCalendar().getTime();
+            String filename = date.toString() + ".png";
+            setFilename(filename);
+        }
+        ImportExport.save(getActivity(), bitmap, filename);
+
+        // Saves the last used filename
+        preferenceManager.setLastUsedFilename(filename);
+    }
+
+    private void setFilename(String filename) {
+        this.filename = filename;
+        preferenceManager.setLastUsedFilename(filename);
+        Toolbar toolbar = ((ContainerActivity) getActivity()).getToolbar();
+        toolbar.setTitle(filename);
     }
 
     @Override
@@ -483,5 +609,22 @@ public class ContainerFragment extends Fragment implements
     public Frame requestFrame(boolean duplicate) {
         // LayerFragment constructs an Animation frame
         return layerFragment.requestFrame(duplicate);
+    }
+
+    @Override
+    public void onDismiss(String filename, AnimationFile file) {
+        if (!this.filename.equals(filename)) {
+            setFilename(filename);
+            AnimationFile animationFile = ImportExport.load(getActivity(), filename);
+            animationFragment.setFrames(animationFile.getFrames());
+            drawingFragment.setFrames(animationFile.getFrames());
+            layerFragment.setFrames(animationFile.getFrames());
+
+        }
+    }
+
+    @Override
+    public Frame requestFrame() {
+        return layerFragment.requestFrame(false);
     }
 }

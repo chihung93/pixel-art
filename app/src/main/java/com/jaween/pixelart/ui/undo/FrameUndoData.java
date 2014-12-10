@@ -4,7 +4,7 @@ import android.graphics.Bitmap;
 
 import com.jaween.pixelart.ui.animation.Frame;
 import com.jaween.pixelart.ui.layer.Layer;
-import com.jaween.pixelart.util.Encoder;
+import com.jaween.pixelart.util.BitmapEncoder;
 
 import java.util.LinkedList;
 
@@ -18,7 +18,7 @@ public class FrameUndoData {
     }
 
     public static final int NULL_INDEX = -1;
-    private static Encoder encoder = new Encoder();
+    private static BitmapEncoder bitmapEncoder = new BitmapEncoder();
 
     private FrameOperation type = null;
     private int frameIndex = NULL_INDEX;
@@ -55,18 +55,18 @@ public class FrameUndoData {
         titles = new LinkedList<>();
         visibilities = new LinkedList<>();
         lockList = new LinkedList<>();
-        encoder.setBitmapDimensions(layerWidth, layerHeight);
+        bitmapEncoder.setBitmapDimensions(layerWidth, layerHeight);
 
         // Decomposes the layers and compresses the layer images
         for (int i = 0; i < frame.getLayers().size(); i++) {
             Layer layer = frame.getLayers().get(i);
-            Integer[] compressedBitmap = encoder.encodeRunLength(layer.getImage());
+            Integer[] compressedBitmap = bitmapEncoder.encodeRunLength(layer.getImage());
             compressedLayers.add(compressedBitmap);
             titles.add(layer.getTitile());
             visibilities.add(layer.isVisible());
             lockList.add(layer.isLocked());
         }
-        compressedCompositeBitmap = encoder.encodeRunLength(frame.getCompositeBitmap());
+        compressedCompositeBitmap = bitmapEncoder.encodeRunLength(frame.getCompositeBitmap());
         currentLayerIndex = frame.getCurrentLayerIndex();
     }
 
@@ -105,7 +105,7 @@ public class FrameUndoData {
         LinkedList<Layer> layers = new LinkedList<Layer>();
         for (int i = 0; i < compressedLayers.size(); i++) {
             Bitmap layerImage = Bitmap.createBitmap(layerWidth, layerHeight, config);
-            encoder.decodeRunLength(compressedLayers.get(i), layerImage);
+            bitmapEncoder.decodeRunLength(compressedLayers.get(i), layerImage);
 
             String title = titles.get(i);
             boolean visibility = visibilities.get(i);
@@ -119,7 +119,7 @@ public class FrameUndoData {
             layers.add(layer);
         }
         Bitmap compositeBitmap = Bitmap.createBitmap(layerWidth, layerHeight, config);
-        encoder.decodeRunLength(compressedCompositeBitmap, compositeBitmap);
+        bitmapEncoder.decodeRunLength(compressedCompositeBitmap, compositeBitmap);
 
         Frame frame = new Frame(layers, compositeBitmap, currentLayerIndex);
         return frame;

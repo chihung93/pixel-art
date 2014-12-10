@@ -44,7 +44,7 @@ public class AnimationFragment extends Fragment implements
         AdapterView.OnItemClickListener,
         FrameAdapter.FrameListItemListener {
 
-    private LinkedList<Frame> frames = new LinkedList<Frame>();
+    private LinkedList<Frame> frames = null;
     private FrameAdapter frameAdapter;
 
     private GridView frameGrid;
@@ -79,7 +79,8 @@ public class AnimationFragment extends Fragment implements
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        setHasOptionsMenu(true);
+        // TODO: Animation disabled until issues resolved
+        //setHasOptionsMenu(true);
 
         previewAnimation = new AnimationDrawable();
         previewAnimation.setOneShot(false);
@@ -99,8 +100,6 @@ public class AnimationFragment extends Fragment implements
         initialiseConfigChangeFragment();
 
         onRestoreInstanceState(savedInstanceState);
-
-        createAdaptor();
 
         return view;
     }
@@ -188,15 +187,15 @@ public class AnimationFragment extends Fragment implements
         // Attempts to restore the frames
         frames = configChangeWorker.getFrames();
         configChangeWorker.setFrames(null);
+
+        // Creates the adaptor only if it's restoring frames, not if we're loading a file
+        if (frames != null) {
+            createAdaptor();
+        }
     }
 
     /** Creates and sets the frame adapter. **/
     private void createAdaptor() {
-        // Frames didn't exist, creates now list
-        if (frames == null) {
-            frames = new LinkedList<Frame>();
-        }
-
         // Sets the adapter now that we have a reference to our list of frames
         frameAdapter = new FrameAdapter(getActivity(), frames, checkerboardTile);
         frameAdapter.setFrameListItemListener(this);
@@ -214,6 +213,11 @@ public class AnimationFragment extends Fragment implements
 
     /** Notifies this Fragment when it can safely request the first frame. **/
     public void notifyFragmentsReady() {
+        if (frames == null) {
+            frames = new LinkedList<Frame>();
+            createAdaptor();
+        }
+
         if (frames.isEmpty()) {
             requestFrame(false);
         }
@@ -232,6 +236,12 @@ public class AnimationFragment extends Fragment implements
     /** Retrieves the list of all the Frames. **/
     public LinkedList<Frame> getFrames() {
         return frames;
+    }
+
+    /** Sets the frames and creates the adaptor. **/
+    public void setFrames(LinkedList<Frame> frames) {
+        this.frames = frames;
+        createAdaptor();
     }
 
     public void setUndoManager(UndoManager undoManager) {
@@ -264,7 +274,7 @@ public class AnimationFragment extends Fragment implements
         // Updates the data structure and animates out the item
         frames.remove(frameIndex);
 
-        // If the current frame has moved, points the currentFrameIndex at it's new position
+        // If the current frame has moved, points the currentFrameIndex at its new position
         if (frameIndex == currentFrameIndex && frameIndex == frames.size()) {
             // Frame deleted was the current frame and it was the final frame
             // New current frame is the one above it

@@ -1,11 +1,9 @@
 package com.jaween.pixelart.ui.undo;
 
 import android.graphics.Bitmap;
-import android.util.Log;
 
 import com.jaween.pixelart.ui.animation.Frame;
-import com.jaween.pixelart.ui.layer.Layer;
-import com.jaween.pixelart.util.Encoder;
+import com.jaween.pixelart.util.BitmapEncoder;
 
 import java.util.List;
 
@@ -20,7 +18,7 @@ public class DrawOpManager {
 
     // Bitmaps and compression
     private Bitmap layerBeforeModification = null;
-    private final Encoder encoder = new Encoder();
+    private final BitmapEncoder bitmapEncoder = new BitmapEncoder();
 
     // Bitmap pixel arrays
     private int[] lhsPixelArray = null;
@@ -41,7 +39,7 @@ public class DrawOpManager {
         xorArray = new int[layerWidth * layerHeight];
 
         // Allocates memory for pixel data in the compression function
-        encoder.setBitmapDimensions(layerWidth, layerHeight);
+        bitmapEncoder.setBitmapDimensions(layerWidth, layerHeight);
 
         // Layer dimensions
         this.layerWidth = layerWidth;
@@ -61,7 +59,7 @@ public class DrawOpManager {
         xorArray = xor(layerBeforeModification, currentLayer);
 
         // Compresses these differences
-        Integer[] encodedChanges = encoder.encodeRunLength(xorArray);
+        Integer[] encodedChanges = bitmapEncoder.encodeRunLength(xorArray);
 
         // Creates an UndoItem
         DrawOpUndoData undoData = new DrawOpUndoData(encodedChanges, frameIndex, layerIndex);
@@ -129,7 +127,7 @@ public class DrawOpManager {
      **/
     private void performUpdate(Integer[] compressedChanges, Bitmap destination) {
         // Decodes the uncompressed changes
-        encoder.decodeRunLength(compressedChanges, xorArray);
+        bitmapEncoder.decodeRunLength(compressedChanges, xorArray);
 
         // Retrieves the new frame
         xor(destination, xorArray);

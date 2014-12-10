@@ -8,9 +8,9 @@ import java.util.ArrayList;
 /**
  * Compresses bitmaps
  */
-public class Encoder {
+public class BitmapEncoder {
 
-    private static final String LOG_TAG = Encoder.class.getSimpleName();
+    private static final String LOG_TAG = BitmapEncoder.class.getSimpleName();
 
     private ArrayList<Integer> encodedBitmapList = new ArrayList<Integer>();
     private int[] pixelArray;

@@ -24,7 +24,6 @@ import java.util.LinkedList;
 
 public class DrawingFragment extends Fragment implements
         DrawingSurface.OnClearPanelsListener,
-        DrawingSurface.OnDimensionsCalculatedListener,
         DrawingSurface.OnSelectRegionListener,
         ActionMode.Callback {
 
@@ -33,7 +32,6 @@ public class DrawingFragment extends Fragment implements
 
     // Callbacks
     private OnClearPanelsListener onClearPanelsListener = null;
-    private OnDimensionsCalculatedListener onDimensionsCalculatedListener = null;
     private ActionMode.Callback actionModeCallback = this;
 
     // Regular UI state
@@ -56,7 +54,6 @@ public class DrawingFragment extends Fragment implements
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         surface = new DrawingSurface(getActivity(), selectedTool);
         surface.setOnClearPanelsListener(this);
-        surface.setOnDimensionsCalculatedListener(this);
         surface.setOnSelectRegionListener(this);
 
         // Retrieves the undo manager for undoing and redoing drawing commands
@@ -181,22 +178,11 @@ public class DrawingFragment extends Fragment implements
     }
 
     @Override
-    public void onDimensionsCalculated(int width, int height) {
-        if (onDimensionsCalculatedListener != null) {
-            onDimensionsCalculatedListener.onSurfaceCreated(width, height);
-        }
-    }
-
-    @Override
     public void onSelectRegion(Path selectedRegion) {
         // Starts the Contextual Action Bar if there isn't one already there (i.e. actionMode == null)
         if (actionMode == null) {
             ((ContainerActivity) getActivity()).getToolbar().startActionMode(actionModeCallback);
         }
-    }
-
-    public void setOnDimensionsCalculatedListener(OnDimensionsCalculatedListener onDimensionsCalculatedListener) {
-        this.onDimensionsCalculatedListener = onDimensionsCalculatedListener;
     }
 
     // Passed along to the DrawingSurface
@@ -245,10 +231,6 @@ public class DrawingFragment extends Fragment implements
     public void onDestroyActionMode(ActionMode actionMode) {
         surface.dismissSelection();
         this.actionMode = null;
-    }
-
-    public interface OnDimensionsCalculatedListener {
-        public void onSurfaceCreated(int width, int height);
     }
 
     public interface OnClearPanelsListener {

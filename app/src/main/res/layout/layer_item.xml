@@ -28,7 +28,7 @@
         android:layout_alignLeft="@+id/iv_layer_visibility"
         android:layout_alignRight="@+id/iv_layer_visibility"
         android:layout_marginBottom="@dimen/view_margin"
-        android:src="@drawable/ic_layer_delete_dark" />
+        android:src="@drawable/ic_delete_dark" />
 
 
     <ImageView

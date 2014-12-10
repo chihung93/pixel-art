@@ -9,12 +9,12 @@ This app currently includes:
  * Smooth zooming and panning
  * UI controls (colour palette, undo/redo system, pixel grid, thumbnail)
  * Basic tablet support
- * Layer support
+ * Drawing file picker
  * Plenty of bugs
 
 TODO
 ----
 Features that are currently lacking:
  * Standard tools (selection, text, etc.)
- * Restoring state between application restarts
- * Animation support
+ * Layer support (partially complete)
+ * Animation support (partially complete)

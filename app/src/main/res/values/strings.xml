@@ -10,6 +10,8 @@
     <string name="action_grid">Grid</string>
     <string name="action_tool">Tools</string>
     <string name="action_palette">Palette</string>
+    <string name="action_new_drawing">New drawing</string>
+    <string name="action_export">Export</string>
     <string name="action_settings">Settings</string>
     <string name="action_copy">Copy</string>
     <string name="action_cut">Cut</string>
@@ -19,6 +21,14 @@
     <string name="action_delete_palette">Delete palette</string>
     <string name="action_add_frame">Add frame</string>
     <string name="action_duplicate_frame">Duplicate frame</string>
+    <string name="action_delete">Delete</string>
+
+    <!-- Text -->
+    <string name="text_export_success">Drawing exported</string>
+    <string name="text_export_failure">Export failed</string>
+    <string name="text_load_dialog_title">Choose a drawing</string>
+    <string name="text_new_drawing">New drawing</string>
+
 
     <!-- Tools -->
     <string name="tool_pen">Pen</string>
@@ -41,9 +51,11 @@
     <string name="tool_option_rounded">Rounded Corners</string>
     <string name="tool_option_threshold">Threshold</string>
 
-    <!-- Palette -->
+    <!-- Buttons -->
     <string name="button_customise_palette">Customise</string>
     <string name="button_next_palette">Next Palette</string>
+    <string name="button_ok">OK</string>
+    <string name="button_cancel">Cancel</string>
 
     <!--Colour Picker Spaces-->
     <string name="label_opacity">Opacity</string>

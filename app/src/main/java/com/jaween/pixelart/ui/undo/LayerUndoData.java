@@ -3,7 +3,7 @@ package com.jaween.pixelart.ui.undo;
 import android.graphics.Bitmap;
 
 import com.jaween.pixelart.ui.layer.Layer;
-import com.jaween.pixelart.util.Encoder;
+import com.jaween.pixelart.util.BitmapEncoder;
 
 /**
  * Created by ween on 11/29/14.
@@ -15,7 +15,7 @@ public class LayerUndoData {
     }
 
     public static final int NULL_INDEX = -1;
-    private static Encoder encoder = new Encoder();
+    private static BitmapEncoder bitmapEncoder = new BitmapEncoder();
 
     private LayerOperation type = null;
     private int frameIndex = NULL_INDEX;
@@ -50,8 +50,8 @@ public class LayerUndoData {
         config = layer.getImage().getConfig();
 
         // Compresses the layer image and decomposes the rest of the layer
-        encoder.setBitmapDimensions(layerWidth, layerHeight);
-        compressedLayer = encoder.encodeRunLength(layer.getImage());
+        bitmapEncoder.setBitmapDimensions(layerWidth, layerHeight);
+        compressedLayer = bitmapEncoder.encodeRunLength(layer.getImage());
         title = layer.getTitile();
         visibility = layer.isVisible();
         locked = layer.isLocked();
@@ -97,7 +97,7 @@ public class LayerUndoData {
     public Layer getLayer() {
         // Decompresses the bitmap
         Bitmap layerImage = Bitmap.createBitmap(layerWidth, layerHeight, config);
-        encoder.decodeRunLength(compressedLayer, layerImage);
+        bitmapEncoder.decodeRunLength(compressedLayer, layerImage);
 
         // Recreates the layer object
         Layer layer = new Layer(layerImage, title);
