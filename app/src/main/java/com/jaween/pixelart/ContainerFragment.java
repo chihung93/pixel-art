@@ -528,8 +528,6 @@ public class ContainerFragment extends Fragment implements
     }
 
     public void save() {
-        Log.d("AutoSaver", "Saved!");
-
         // Retrieves the animation
         LinkedList<Frame> frames = animationFragment.getFrames();
         Bitmap bitmap = frames.get(0).getLayers().get(0).getImage();

@@ -2,13 +2,16 @@
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:paddingBottom="@dimen/view_margin">
+    android:paddingBottom="@dimen/spacing"
+    android:paddingLeft="@dimen/edge_keyline"
+    android:paddingRight="@dimen/edge_keyline">
 
     <CheckBox
         android:id="@+id/cb_option_aa"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_margin="@dimen/view_margin"
+        android:layout_marginBottom="@dimen/view_margin"
+        android:layout_marginTop="@dimen/view_margin"
         android:text="@string/tool_option_aa" />
 
     <ImageView
@@ -17,7 +20,7 @@
         android:layout_height="32dp"
         android:layout_below="@id/cb_option_aa"
         android:layout_marginBottom="@dimen/view_margin"
-        android:layout_marginLeft="@dimen/view_margin"
+        android:layout_marginRight="@dimen/view_margin"
         android:layout_marginTop="@dimen/view_margin"
         android:src="@drawable/tool_options_pen_thickness_thin" />
 
@@ -28,7 +31,7 @@
         android:layout_alignParentRight="true"
         android:layout_below="@id/cb_option_aa"
         android:layout_marginBottom="@dimen/view_margin"
-        android:layout_marginRight="@dimen/view_margin"
+        android:layout_marginLeft="@dimen/view_margin"
         android:layout_marginTop="@dimen/view_margin"
         android:src="@drawable/tool_options_pen_thickness_thick" />
 
@@ -37,7 +40,10 @@
         android:layout_width="wrap_content"
         android:layout_height="32dp"
         android:layout_below="@id/cb_option_aa"
-        android:layout_margin="@dimen/view_margin"
+        android:layout_marginBottom="@dimen/view_margin"
+        android:layout_marginLeft="@dimen/view_margin"
+        android:layout_marginRight="@dimen/view_margin"
+        android:layout_marginTop="@dimen/view_margin"
         android:layout_toLeftOf="@id/iv_option_thickness_right"
         android:layout_toRightOf="@id/iv_option_thickness_left"
         android:layout_weight="1"

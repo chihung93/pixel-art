@@ -1,5 +1,10 @@
 package com.jaween.pixelart.ui;
 
+import android.animation.Animator;
+import android.animation.AnimatorSet;
+import android.animation.ObjectAnimator;
+import android.animation.PropertyValuesHolder;
+import android.animation.ValueAnimator;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.util.Log;
@@ -7,9 +12,17 @@ import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.ViewTreeObserver;
+import android.view.animation.AccelerateInterpolator;
+import android.view.animation.DecelerateInterpolator;
+import android.view.animation.Interpolator;
 import android.widget.FrameLayout;
+import android.widget.LinearLayout;
+import android.widget.TableLayout;
+import android.widget.TableRow;
 import android.widget.TextView;
 
+import com.jaween.pixelart.PanelManagerFragment;
 import com.jaween.pixelart.R;
 import com.jaween.pixelart.tools.Dropper;
 import com.jaween.pixelart.tools.Eraser;
@@ -69,14 +82,30 @@ public class ToolboxFragment extends Fragment implements  View.OnClickListener, 
     private OvalOptionsView ovalOptions;
     private MagicWandOptionsView magicWandOptions;
 
-    private FrameLayout optionsFrameLayout;
-
     private ViewGroup parentViewGroup;
+    private FrameLayout optionsFrameLayout;
+    private TableLayout toolTable;
+
+    // Animations
+    private static final int ANIM_SLIDE_DURATION = 200;
+    private static final int ANIM_TOOL_DURATION = 100;
+    private static final int ANIM_TOOL_DELAY = 40;
+    private static final int ANIM_FADE_DURATION = 250;
+
+    private LinearLayout toolboxBase;
+    private ValueAnimator slideAnimator;
 
     private int restoredColour;
 
     private static final String KEY_TOOL = "key_tool";
     private static final int NULL_TOOL_ID = -1;
+
+    private AnimatorSet contentAnimatorSetIn = new AnimatorSet();
+    private AnimatorSet contentAnimatorSetOut = new AnimatorSet();
+    private Interpolator decelerate = new DecelerateInterpolator();
+    private Interpolator accelerate = new AccelerateInterpolator();
+    private int measuredHeight;
+
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -133,6 +162,8 @@ public class ToolboxFragment extends Fragment implements  View.OnClickListener, 
         if (onToolSelectListener != null) {
             onToolSelectListener.onToolSelected(selectedTool, false);
         }
+
+        setupAnimations();
 
         return parentViewGroup;
     }
@@ -197,6 +228,8 @@ public class ToolboxFragment extends Fragment implements  View.OnClickListener, 
         magicWandButton = (ToolButton) v.findViewById(R.id.ib_tool_magic_wand);
         freeSelectButton = (ToolButton) v.findViewById(R.id.ib_tool_free_select);
 
+        toolboxBase = (LinearLayout) v.findViewById(R.id.ll_toolbox_base);
+        toolTable = (TableLayout) v.findViewById(R.id.tl_toolbox_table);
         optionsFrameLayout = (FrameLayout) v.findViewById(R.id.fl_container_tool_options);
 
         // OnClickListeners
@@ -236,6 +269,11 @@ public class ToolboxFragment extends Fragment implements  View.OnClickListener, 
 
     @Override
     public void onClick(View v) {
+        // Can't change tool while animating
+        if (animationStarted()) {
+            return;
+        }
+
         if (v instanceof ToolButton) {
             optionsFrameLayout.removeAllViews();
         }
@@ -412,4 +450,215 @@ public class ToolboxFragment extends Fragment implements  View.OnClickListener, 
             selectedTool.getToolAttributes().getPaint().setColor(colour);
         }
     }
+
+    private void hideFragment() {
+        ((PanelManagerFragment) getParentFragment()).hideFragmentTemp(this);
+    }
+
+    private boolean animationStarted() {
+        return slideAnimator.isStarted() ||
+                contentAnimatorSetIn.isStarted() ||
+                contentAnimatorSetOut.isStarted();
+    }
+
+    private void setupAnimations() {
+        // Panel sliding animation
+        slideAnimator = ValueAnimator.ofInt(0, 0);
+        slideAnimator.setDuration(ANIM_SLIDE_DURATION);
+        slideAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+            @Override
+            public void onAnimationUpdate(ValueAnimator valueAnimator) {
+                //Update Height
+                int value = (Integer) valueAnimator.getAnimatedValue();
+                ViewGroup.LayoutParams layoutParams = toolboxBase.getLayoutParams();
+                layoutParams.height = value;
+                toolboxBase.setLayoutParams(layoutParams);
+            }
+        });
+
+        createToolAnimationIn();
+        createToolAnimationOut();
+    }
+
+    private void getViewHeight() {
+        ViewTreeObserver viewTreeObserver = toolboxBase.getViewTreeObserver();
+        viewTreeObserver.addOnPreDrawListener(new ViewTreeObserver.OnPreDrawListener() {
+            @Override
+            public boolean onPreDraw() {
+                measuredHeight = toolboxBase.getMeasuredHeight();
+                if (measuredHeight > 0) {
+                    toolboxBase.getViewTreeObserver().removeOnPreDrawListener(this);
+                }
+                return true;
+            }
+        });
+    }
+
+    public void startAnimation(final boolean forward) {
+        // Only starts animation if there are no other animations playing
+        if (animationStarted()) {
+            return;
+        }
+
+        getViewHeight();
+
+        if (forward) {
+            // Makes all the ToolButtons invisible to begin with
+            for (int j = 0; j < toolTable.getChildCount(); j++) {
+                TableRow tableRow = (TableRow) toolTable.getChildAt(j);
+                for (int i = 0; i < tableRow.getChildCount(); i++) {
+                    // Initially they are gone
+                    View view = tableRow.getChildAt(i);
+                    view.setScaleX(0);
+                    view.setScaleY(0);
+                }
+            }
+            toolTable.setVisibility(View.INVISIBLE);
+            optionsFrameLayout.setVisibility(View.INVISIBLE);
+
+            slideAnimator.setIntValues(0, measuredHeight);
+            slideAnimator.removeAllListeners();
+            slideAnimator.addListener(slideDownListener);
+            slideAnimator.start();
+        } else {
+            // Plays the animation in reverse
+            slideAnimator.setIntValues(toolboxBase.getHeight(), 0);
+            contentAnimatorSetOut.removeAllListeners();
+            contentAnimatorSetOut.addListener(slideUpListener);
+            contentAnimatorSetOut.start();
+        }
+    }
+
+
+    private void createToolAnimationIn() {
+        // Tools appearing two by two
+        ObjectAnimator[] toolAnimators = new ObjectAnimator[10];
+        for (int row = 0; row < toolTable.getChildCount(); row++) {
+            TableRow tableRow = (TableRow) toolTable.getChildAt(row);
+            for (int col = 0; col < tableRow.getChildCount(); col++) {
+                final View view = tableRow.getChildAt(col);
+
+                PropertyValuesHolder pvhSX = PropertyValuesHolder.ofFloat(View.SCALE_X, 1f);
+                PropertyValuesHolder pvhSY = PropertyValuesHolder.ofFloat(View.SCALE_Y, 1f);
+
+                // Makes items appear diagonally
+                ObjectAnimator toolAnimator = ObjectAnimator.ofPropertyValuesHolder(view, pvhSX, pvhSY);
+                toolAnimator.setInterpolator(decelerate);
+                toolAnimator.setStartDelay(col * ANIM_TOOL_DELAY + row * ANIM_TOOL_DELAY);
+                toolAnimator.setDuration(ANIM_TOOL_DURATION);
+                toolAnimators[row * tableRow.getChildCount() + col] = toolAnimator;
+            }
+        }
+        AnimatorSet toolAnimatorSet = new AnimatorSet();
+        toolAnimatorSet.playTogether(toolAnimators);
+        ObjectAnimator optionsAnimator = ObjectAnimator.ofFloat(optionsFrameLayout, View.ALPHA, 0f, 1f);
+        optionsAnimator.setDuration(ANIM_FADE_DURATION);
+        contentAnimatorSetIn.playSequentially(toolAnimatorSet, optionsAnimator);
+        contentAnimatorSetIn.setInterpolator(decelerate);
+    }
+
+    private void createToolAnimationOut() {
+        // Tools disappearing two by two
+        ObjectAnimator[] toolAnimators = new ObjectAnimator[10];
+        for (int row = 0; row < toolTable.getChildCount(); row++) {
+            TableRow tableRow = (TableRow) toolTable.getChildAt(row);
+            for (int col = 0; col < tableRow.getChildCount(); col++) {
+                final View view = tableRow.getChildAt(col);
+
+                PropertyValuesHolder pvhSX = PropertyValuesHolder.ofFloat(View.SCALE_X, 0f);
+                PropertyValuesHolder pvhSY = PropertyValuesHolder.ofFloat(View.SCALE_Y, 0f);
+
+                // Makes items disappear diagonally
+                ObjectAnimator toolAnimator = ObjectAnimator.ofPropertyValuesHolder(view, pvhSX, pvhSY);
+                toolAnimator.setInterpolator(accelerate);
+                toolAnimator.setStartDelay(col * ANIM_TOOL_DELAY + row * ANIM_TOOL_DELAY);
+                toolAnimator.setDuration(ANIM_TOOL_DURATION);
+                toolAnimators[row * tableRow.getChildCount() + col] = toolAnimator;
+            }
+        }
+        AnimatorSet toolAnimatorSet = new AnimatorSet();
+        toolAnimatorSet.playTogether(toolAnimators);
+        ObjectAnimator optionsAnimator = ObjectAnimator.ofFloat(optionsFrameLayout, View.ALPHA, 1f, 0f);
+        optionsAnimator.setDuration(ANIM_FADE_DURATION);
+        contentAnimatorSetOut.playSequentially(optionsAnimator, toolAnimatorSet);
+        contentAnimatorSetOut.setInterpolator(accelerate);
+    }
+
+
+    private Animator.AnimatorListener slideDownListener = new Animator.AnimatorListener() {
+        @Override
+        public void onAnimationStart(Animator animator) {
+            slideAnimator.setInterpolator(decelerate);
+            toolTable.setVisibility(View.INVISIBLE);
+            optionsFrameLayout.setVisibility(View.INVISIBLE);
+        }
+
+        @Override
+        public void onAnimationEnd(Animator animator) {
+            // Modified the LayoutParams to get the expand/collapse effect, so restores the original behaviour
+            LinearLayout.LayoutParams layoutParams = (LinearLayout.LayoutParams) toolboxBase.getLayoutParams();
+            layoutParams.height = LinearLayout.LayoutParams.MATCH_PARENT;
+            toolboxBase.setLayoutParams(layoutParams);
+
+            toolTable.setVisibility(View.VISIBLE);
+            optionsFrameLayout.setVisibility(View.VISIBLE);
+            contentAnimatorSetIn.start();
+        }
+
+        @Override
+        public void onAnimationCancel(Animator animator) {
+            // No implementation
+        }
+
+        @Override
+        public void onAnimationRepeat(Animator animator) {
+            // No implementation
+        }
+    };
+
+    private Animator.AnimatorListener slideUpListener = new Animator.AnimatorListener() {
+        @Override
+        public void onAnimationStart(Animator animator) {
+            // No implementation
+        }
+
+        @Override
+        public void onAnimationEnd(Animator animator) {
+            slideAnimator.removeAllListeners();
+            slideAnimator.addListener(slideUpFragmentListener);
+            slideAnimator.start();
+        }
+
+        @Override
+        public void onAnimationCancel(Animator animator) {
+            // No implementation
+        }
+
+        @Override
+        public void onAnimationRepeat(Animator animator) {
+            // No implementation
+        }
+    };
+
+    private Animator.AnimatorListener slideUpFragmentListener = new Animator.AnimatorListener() {
+        @Override
+        public void onAnimationStart(Animator animator) {
+            slideAnimator.setInterpolator(accelerate);
+        }
+
+        @Override
+        public void onAnimationEnd(Animator animator) {
+            hideFragment();
+        }
+
+        @Override
+        public void onAnimationCancel(Animator animator) {
+            // No implementation
+        }
+
+        @Override
+        public void onAnimationRepeat(Animator animator) {
+            // No implementation
+        }
+    };
 }

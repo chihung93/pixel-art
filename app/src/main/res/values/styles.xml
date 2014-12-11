@@ -12,27 +12,17 @@
     </style>
 
     <!-- ActionBar theme -->
-    <style name="MyActionBar" parent="@style/ThemeOverlay.AppCompat.ActionBar">
+    <style name="MyActionBar" parent="@style/ThemeOverlay.AppCompat.Dark.ActionBar">
         <item name="android:background">@color/actionbar_background_colour</item>
         <item name="android:textColorPrimary">@color/actionbar_text_colour</item>
 
         <!-- Support library compatibility -->
         <item name="logo">@drawable/ic_logo</item>
         <item name="displayOptions">showHome|useLogo</item>
-        <item name="background">@color/actionbar_background_colour</item>
-        <item name="popupTheme">@style/MyPopupMenu</item>
     </style>
 
     <style name="MyActionBarTextStyle" parent="@style/TextAppearance.AppCompat.Widget.ActionBar.Title">
         <item name="android:textColor">@color/actionbar_text_colour</item>
-    </style>
-
-    <!-- Contextual ActionBar theme -->
-    <style name="MyActionMode" parent="Widget.AppCompat.ActionMode">
-        <item name="android:actionModeBackground">@color/primary_dark</item>
-
-        <!-- Support library compatibility -->
-        <item name="actionModeBackground">@color/primary_dark</item>
     </style>
 
     <style name="MyPopupMenu" parent="Widget.AppCompat.Light.PopupMenu">

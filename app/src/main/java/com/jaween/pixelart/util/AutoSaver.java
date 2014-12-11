@@ -43,7 +43,10 @@ public class AutoSaver {
         handler.removeCallbacks(runnable);
     }
 
+    /** Run on the main thread. **/
     private void performSave() {
+        // TODO: Crash, " Only the original thread that created a view hierarchy can touch its views."
+        // at the save() line. The file didn't load next start and ImportExport couldn't decode it again
         containerFragment.save();
         handler.postDelayed(runnable, intervalMillis);
     }

@@ -17,8 +17,8 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_margin="@dimen/view_margin"
-        android:paddingLeft="@dimen/left_keyline"
-        android:paddingRight="@dimen/left_keyline"
+        android:paddingLeft="@dimen/edge_keyline"
+        android:paddingRight="@dimen/edge_keyline"
         android:text="Preview"
         android:textColor="@color/drawer_content_colour" />
 
@@ -35,7 +35,7 @@
             android:clipToPadding="false"
             android:horizontalSpacing="@dimen/view_margin"
             android:numColumns="2"
-            android:padding="@dimen/left_keyline"
+            android:padding="@dimen/edge_keyline"
             android:scrollbarStyle="outsideOverlay"
             android:verticalSpacing="@dimen/view_margin"
             tools:listitem="@layout/frame_item" />

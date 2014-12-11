@@ -1,13 +1,14 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/ll_toolbox_base"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="@color/panel_background"
     android:orientation="vertical">
 
     <TableLayout xmlns:tools="http://schemas.android.com/tools"
-        android:id="@+id/gl_toolbox_grid"
+        android:id="@+id/tl_toolbox_table"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="@color/panel_background"
         tools:context="com.jaween.pixelart.ui.PaletteFragment">
 
         <TableRow>
@@ -18,6 +19,7 @@
                 android:layout_width="0dp"
                 android:layout_height="60dp"
                 android:layout_weight="1"
+                android:padding="@dimen/edge_keyline"
                 android:src="@drawable/tool_pen" />
 
             <com.jaween.pixelart.ui.ToolButton
@@ -26,6 +28,7 @@
                 android:layout_width="0dp"
                 android:layout_height="60dp"
                 android:layout_weight="1"
+                android:padding="@dimen/edge_keyline"
                 android:src="@drawable/tool_eraser" />
 
             <com.jaween.pixelart.ui.ToolButton
@@ -34,6 +37,7 @@
                 android:layout_width="0dp"
                 android:layout_height="60dp"
                 android:layout_weight="1"
+                android:padding="@dimen/edge_keyline"
                 android:src="@drawable/tool_rect" />
 
             <com.jaween.pixelart.ui.ToolButton
@@ -42,6 +46,7 @@
                 android:layout_width="0dp"
                 android:layout_height="60dp"
                 android:layout_weight="1"
+                android:padding="@dimen/edge_keyline"
                 android:src="@drawable/tool_oval" />
 
             <com.jaween.pixelart.ui.ToolButton
@@ -50,6 +55,7 @@
                 android:layout_width="0dp"
                 android:layout_height="60dp"
                 android:layout_weight="1"
+                android:padding="@dimen/edge_keyline"
                 android:src="@drawable/tool_rect_select" />
         </TableRow>
 
@@ -61,6 +67,7 @@
                 android:layout_width="0dp"
                 android:layout_height="60dp"
                 android:layout_weight="1"
+                android:padding="@dimen/edge_keyline"
                 android:src="@drawable/tool_fill" />
 
             <com.jaween.pixelart.ui.ToolButton
@@ -69,19 +76,21 @@
                 android:layout_width="0dp"
                 android:layout_height="60dp"
                 android:layout_weight="1"
+                android:padding="@dimen/edge_keyline"
                 android:src="@drawable/tool_dropper" />
 
+            <!-- android:padding="@dimen/left_keyline" for Text tool, doesn't work well with TextView -->
             <TextView
                 android:id="@+id/ib_tool_text"
                 style="@style/Widget.AppCompat.ActionButton"
                 android:layout_width="0dp"
                 android:layout_height="60dp"
                 android:layout_weight="1"
+                android:fontFamily="serif"
                 android:text="T"
                 android:textColor="@android:color/white"
                 android:textSize="48sp"
-                android:textStyle="bold"
-                android:fontFamily="serif"/>
+                android:textStyle="bold" />
 
             <com.jaween.pixelart.ui.ToolButton
                 android:id="@+id/ib_tool_magic_wand"
@@ -89,6 +98,7 @@
                 android:layout_width="0dp"
                 android:layout_height="60dp"
                 android:layout_weight="1"
+                android:padding="@dimen/edge_keyline"
                 android:src="@drawable/tool_magic_wand" />
 
             <com.jaween.pixelart.ui.ToolButton
@@ -97,13 +107,13 @@
                 android:layout_width="0dp"
                 android:layout_height="60dp"
                 android:layout_weight="1"
+                android:padding="@dimen/edge_keyline"
                 android:src="@drawable/tool_free_select" />
         </TableRow>
     </TableLayout>
+
     <FrameLayout
         android:id="@+id/fl_container_tool_options"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:background="@color/panel_background"
-        android:animateLayoutChanges="true"/>
+        android:layout_height="wrap_content" />
 </LinearLayout>

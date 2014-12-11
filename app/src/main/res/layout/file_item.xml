@@ -10,7 +10,7 @@
         android:background="@drawable/item_selector"
         android:gravity="center"
         android:orientation="horizontal"
-        android:padding="@dimen/file_item_padding">
+        android:padding="@dimen/spacing">
 
         <LinearLayout
             android:layout_width="wrap_content"

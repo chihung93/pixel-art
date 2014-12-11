@@ -1,6 +1,5 @@
 package com.jaween.pixelart;
 
-import android.app.Activity;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
@@ -12,12 +11,12 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
+import android.view.animation.DecelerateInterpolator;
 import android.widget.RelativeLayout;
 
 import com.jaween.pixelart.ui.DrawingFragment;
 import com.jaween.pixelart.ui.PaletteFragment;
 import com.jaween.pixelart.ui.ToolboxFragment;
-import com.jaween.pixelart.ui.layer.Layer;
 import com.jaween.pixelart.ui.layer.LayerFragment;
 
 /**
@@ -56,7 +55,6 @@ public class PanelManagerFragment extends Fragment implements
     private int slideOutAnimation = R.anim.slide_up;
     private RelativeLayout combinedPanel;
     private boolean combinedPanelVisible = true;
-
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -229,13 +227,14 @@ public class PanelManagerFragment extends Fragment implements
         // Slides in the new panel
         if (in.isHidden()) {
             FragmentTransaction fragmentTransaction = getChildFragmentManager().beginTransaction();
-            fragmentTransaction.setCustomAnimations(slideInAnimation, slideOutAnimation, slideInAnimation, slideOutAnimation);
+            //fragmentTransaction.setCustomAnimations(slideInAnimation, slideOutAnimation, slideInAnimation, slideOutAnimation);
             fragmentTransaction.show(in);
             fragmentTransaction.commit();
+            animateOut(in, true);
             return true;
         } else {
             // The panel was already being shown, slides it out
-            hidePanel(in);
+            animateOut(in, false);
             return false;
         }
     }
@@ -252,10 +251,7 @@ public class PanelManagerFragment extends Fragment implements
         }
 
         if (!fragment.isHidden()) {
-            FragmentTransaction fragmentTransaction = getChildFragmentManager().beginTransaction();
-            fragmentTransaction.setCustomAnimations(slideInAnimation, slideOutAnimation, slideInAnimation, slideOutAnimation);
-            fragmentTransaction.hide(fragment);
-            fragmentTransaction.commit();
+            animateOut(fragment, false);
             return true;
         }
         return false;
@@ -287,6 +283,18 @@ public class PanelManagerFragment extends Fragment implements
         return combinedPanelVisible;
     }
 
+    private void animateOut(Fragment fragment, boolean forward) {
+        if (layoutWidthDp == NARROW_LAYOUT_WIDTH_DP) {
+            if (fragment instanceof ToolboxFragment) {
+                ((ToolboxFragment) fragment).startAnimation(forward);
+            }
+        } else {
+            FragmentTransaction fragmentTransaction = getChildFragmentManager().beginTransaction();
+            fragmentTransaction.setCustomAnimations(slideInAnimation, slideOutAnimation, slideInAnimation, slideOutAnimation);
+            fragmentTransaction.hide(fragment);
+            fragmentTransaction.commit();
+        }
+    }
 
     public PaletteFragment getPaletteFragment() {
         return paletteFragment;
@@ -300,9 +308,14 @@ public class PanelManagerFragment extends Fragment implements
         return layerFragment;
     }
 
+    public void hideFragmentTemp(Fragment fragment) {
+        FragmentTransaction fragmentTransaction = getChildFragmentManager().beginTransaction();
+        fragmentTransaction.hide(fragment);
+        fragmentTransaction.commit();
+    }
+
     @Override
     public void onAnimationStart(Animation animation) {
-        // If te
         if (combinedPanelVisible) {
             combinedPanel.setVisibility(View.VISIBLE);
         }
