@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="wrap_content"
-    android:layout_height="wrap_content">
+    android:layout_height="wrap_content"
+    android:theme="@style/TextDark.Body">
 
     <LinearLayout
         android:id="@+id/ll_file_content"
@@ -33,7 +34,6 @@
 
             <TextView
                 android:id="@+id/tv_filename"
-                style="@style/Body"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center_horizontal"
@@ -41,9 +41,9 @@
                 android:layout_marginLeft="@dimen/view_margin"
                 android:layout_marginTop="@dimen/view_margin"
                 android:ellipsize="end"
-                android:minLines="3"
                 android:maxLines="3"
                 android:maxWidth="96dp"
+                android:minLines="3"
                 android:text="Test File" />
 
         </LinearLayout>
@@ -62,8 +62,8 @@
         android:id="@+id/ll_file_add"
         android:layout_width="match_parent"
         android:layout_height="180dp"
-        android:gravity="center"
         android:descendantFocusability="blocksDescendants"
+        android:gravity="center"
         android:orientation="vertical">
 
         <ImageView
@@ -73,7 +73,6 @@
             android:src="@drawable/ic_action_add_dark" />
 
         <TextView
-            style="@style/Body"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="@string/text_new_drawing" />

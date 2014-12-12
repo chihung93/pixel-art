@@ -57,7 +57,9 @@ public class DrawingSurface extends SurfaceView implements SurfaceHolder.Callbac
     private ScaleGestureDetector scaleGestureDetector;
     private ScaleListener scaleListener;
     private Paint shadowPaint = new Paint();
+    private Paint thumbnailShadowPaint = new Paint();
     private float shadowWidthDp;
+    private float thumbnailShadowWidthDp;
 
     // Selection
     private static final int SELECTION_BORDER_ALPHA = 240;
@@ -150,7 +152,10 @@ public class DrawingSurface extends SurfaceView implements SurfaceHolder.Callbac
 
         // Shadow around canvas and thumbnail
         shadowWidthDp = 4 * dp;
+        thumbnailShadowWidthDp = 8 * dp;
         shadowPaint.setShadowLayer(shadowWidthDp, 0, shadowWidthDp / 2, Color.DKGRAY);
+        thumbnailShadowPaint.setShadowLayer(thumbnailShadowWidthDp, 0,
+                thumbnailShadowWidthDp / 2, Color.DKGRAY);
 
         // Region selection 'marching ants' dotted border
         selectionBorderPaint.setStrokeWidth(2 * dp);
@@ -496,7 +501,8 @@ public class DrawingSurface extends SurfaceView implements SurfaceHolder.Callbac
                 // Draws only when zoomed in
                 float scale = scaleListener.getScale();
                 if (scale > thumbnailScaleThreshold) {
-                    thumbnail.draw(canvas, compositeBitmap, scaleListener.getViewport(), checkerboardTile, bitmapPaint, shadowPaint);
+                    thumbnail.draw(canvas, compositeBitmap, scaleListener.getViewport(),
+                            checkerboardTile, bitmapPaint, thumbnailShadowPaint);
                 }
             }
         }

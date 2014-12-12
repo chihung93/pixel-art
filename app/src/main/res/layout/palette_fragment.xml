@@ -1,16 +1,13 @@
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="fill_parent"
     android:layout_height="wrap_content"
     android:background="@android:color/transparent"
     android:orientation="vertical">
 
-    <include
-        android:id="@+id/incl_palette_base_temp"
-        layout="@layout/palette_fragment_base" />
+    <include layout="@layout/palette_fragment_base" />
 
     <View
         android:layout_width="match_parent"
         android:layout_height="8dp"
-        android:layout_below="@+id/incl_palette_base_temp"
         android:background="@drawable/panel_shadow_horizontal" />
-</RelativeLayout>
+</LinearLayout>

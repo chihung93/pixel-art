@@ -40,6 +40,7 @@
         android:layout_height="32dp"
         android:layout_below="@id/cb_option_aa"
         android:layout_marginBottom="@dimen/view_margin"
+        android:layout_marginRight="@dimen/view_margin"
         android:layout_marginTop="@dimen/view_margin"
         android:src="@drawable/tool_options_pen_thickness_thin" />
 
@@ -50,6 +51,7 @@
         android:layout_alignParentRight="true"
         android:layout_below="@id/cb_option_aa"
         android:layout_marginBottom="@dimen/view_margin"
+        android:layout_marginLeft="@dimen/view_margin"
         android:layout_marginTop="@dimen/view_margin"
         android:src="@drawable/tool_options_pen_thickness_thick" />
 

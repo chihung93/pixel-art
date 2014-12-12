@@ -48,7 +48,7 @@
     <string name="tool_option_circle_lock">Lock to Circle</string>
     <string name="tool_option_inner_fill">Inner Fill</string>
     <string name="tool_option_square_lock">Lock to Square</string>
-    <string name="tool_option_rounded">Rounded Corners</string>
+    <string name="tool_option_rounded">Round Corners</string>
     <string name="tool_option_threshold">Threshold</string>
 
     <!-- Buttons -->

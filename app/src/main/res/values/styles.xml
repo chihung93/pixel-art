@@ -1,8 +1,10 @@
 <resources>
 
     <!-- Base application theme. -->
-    <style name="AppTheme" parent="Theme.AppCompat.Light.NoActionBar">
+    <style name="AppTheme" parent="Theme.AppCompat.NoActionBar">
         <item name="android:windowBackground">@color/surface_background_colour</item>
+        <item name="android:alertDialogTheme">@android:style/Theme.Holo.Light.Dialog</item>
+        <item name="android:seekBarStyle">@style/MySeekBar</item>
 
         <!-- Support library compatibility -->
         <item name="colorPrimary">@color/primary</item>
@@ -25,22 +27,42 @@
         <item name="android:textColor">@color/actionbar_text_colour</item>
     </style>
 
-    <style name="MyPopupMenu" parent="Widget.AppCompat.Light.PopupMenu">
-
-    </style>
+    <style name="MyPopupMenu" parent="Widget.AppCompat.Light.PopupMenu"></style>
 
     <!-- View Styles -->
-    <style name="TextSmall">
-        <item name="android:textColor">#000000</item>
-        <item name="android:alpha">0.87</item>
+    <style name="TextLight">
+        <item name="android:textColor">#FFFFFF</item>
+        <item name="android:textSize">14sp</item>
     </style>
 
-    <style name="Subhead" parent="TextSmall">
+    <style name="TextDark">
+        <item name="android:textColor">#DE000000</item>
+        <item name="android:textSize">14sp</item>
+    </style>
+
+    <style name="Subhead" parent="TextLight">
         <item name="android:textSize">16sp</item>
     </style>
 
-    <style name="Body" parent="TextSmall">
+    <style name="Body" parent="TextLight">
         <item name="android:textSize">14sp</item>
     </style>
+
+    <style name="TextDark.Body" parent="TextDark">
+        <item name="android:textSize">14sp</item>
+    </style>
+
+
+    <style name="MySeekBar" parent="android:Widget.SeekBar">
+        <item name="android:progressDrawable">@drawable/seekbar_progress_selector</item>
+        <item name="android:indeterminateDrawable">@drawable/seekbar_progress_selector</item>
+        <item name="android:minHeight">13dip</item>
+        <item name="android:maxHeight">13dip</item>
+        <item name="android:thumb">@drawable/seekbar_control_selector</item>
+        <item name="android:thumbOffset">16dip</item>
+        <item name="android:paddingLeft">16dip</item>
+        <item name="android:paddingRight">16dip</item>
+    </style>
+
 
 </resources>

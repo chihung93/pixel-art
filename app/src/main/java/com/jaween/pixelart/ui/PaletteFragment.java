@@ -7,20 +7,24 @@ import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.FrameLayout;
+import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 import android.widget.TableLayout;
 import android.widget.TableRow;
 import android.widget.Toast;
 
+import com.jaween.pixelart.PanelManagerFragment;
 import com.jaween.pixelart.R;
 import com.jaween.pixelart.util.Color;
 import com.jaween.pixelart.ui.colourpicker.ColourPickerFragment;
+import com.jaween.pixelart.util.SlideAnimator;
 
 import java.util.ArrayList;
 
@@ -37,11 +41,8 @@ public class PaletteFragment extends Fragment implements
     private ColourPickerFragment colourPickerFragment;
     private static final String TAG_COLOUR_PICKER_FRAGMENT = "tag_colour_picker_fragment";
 
-    // Allows for smooth fragment sliding animations
-    private RelativeLayout parentLayout;
-
     // Palette grid
-    private TableLayout tableLayout;
+    private TableLayout paletteTable;
     private static final int ROW_COUNT = 2;
     private static final int COLUMN_COUNT = 8;
 
@@ -69,6 +70,11 @@ public class PaletteFragment extends Fragment implements
     // Static sidebar specific variables
     private View primaryColourView;
     private Drawable[] primaryColourViewLayers = new Drawable[2];
+
+    // Animation
+    private SlideAnimator slideAnimator;
+    private LinearLayout container;
+    private LinearLayout buttonBar;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -99,24 +105,30 @@ public class PaletteFragment extends Fragment implements
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
 
-        parentLayout = (RelativeLayout) inflater.inflate(R.layout.palette_fragment, null, false);
-        parentLayout.setOnTouchListener(this);
-
-        customisePaletteButton = (Button) parentLayout.findViewById(R.id.bt_customise_palette);
-        nextPaletteButton = (Button) parentLayout.findViewById(R.id.bt_next_palette);
-
-        // Static sidebar primary colour
-        primaryColourView = parentLayout.findViewById(R.id.vw_primary_colour);
-
-        customisePaletteButton.setOnClickListener(this);
-        nextPaletteButton.setOnClickListener(this);
-
-        tableLayout = (TableLayout) parentLayout.findViewById(R.id.tl_palette_grid);
-        initialisePalette(tableLayout);
+        View view = inflater.inflate(R.layout.palette_fragment, null, false);
+        initialiseViews(view);
 
         onRestoreInstanceState(savedInstanceState);
 
-        return parentLayout;
+        slideAnimator = new SlideAnimator(this.container, paletteTable, buttonBar, ((PanelManagerFragment) getParentFragment()), this);
+
+
+        return view;
+    }
+    
+    private void initialiseViews(View v) {
+        customisePaletteButton = (Button) v.findViewById(R.id.bt_customise_palette);
+        nextPaletteButton = (Button) v.findViewById(R.id.bt_next_palette);
+        primaryColourView = v.findViewById(R.id.vw_primary_colour);
+        container = (LinearLayout) v.findViewById(R.id.ll_palette_base);
+        paletteTable = (TableLayout) v.findViewById(R.id.tl_palette_grid);
+        buttonBar = (LinearLayout) v.findViewById(R.id.ll_button_bar);
+
+        v.setOnTouchListener(this);
+        customisePaletteButton.setOnClickListener(this);
+        nextPaletteButton.setOnClickListener(this);
+
+        initialisePalette(paletteTable);
     }
 
     @Override
@@ -363,5 +375,13 @@ public class PaletteFragment extends Fragment implements
         public void onToggleColourPalette(boolean visible);
 
         public void onColourPaletteAnimationEnd();
+    }
+
+    public void startAnimation(boolean forward, int height) {
+        if (forward) {
+            slideAnimator.start(height);
+        } else {
+            slideAnimator.reverse(height);
+        }
     }
 }

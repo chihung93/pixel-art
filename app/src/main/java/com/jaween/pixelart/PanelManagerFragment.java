@@ -11,7 +11,6 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
-import android.view.animation.DecelerateInterpolator;
 import android.widget.RelativeLayout;
 
 import com.jaween.pixelart.ui.DrawingFragment;
@@ -230,11 +229,11 @@ public class PanelManagerFragment extends Fragment implements
             //fragmentTransaction.setCustomAnimations(slideInAnimation, slideOutAnimation, slideInAnimation, slideOutAnimation);
             fragmentTransaction.show(in);
             fragmentTransaction.commit();
-            animateOut(in, true);
+            animate(in, true);
             return true;
         } else {
             // The panel was already being shown, slides it out
-            animateOut(in, false);
+            animate(in, false);
             return false;
         }
     }
@@ -251,7 +250,7 @@ public class PanelManagerFragment extends Fragment implements
         }
 
         if (!fragment.isHidden()) {
-            animateOut(fragment, false);
+            animate(fragment, false);
             return true;
         }
         return false;
@@ -283,10 +282,12 @@ public class PanelManagerFragment extends Fragment implements
         return combinedPanelVisible;
     }
 
-    private void animateOut(Fragment fragment, boolean forward) {
+    private void animate(Fragment fragment, boolean forward) {
         if (layoutWidthDp == NARROW_LAYOUT_WIDTH_DP) {
             if (fragment instanceof ToolboxFragment) {
-                ((ToolboxFragment) fragment).startAnimation(forward);
+                ((ToolboxFragment) fragment).startAnimation(forward, 0);
+            } else if (fragment instanceof PaletteFragment) {
+                ((PaletteFragment) fragment).startAnimation(forward, 0);
             }
         } else {
             FragmentTransaction fragmentTransaction = getChildFragmentManager().beginTransaction();
