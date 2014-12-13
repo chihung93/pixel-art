@@ -195,8 +195,7 @@ public class DrawingSurface extends SurfaceView implements SurfaceHolder.Callbac
         // To avoid the pixels lose their aspect ratio, we round the thumbnail scale
         // We round up as we don' want pixels smaller than 1dp
         float thumnbnailScale = (float) Math.ceil(dp);
-        float thumbnailLeft = getWidth() - layerWidth * thumnbnailScale
-                - getResources().getDimension(R.dimen.canvas_margin);
+        float thumbnailLeft = getResources().getDimension(R.dimen.canvas_margin);
         float thumbnailTop = getHeight() - layerHeight * thumnbnailScale
                 - getResources().getDimension(R.dimen.canvas_margin);
         thumbnail = new Thumbnail(
@@ -630,6 +629,7 @@ public class DrawingSurface extends SurfaceView implements SurfaceHolder.Callbac
         currentLayerIndex = index;
         resetOngoingBitmap();
 
+        // TODO: Fix: Draw, then switch files and undo => Applies the other file's differences!
         // Notifies the undo manager to change its 'layerBeforeModification'
         Layer layer = frames.get(currentFrameIndex).getLayers().get(currentLayerIndex);
         drawOpManager.switchLayer(layer.getImage());

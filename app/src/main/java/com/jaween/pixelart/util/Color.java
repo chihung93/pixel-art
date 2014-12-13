@@ -115,8 +115,9 @@ public class Color extends android.graphics.Color {
     }
 
     /**
-     * Finds the perceptual difference between two colours and returns a normalised value between
-     * 0.0 and 1.0. Uses the algorithm found here http://www.compuphase.com/cmetric.htm
+     * Work in progress. Finds the perceptual difference between two colours and returns a
+     * normalised value between 0.0 and 1.0. Uses the algorithm found here:
+     * http://www.compuphase.com/cmetric.htm
      * @param colourA The first colour to compare in packed ARGB format
      * @param colourB The second colour to compare in packed ARGB format
      * @return The colour distance from 0.0 to 1.0
@@ -139,6 +140,27 @@ public class Color extends android.graphics.Color {
         double distance = Math.sqrt(componentRed + componentGreen + componentBlue);
 
         return distance;
+    }
+
+    /**
+     * Finds the RGB distance between two colours and returns a normalised value between 0.0 and
+     * 1.0.
+     * @param colourA The first colour to compare in packed ARGB format
+     * @param colourB The second colour to compare in packed ARGB format
+     * @return The colour distance from 0.0 to 1.0
+     */
+    public static double colourDistanceRGB(int colourA, int colourB) {
+        double deltaA = (Color.alpha(colourA) - Color.alpha(colourB));
+        double deltaR = (Color.red(colourA) - Color.red(colourB));
+        double deltaG = (Color.green(colourA) - Color.green(colourB));
+        double deltaB = (Color.blue(colourA) - Color.blue(colourB));
+
+        double distA =  deltaA * deltaA;
+        double distR = deltaR * deltaR;
+        double distG = deltaG * deltaG;
+        double distB = deltaB * deltaB;
+
+        return Math.sqrt(distA + distR + distG + distB) / (2 * 255f);
     }
 
     public static LayerDrawable tintAndLayerDrawable(Drawable colouredInnner, Drawable border, int colour) {
