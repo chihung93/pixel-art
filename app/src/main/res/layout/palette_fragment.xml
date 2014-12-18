@@ -1,13 +1,13 @@
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<com.jaween.pixelart.util.SlidingLinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/sll_palette_content"
     android:layout_width="fill_parent"
     android:layout_height="wrap_content"
-    android:background="@android:color/transparent"
+    android:background="@drawable/panel_shadow_horizontal"
     android:orientation="vertical">
 
     <include layout="@layout/palette_fragment_base" />
 
     <View
         android:layout_width="match_parent"
-        android:layout_height="8dp"
-        android:background="@drawable/panel_shadow_horizontal" />
-</LinearLayout>
+        android:layout_height="8dp" />
+</com.jaween.pixelart.util.SlidingLinearLayout>

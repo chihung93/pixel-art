@@ -6,14 +6,11 @@ import android.animation.ObjectAnimator;
 import android.animation.PropertyValuesHolder;
 import android.animation.ValueAnimator;
 import android.support.v4.app.Fragment;
-import android.util.Log;
 import android.view.View;
-import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
 import android.view.animation.AccelerateInterpolator;
 import android.view.animation.DecelerateInterpolator;
 import android.view.animation.Interpolator;
-import android.widget.LinearLayout;
 import android.widget.TableLayout;
 import android.widget.TableRow;
 
@@ -39,20 +36,32 @@ public class SlideAnimator {
     private Interpolator accelerate = new AccelerateInterpolator();
 
     // Views
-    private int measuredHeight;
-    private View container;
+    private SlidingLinearLayout container;
     private TableLayout table;
     private View bar;
 
     private PanelManagerFragment panelManagerFragment;
     private Fragment fragment;
 
-    public SlideAnimator(View container, TableLayout table, View bar, PanelManagerFragment panelManagerFragment, Fragment fragment) {
+    public SlideAnimator(final SlidingLinearLayout container, TableLayout table, View bar, PanelManagerFragment panelManagerFragment, Fragment fragment) {
         this.container = container;
         this.table = table;
         this.bar = bar;
         this.panelManagerFragment = panelManagerFragment;
         this.fragment = fragment;
+
+        // Stops the first frame of the first play through from popping in then back out
+        ViewTreeObserver viewTreeObserver = container.getViewTreeObserver();
+        viewTreeObserver.addOnPreDrawListener(new ViewTreeObserver.OnPreDrawListener() {
+            @Override
+            public boolean onPreDraw() {
+                if (container.getHeight() > 0) {
+                    container.getViewTreeObserver().removeOnPreDrawListener(this);
+                    container.setYFraction(0);
+                }
+                return true;
+            }
+        });
 
         setupAnimations();
     }
@@ -63,38 +72,14 @@ public class SlideAnimator {
                 contentAnimatorSetOut.isRunning();
     }
 
-    private void getViewHeight() {
-        ViewTreeObserver viewTreeObserver = container.getViewTreeObserver();
-        viewTreeObserver.addOnPreDrawListener(new ViewTreeObserver.OnPreDrawListener() {
-            @Override
-            public boolean onPreDraw() {
-                measuredHeight = container.getMeasuredHeight();
-                if (measuredHeight > 0) {
-                    container.getViewTreeObserver().removeOnPreDrawListener(this);
-                }
-                return true;
-            }
-        });
-    }
-
     private void hideFragment() {
         panelManagerFragment.hideFragmentTemp(fragment);
     }
 
     private void setupAnimations() {
         // Panel sliding animation
-        slideAnimator = ValueAnimator.ofInt(0, 0);
+        slideAnimator = ObjectAnimator.ofFloat(container, "yFraction", 0, 1f);
         slideAnimator.setDuration(ANIM_SLIDE_DURATION);
-        slideAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
-            @Override
-            public void onAnimationUpdate(ValueAnimator valueAnimator) {
-                //Update Height
-                int value = (Integer) valueAnimator.getAnimatedValue();
-                ViewGroup.LayoutParams layoutParams = container.getLayoutParams();
-                layoutParams.height = value;
-                container.setLayoutParams(layoutParams);
-            }
-        });
 
         createItemAnimationIn();
         createItemAnimationOut();
@@ -106,8 +91,6 @@ public class SlideAnimator {
             return;
         }
 
-        getViewHeight();
-
         // Makes all the items invisible to begin with
         for (int j = 0; j < table.getChildCount(); j++) {
             TableRow tableRow = (TableRow) table.getChildAt(j);
@@ -118,10 +101,8 @@ public class SlideAnimator {
                 view.setScaleY(0);
             }
         }
-        table.setVisibility(View.INVISIBLE);
-        bar.setVisibility(View.INVISIBLE);
 
-        slideAnimator.setIntValues(fromHeight, measuredHeight);
+        slideAnimator.setFloatValues(0f, 1f);
         slideAnimator.removeAllListeners();
         slideAnimator.addListener(slideDownListener);
         slideAnimator.start();
@@ -133,12 +114,10 @@ public class SlideAnimator {
             return;
         }
 
-        getViewHeight();
-
         // Plays the animation in reverse
-        slideAnimator.setIntValues(container.getHeight(), toHeight);
+        slideAnimator.setFloatValues(1f, 0f);
         contentAnimatorSetOut.removeAllListeners();
-        contentAnimatorSetOut.addListener(slideUpListener);
+        contentAnimatorSetOut.addListener(animOutListener);
         contentAnimatorSetOut.start();
     }
 
@@ -217,13 +196,9 @@ public class SlideAnimator {
 
         @Override
         public void onAnimationEnd(Animator animator) {
-            // Modified LayoutParams to get expand/collapse effect, restores the original behaviour
-            ViewGroup.LayoutParams layoutParams = container.getLayoutParams();
-            layoutParams.height = LinearLayout.LayoutParams.WRAP_CONTENT;
-            container.setLayoutParams(layoutParams);
-
             table.setVisibility(View.VISIBLE);
             bar.setVisibility(View.VISIBLE);
+            bar.setAlpha(0);
             contentAnimatorSetIn.start();
         }
 
@@ -238,7 +213,7 @@ public class SlideAnimator {
         }
     };
 
-    private Animator.AnimatorListener slideUpListener = new Animator.AnimatorListener() {
+    private Animator.AnimatorListener animOutListener = new Animator.AnimatorListener() {
         @Override
         public void onAnimationStart(Animator animator) {
             // No implementation
@@ -247,7 +222,7 @@ public class SlideAnimator {
         @Override
         public void onAnimationEnd(Animator animator) {
             slideAnimator.removeAllListeners();
-            slideAnimator.addListener(slideUpFragmentListener);
+            slideAnimator.addListener(slideUpListener);
             slideAnimator.start();
         }
 
@@ -262,7 +237,7 @@ public class SlideAnimator {
         }
     };
 
-    private Animator.AnimatorListener slideUpFragmentListener = new Animator.AnimatorListener() {
+    private Animator.AnimatorListener slideUpListener = new Animator.AnimatorListener() {
         @Override
         public void onAnimationStart(Animator animator) {
             slideAnimator.setInterpolator(accelerate);

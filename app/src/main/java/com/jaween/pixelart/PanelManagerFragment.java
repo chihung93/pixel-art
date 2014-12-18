@@ -285,9 +285,9 @@ public class PanelManagerFragment extends Fragment implements
     private void animate(Fragment fragment, boolean forward) {
         if (layoutWidthDp == NARROW_LAYOUT_WIDTH_DP) {
             if (fragment instanceof ToolboxFragment) {
-                ((ToolboxFragment) fragment).startAnimation(forward, 0);
+                ((ToolboxFragment) fragment).startAnimation(forward, paletteFragment.getHeight());
             } else if (fragment instanceof PaletteFragment) {
-                ((PaletteFragment) fragment).startAnimation(forward, 0);
+                ((PaletteFragment) fragment).startAnimation(forward, toolboxFragment.getHeight());
             }
         } else {
             FragmentTransaction fragmentTransaction = getChildFragmentManager().beginTransaction();

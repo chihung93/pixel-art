@@ -1,10 +1,5 @@
 package com.jaween.pixelart.ui;
 
-import android.animation.Animator;
-import android.animation.AnimatorSet;
-import android.animation.ObjectAnimator;
-import android.animation.PropertyValuesHolder;
-import android.animation.ValueAnimator;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.util.Log;
@@ -13,13 +8,8 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
-import android.view.animation.AccelerateInterpolator;
-import android.view.animation.DecelerateInterpolator;
-import android.view.animation.Interpolator;
 import android.widget.FrameLayout;
-import android.widget.LinearLayout;
 import android.widget.TableLayout;
-import android.widget.TableRow;
 import android.widget.TextView;
 
 import com.jaween.pixelart.PanelManagerFragment;
@@ -41,6 +31,7 @@ import com.jaween.pixelart.tools.options.PenOptionsView;
 import com.jaween.pixelart.tools.options.RectOptionsView;
 import com.jaween.pixelart.tools.options.ToolOptionsView;
 import com.jaween.pixelart.util.SlideAnimator;
+import com.jaween.pixelart.util.SlidingLinearLayout;
 
 import java.util.ArrayList;
 
@@ -83,7 +74,7 @@ public class ToolboxFragment extends Fragment implements  View.OnClickListener, 
     private OvalOptionsView ovalOptions;
     private MagicWandOptionsView magicWandOptions;
 
-    private LinearLayout toolboxBase;
+    private SlidingLinearLayout toolboxLayout;
     private FrameLayout optionsFrameLayout;
     private TableLayout toolTable;
 
@@ -151,8 +142,9 @@ public class ToolboxFragment extends Fragment implements  View.OnClickListener, 
             onToolSelectListener.onToolSelected(selectedTool, false);
         }
 
-        slideAnimator = new SlideAnimator(toolboxBase, toolTable, optionsFrameLayout, ((PanelManagerFragment) getParentFragment()), this);
-
+        if (toolboxLayout != null) {
+            slideAnimator = new SlideAnimator(toolboxLayout, toolTable, optionsFrameLayout, ((PanelManagerFragment) getParentFragment()), this);
+        }
 
         return view;
     }
@@ -217,7 +209,7 @@ public class ToolboxFragment extends Fragment implements  View.OnClickListener, 
         magicWandButton = (ToolButton) v.findViewById(R.id.ib_tool_magic_wand);
         freeSelectButton = (ToolButton) v.findViewById(R.id.ib_tool_free_select);
 
-        toolboxBase = (LinearLayout) v.findViewById(R.id.ll_toolbox_base);
+        toolboxLayout = (SlidingLinearLayout) v.findViewById(R.id.sll_toolbox_content);
         toolTable = (TableLayout) v.findViewById(R.id.tl_toolbox_table);
         optionsFrameLayout = (FrameLayout) v.findViewById(R.id.fl_container_tool_options);
 
@@ -333,6 +325,10 @@ public class ToolboxFragment extends Fragment implements  View.OnClickListener, 
         if (onToolSelectListener != null) {
             onToolSelectListener.onToolSelected(selectedTool, dismissPanel);
         }
+    }
+
+    public int getHeight() {
+        return toolboxLayout.getHeight();
     }
 
     private void changeSelectedTool(Tool tool) {

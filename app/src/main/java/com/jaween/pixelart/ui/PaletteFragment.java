@@ -25,6 +25,7 @@ import com.jaween.pixelart.R;
 import com.jaween.pixelart.util.Color;
 import com.jaween.pixelart.ui.colourpicker.ColourPickerFragment;
 import com.jaween.pixelart.util.SlideAnimator;
+import com.jaween.pixelart.util.SlidingLinearLayout;
 
 import java.util.ArrayList;
 
@@ -73,7 +74,7 @@ public class PaletteFragment extends Fragment implements
 
     // Animation
     private SlideAnimator slideAnimator;
-    private LinearLayout container;
+    private SlidingLinearLayout container;
     private LinearLayout buttonBar;
 
     @Override
@@ -110,17 +111,18 @@ public class PaletteFragment extends Fragment implements
 
         onRestoreInstanceState(savedInstanceState);
 
-        slideAnimator = new SlideAnimator(this.container, paletteTable, buttonBar, ((PanelManagerFragment) getParentFragment()), this);
-
+        if (this.container != null) {
+            slideAnimator = new SlideAnimator(this.container, paletteTable, buttonBar, ((PanelManagerFragment) getParentFragment()), this);
+        }
 
         return view;
     }
-    
+
     private void initialiseViews(View v) {
         customisePaletteButton = (Button) v.findViewById(R.id.bt_customise_palette);
         nextPaletteButton = (Button) v.findViewById(R.id.bt_next_palette);
         primaryColourView = v.findViewById(R.id.vw_primary_colour);
-        container = (LinearLayout) v.findViewById(R.id.ll_palette_base);
+        container = (SlidingLinearLayout) v.findViewById(R.id.sll_palette_content);
         paletteTable = (TableLayout) v.findViewById(R.id.tl_palette_grid);
         buttonBar = (LinearLayout) v.findViewById(R.id.ll_button_bar);
 
@@ -255,6 +257,10 @@ public class PaletteFragment extends Fragment implements
                 primaryColourView.setBackground(background);
             }
         }
+    }
+
+    public int getHeight() {
+        return container.getHeight();
     }
 
     @Override
