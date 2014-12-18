@@ -192,7 +192,7 @@ public class ContainerFragment extends Fragment implements
 
         if (savedInstanceState != null) {
             // Restores the filename (don't call setFilename() here, Toolbar hasn't initialised)
-            filename = savedInstanceState.getString(KEY_FILENAME, null);
+            filename = savedInstanceState.getString(KEY_FILENAME);
         }
 
     }
@@ -581,6 +581,7 @@ public class ContainerFragment extends Fragment implements
 
     @Override
     public void onDestroyActionMode(ActionMode actionMode) {
+        // Closes the colour picker
         paletteFragment.hideColourPicker();
         onToggleColourPalette(false);
         this.actionMode = null;

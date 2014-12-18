@@ -1,6 +1,7 @@
 package com.jaween.pixelart.tools;
 
 import android.graphics.Bitmap;
+import android.graphics.Path;
 import android.graphics.PointF;
 import android.graphics.drawable.Drawable;
 
@@ -11,6 +12,7 @@ public class RectSelect extends Selection {
 
     private static final int TOOL_ID = 4;
     private PointF start = new PointF();
+    private Path inversePath = new Path();
 
     public RectSelect(String name, Drawable icon) {
         super(name, icon, TOOL_ID);
@@ -23,6 +25,9 @@ public class RectSelect extends Selection {
 
         start.x = event.x;
         start.y = event.y;
+        toolReport.getPath().setFillType(Path.FillType.WINDING);
+        inversePath.setFillType(Path.FillType.INVERSE_WINDING);
+        setPath(toolReport.getPath(), inversePath);
 
         rectPathRegion(event);
     }
@@ -41,15 +46,16 @@ public class RectSelect extends Selection {
         roundCoordinates(event);
         clampPoint(bitmap.getWidth(), bitmap.getHeight(), event);
         rectPathRegion(event);
+        toolReport.getInversePath().set(inversePath);
     }
 
     // Creates a rectangular path
     private void rectPathRegion(PointF event) {
-        toolReport.getPath().reset();
-        toolReport.getPath().moveTo(start.x, start.y);
-        toolReport.getPath().lineTo(event.x, start.y);
-        toolReport.getPath().lineTo(event.x, event.y);
-        toolReport.getPath().lineTo(start.x, event.y);
-        toolReport.getPath().close();
+        pathReset();
+        pathMoveTo(start.x, start.y);
+        pathLineTo(event.x, start.y);
+        pathLineTo(event.x, event.y);
+        pathLineTo(start.x, event.y);
+        pathClose();
     }
 }

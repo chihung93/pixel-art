@@ -16,7 +16,7 @@ import java.util.Map;
 /**
  * Created by ween on 11/30/14.
  */
-public class MagicWand extends Tool {
+public class MagicWand extends Selection {
 
     private static final int TOOL_ID = 8;
     private int[] bitmapArray;
@@ -36,6 +36,7 @@ public class MagicWand extends Tool {
     int linkedListStackIndex = 0;
 
     private Path selectedPath = new Path();
+    private Path selectedPathInverse = new Path();
     private int previouslyTouchedColour;
 
     public MagicWand(String name, Drawable icon) {
@@ -45,17 +46,20 @@ public class MagicWand extends Tool {
         toolAttributes.setMutator(false);
         toolAttributes.setSelector(true);
         selectedPath.setFillType(Path.FillType.EVEN_ODD);
+        selectedPathInverse.setFillType(Path.FillType.INVERSE_EVEN_ODD);
+        setPath(selectedPath, selectedPathInverse);
     }
 
     @Override
     protected void onStart(Bitmap bitmap, PointF event) {
-        selectedPath.reset();
+        pathReset();
 
         if (isInBounds(bitmap, event)) {
             previouslyTouchedColour = colour((int) event.x, (int) event.y);
             performSelection(bitmap, event);
         }
         toolReport.getPath().set(selectedPath);
+        toolReport.getInversePath().set(selectedPathInverse);
     }
 
     @Override
@@ -69,11 +73,13 @@ public class MagicWand extends Tool {
             }
         }
         toolReport.getPath().set(selectedPath);
+        toolReport.getInversePath().set(selectedPathInverse);
     }
 
     @Override
     protected void onEnd(Bitmap bitmap, PointF event) {
         toolReport.getPath().set(selectedPath);
+        toolReport.getInversePath().set(selectedPathInverse);
     }
 
     private int colour(int x, int y) {
@@ -169,6 +175,7 @@ public class MagicWand extends Tool {
 
                 if (!spanLeft && x > 0 && similar(x - 1, y1, oldColour) && !mask[(x - 1) + y1 * width]) {
                     // Pixel to the left must also be changed, pushes it to the stack
+                    // TODO: Had ArrayIndexOutOfBoundsException on the following line
                     maskStack[maskStackIndex] = x - 1;
                     maskStack[maskStackIndex + 1] = y1;
                     maskStackIndex += 2;
@@ -240,11 +247,11 @@ public class MagicWand extends Tool {
 
     /** Creates a path around the selected area using the line segments in the dictionary. **/
     private void generatePathMap(Map<Point, LinkedList<Point>> dictionary) {
-        selectedPath.reset();
+        pathReset();
 
         // Begins the path at some point on the mask
         Point current = segments.pollFirst();
-        selectedPath.moveTo(current.x, current.y);
+        pathMoveTo(current.x, current.y);
         while(true) {
             // Retrieves a point that is adjacent to this one (two points that form a line segment)
             LinkedList<Point> points = dictionary.get(current);
@@ -260,10 +267,11 @@ public class MagicWand extends Tool {
                 dictionary.get(current).remove(previous);
 
                 // This edge can now be marked
-                selectedPath.lineTo(current.x, current.y);
+                pathLineTo(current.x, current.y);
+                pathLineTo(current.x, current.y);
             } else {
                 // Closes off the area being selected
-                selectedPath.close();
+                pathClose();
 
                 // Since the selection may have holes in it, we must outline those holes too. This
                 // ensures that we use all the remaining line segments.
@@ -272,7 +280,7 @@ public class MagicWand extends Tool {
 
                     if (!dictionary.get(current).isEmpty()) {
                         // Next closed region to outline
-                        selectedPath.moveTo(current.x, current.y);
+                        pathMoveTo(current.x, current.y);
                         break;
                     }
                 }

@@ -19,6 +19,6 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:clickable="true"
-        android:src="@drawable/ic_delete_dark" />
+        android:src="@drawable/ic_remove_dark" />
 
 </LinearLayout>

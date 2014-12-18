@@ -1,5 +1,7 @@
 package com.jaween.pixelart.tools;
 
+import android.graphics.Matrix;
+import android.graphics.Path;
 import android.graphics.PointF;
 import android.graphics.drawable.Drawable;
 
@@ -10,12 +12,20 @@ import com.jaween.pixelart.tools.attributes.ToolAttributes;
  */
 abstract class Selection extends Tool {
 
+    private Path path;
+    private Path inverse;
+
     protected Selection(String name, Drawable icon, int toolId) {
         super(name, icon, toolId);
 
         toolAttributes = new ToolAttributes();
         toolAttributes.setMutator(false);
         toolAttributes.setSelector(true);
+    }
+
+    protected void setPath(Path path, Path inverse) {
+        this.path = path;
+        this.inverse = inverse;
     }
 
     protected void roundCoordinates(PointF point) {
@@ -35,5 +45,25 @@ abstract class Selection extends Tool {
         } else if (point.y >= height) {
             point.y = height;
         }
+    }
+
+    protected void pathReset() {
+        path.reset();
+        inverse.reset();
+    }
+
+    protected void pathMoveTo(float x, float y) {
+        path.moveTo(x, y);
+        inverse.moveTo(x, y);
+    }
+
+    protected void pathLineTo(float x, float y) {
+        path.lineTo(x, y);
+        inverse.lineTo(x, y);
+    }
+
+    protected void pathClose() {
+        path.close();
+        inverse.close();
     }
 }

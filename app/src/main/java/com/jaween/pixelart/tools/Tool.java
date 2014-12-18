@@ -69,7 +69,7 @@ public abstract class Tool implements Command {
             onMove(bitmap, event);
             return toolReport;
         }
-        return null;
+        return toolReport;
     }
 
     @Override
@@ -79,12 +79,13 @@ public abstract class Tool implements Command {
             onEnd(bitmap, event);
             return toolReport;
         }
-        return null;
+        return toolReport;
     }
 
     @Override
     public final void cancel() {
         cancelled = true;
+        toolReport.reset();
     }
 
     protected abstract void onStart(Bitmap bitmap, PointF event);

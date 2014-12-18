@@ -206,18 +206,22 @@ public class DrawingFragment extends Fragment implements
     @Override
     public boolean onActionItemClicked(ActionMode actionMode, MenuItem menuItem) {
         switch (menuItem.getItemId()) {
+            /*case R.id.action_rotate:
+                surface.rotateSelection();
+                break;*/
             case R.id.action_select_all:
                 surface.selectAll();
                 break;
-            case R.id.action_cut:
+            /*case R.id.action_cut:
                 surface.clearSelection();
                 Toast.makeText(getActivity().getApplicationContext(), "TODO: Layer support", Toast.LENGTH_SHORT).show();
                 surface.dismissSelection();
                 actionMode.finish();
-                break;
-            case R.id.action_copy:
-                surface.clearSelection();
-                Toast.makeText(getActivity().getApplicationContext(), "TODO: Layer support", Toast.LENGTH_SHORT).show();
+                break;*/
+            /*case R.id.action_copy:
+                surface.copySelection();
+                break;*/
+            case R.id.action_delete:
                 surface.dismissSelection();
                 actionMode.finish();
                 break;
@@ -229,7 +233,9 @@ public class DrawingFragment extends Fragment implements
 
     @Override
     public void onDestroyActionMode(ActionMode actionMode) {
-        surface.dismissSelection();
+        // Dismisses any selected regions
+        surface.commitSelection();
+
         this.actionMode = null;
     }
 

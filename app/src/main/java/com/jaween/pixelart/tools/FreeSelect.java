@@ -17,7 +17,7 @@ public class FreeSelect extends Selection {
     // We avoid this by saving the tentative path, copying it to toolRegion.path, then calling close
     private Path tentativePath = new Path();
     private Path tentativePathInt = new Path();
-    private Matrix identityTransformation = new Matrix();
+    private Path inverse;
 
     public FreeSelect(String name, Drawable icon) {
         super(name, icon, TOOL_ID);
@@ -30,10 +30,14 @@ public class FreeSelect extends Selection {
         tentativePath.reset();
         tentativePath.moveTo(event.x, event.y);
 
+        inverse = new Path();
+        inverse.setFillType(Path.FillType.INVERSE_WINDING);
+
         // The selected path aligned to the pixels of the image
         roundCoordinates(event);
-        tentativePathInt.reset();
-        tentativePathInt.moveTo(event.x, event.y);
+        setPath(tentativePathInt, inverse);
+        pathReset();
+        pathMoveTo(event.x, event.y);
     }
 
     @Override
@@ -42,7 +46,7 @@ public class FreeSelect extends Selection {
         tentativePath.lineTo(event.x, event.y);
 
         roundCoordinates(event);
-        tentativePathInt.lineTo(event.x, event.y);
+        pathLineTo(event.x, event.y);
 
         closePathRegion();
     }
@@ -51,15 +55,17 @@ public class FreeSelect extends Selection {
     protected void onEnd(Bitmap bitmap, PointF event) {
         clampPoint(bitmap.getWidth(), bitmap.getHeight(), event);
         roundCoordinates(event);
-        tentativePathInt.lineTo(event.x, event.y);
-        tentativePathInt.transform(identityTransformation, tentativePath);
+        pathLineTo(event.x, event.y);
+        tentativePath.set(tentativePathInt);
 
         closePathRegion();
+
+        toolReport.getInversePath().set(inverse);
     }
 
     private void closePathRegion() {
         // Copies the tentative path and closes it
-        tentativePath.transform(identityTransformation, toolReport.getPath());
+        toolReport.getPath().set(tentativePath);
         toolReport.getPath().close();
     }
 
