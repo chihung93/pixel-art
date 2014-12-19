@@ -5,6 +5,7 @@ import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
 import android.util.DisplayMetrics;
+import android.util.Log;
 import android.view.Display;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -15,6 +16,7 @@ import android.widget.RelativeLayout;
 
 import com.jaween.pixelart.ui.DrawingFragment;
 import com.jaween.pixelart.ui.PaletteFragment;
+import com.jaween.pixelart.ui.PanelFragment;
 import com.jaween.pixelart.ui.ToolboxFragment;
 import com.jaween.pixelart.ui.layer.LayerFragment;
 
@@ -99,10 +101,8 @@ public class PanelManagerFragment extends Fragment implements
             // Sliding panel and menu item callbacks for not static layouts (wide and narrow layouts)
             paletteFragment.setOnShowPaletteListener((ContainerFragment) getParentFragment());
 
-            // The panels are initially hidden in the narraw and wide layouts
+            // TODO: Layers disabled until issues resolved
             FragmentTransaction fragmentTransaction = getChildFragmentManager().beginTransaction();
-            fragmentTransaction.hide(paletteFragment);
-            fragmentTransaction.hide(toolboxFragment);
             fragmentTransaction.hide(layerFragment);
             fragmentTransaction.commit();
         }
@@ -117,9 +117,9 @@ public class PanelManagerFragment extends Fragment implements
         super.onSaveInstanceState(outState);
         // Saves the visibility of the panels
         if (layoutWidthDp == NARROW_LAYOUT_WIDTH_DP || layoutWidthDp == WIDE_LAYOUT_WIDTH_DP) {
-            outState.putBoolean(KEY_PALETTE_VISIBILITY, paletteFragment.isVisible());
-            outState.putBoolean(KEY_TOOLBOX_VISIBILITY, toolboxFragment.isVisible());
-            outState.putBoolean(KEY_LAYER_VISIBILITY, layerFragment.isVisible());
+            outState.putBoolean(KEY_PALETTE_VISIBILITY, paletteFragment.getView().getVisibility() == View.VISIBLE);
+            outState.putBoolean(KEY_TOOLBOX_VISIBILITY, toolboxFragment.getView().getVisibility() == View.VISIBLE);
+            outState.putBoolean(KEY_LAYER_VISIBILITY, layerFragment.getView().getVisibility() == View.VISIBLE);
         } else {
             // Tall layout
             outState.putBoolean(KEY_PALETTE_VISIBILITY, combinedPanelVisible);
@@ -137,31 +137,27 @@ public class PanelManagerFragment extends Fragment implements
 
             if (layoutWidthDp == NARROW_LAYOUT_WIDTH_DP || layoutWidthDp == WIDE_LAYOUT_WIDTH_DP) {
                 // The narrow and wide layouts have independent panels that can be shown
-                FragmentManager fragmentManager = getChildFragmentManager();
-                FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
 
                 // Palette visibility
                 if (paletteVisible) {
-                    fragmentTransaction.show(paletteFragment);
+                    paletteFragment.getView().setVisibility(View.VISIBLE);
                 } else {
-                    fragmentTransaction.hide(paletteFragment);
+                    paletteFragment.getView().setVisibility(View.INVISIBLE);
                 }
 
                 // Toolbox visibility
                 if (toolboxVisible) {
-                    fragmentTransaction.show(toolboxFragment);
+                    toolboxFragment.getView().setVisibility(View.VISIBLE);
                 } else {
-                    fragmentTransaction.hide(toolboxFragment);
+                    toolboxFragment.getView().setVisibility(View.INVISIBLE);
                 }
 
                 // Layer visibility
                 if (layerVisible) {
-                    fragmentTransaction.show(layerFragment);
+                    layerFragment.getView().setVisibility(View.VISIBLE);
                 } else {
-                    fragmentTransaction.hide(layerFragment);
+                    layerFragment.getView().setVisibility(View.INVISIBLE);
                 }
-
-                fragmentTransaction.commit();
             } else if (layoutHeightDp == TALL_LAYOUT_HEIGHT_DP) {
                 // The tall layout has a single combined panel that can be shown if a panel was visible prior
                 if (paletteVisible || toolboxVisible || layerVisible) {
@@ -199,67 +195,76 @@ public class PanelManagerFragment extends Fragment implements
         }
     }
 
-    public boolean togglePanel(Fragment fragment) {
+    public boolean togglePanel(PanelFragment panel) {
         // Palette and Toolbox fragments are combined into a single panel in the tall layout
         if (layoutHeightDp == TALL_LAYOUT_HEIGHT_DP) {
             return toggleCombinedPanel(!combinedPanelVisible);
         }
 
-        // Dismisses any other panels that are in the way
-        Fragment in, outA, outB;
-        if (fragment instanceof PaletteFragment) {
-            in = paletteFragment;
-            outA = toolboxFragment;
-            outB = layerFragment;
-        } else if (fragment instanceof ToolboxFragment) {
-            in = toolboxFragment;
-            outA = paletteFragment;
-            outB = layerFragment;
-        } else {
-            in = layerFragment;
-            outA = paletteFragment;
-            outB = toolboxFragment;
-        }
-        hidePanel(outA);
-        hidePanel(outB);
-
-        // Slides in the new panel
-        if (in.isHidden()) {
-            FragmentTransaction fragmentTransaction = getChildFragmentManager().beginTransaction();
-            //fragmentTransaction.setCustomAnimations(slideInAnimation, slideOutAnimation, slideInAnimation, slideOutAnimation);
-            fragmentTransaction.show(in);
-            fragmentTransaction.commit();
-            animate(in, true);
-            return true;
-        } else {
-            // The panel was already being shown, slides it out
-            animate(in, false);
+        // Panel is already visible, slides it out
+        if (panel.getView().getVisibility() == View.VISIBLE) {
+            slidePanel(panel, false);
             return false;
         }
+
+        // No other panels in the way, slides fragment in
+        PanelFragment outPanel = getVisiblePanel();
+        if (outPanel == null) {
+            slidePanel(panel, true);
+            return true;
+        }
+
+        slidePanels(panel, outPanel);
+        return true;
     }
 
-    public boolean hidePanel(Fragment fragment) {
-        // Large layouts have only static panels (for now)
-        if (layoutWidthDp == LARGE_LAYOUT_WIDTH_DP) {
-            return false;
+    private void slidePanel(PanelFragment panel, boolean forward) {
+        if (animationStarted()) {
+            return;
         }
 
-        // Requests to hide the combined panel
-        if (layoutHeightDp == TALL_LAYOUT_HEIGHT_DP) {
-            return toggleCombinedPanel(false);
+        int height = 0;
+        panel.slide(forward, height);
+    }
+
+    private void slidePanels(PanelFragment inPanel, PanelFragment outPanel) {
+        if (animationStarted()) {
+            return;
         }
 
-        if (!fragment.isHidden()) {
-            animate(fragment, false);
-            return true;
+        boolean forward = true;
+        inPanel.slide(forward, outPanel.getView().getHeight());
+
+        boolean backward = false;
+        outPanel.slide(backward, inPanel.getView().getHeight());
+    }
+
+    private boolean animationStarted() {
+        return paletteFragment.animationStarted() ||
+                toolboxFragment.animationStarted();/* ||
+                layerFragment.animationStarted();*/
+    }
+
+    private PanelFragment getVisiblePanel() {
+        if (toolboxFragment.getView().getVisibility() == View.VISIBLE) {
+            return toolboxFragment;
+        } else if (paletteFragment.getView().getVisibility() == View.VISIBLE) {
+            return paletteFragment;
+        /*} else if (layerFragment.getView().getVisibility() == View.VISIBLE) {
+            return layerFragment;*/
+        } else {
+            return null;
         }
-        return false;
     }
 
     @Override
     public boolean onClearPanels() {
-        boolean didHide = hidePanel(paletteFragment) | hidePanel(toolboxFragment) | hidePanel(layerFragment);
-        return didHide;
+        PanelFragment outPanel = getVisiblePanel();
+        if (outPanel != null) {
+            slidePanel(outPanel, false);
+            return true;
+        }
+        return false;
     }
 
     // The variable 'show' is the state you request the panel to be in (true means request to be visible)
@@ -282,21 +287,6 @@ public class PanelManagerFragment extends Fragment implements
         return combinedPanelVisible;
     }
 
-    private void animate(Fragment fragment, boolean forward) {
-        if (layoutWidthDp == NARROW_LAYOUT_WIDTH_DP) {
-            if (fragment instanceof ToolboxFragment) {
-                ((ToolboxFragment) fragment).startAnimation(forward, paletteFragment.getHeight());
-            } else if (fragment instanceof PaletteFragment) {
-                ((PaletteFragment) fragment).startAnimation(forward, toolboxFragment.getHeight());
-            }
-        } else {
-            FragmentTransaction fragmentTransaction = getChildFragmentManager().beginTransaction();
-            fragmentTransaction.setCustomAnimations(slideInAnimation, slideOutAnimation, slideInAnimation, slideOutAnimation);
-            fragmentTransaction.hide(fragment);
-            fragmentTransaction.commit();
-        }
-    }
-
     public PaletteFragment getPaletteFragment() {
         return paletteFragment;
     }
@@ -307,12 +297,6 @@ public class PanelManagerFragment extends Fragment implements
 
     public LayerFragment getLayerFragment() {
         return layerFragment;
-    }
-
-    public void hideFragmentTemp(Fragment fragment) {
-        FragmentTransaction fragmentTransaction = getChildFragmentManager().beginTransaction();
-        fragmentTransaction.hide(fragment);
-        fragmentTransaction.commit();
     }
 
     @Override

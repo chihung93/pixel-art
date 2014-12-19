@@ -38,7 +38,9 @@ import java.util.ArrayList;
 /**
  * Created by ween on 11/1/14.
  */
-public class ToolboxFragment extends Fragment implements  View.OnClickListener, View.OnTouchListener {
+public class ToolboxFragment extends PanelFragment implements
+        View.OnClickListener,
+        View.OnTouchListener {
 
     private ToolButton selectedToolButton;
     private ToolButton penButton;
@@ -74,11 +76,10 @@ public class ToolboxFragment extends Fragment implements  View.OnClickListener, 
     private OvalOptionsView ovalOptions;
     private MagicWandOptionsView magicWandOptions;
 
+    // Views
     private SlidingLinearLayout toolboxLayout;
     private FrameLayout optionsFrameLayout;
     private TableLayout toolTable;
-
-    private SlideAnimator slideAnimator;
 
     private int restoredColour;
 
@@ -142,11 +143,13 @@ public class ToolboxFragment extends Fragment implements  View.OnClickListener, 
             onToolSelectListener.onToolSelected(selectedTool, false);
         }
 
-        if (toolboxLayout != null) {
-            slideAnimator = new SlideAnimator(toolboxLayout, toolTable, optionsFrameLayout, ((PanelManagerFragment) getParentFragment()), this);
-        }
-
         return view;
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        this.getView().setVisibility(View.INVISIBLE);
     }
 
     @Override
@@ -213,6 +216,9 @@ public class ToolboxFragment extends Fragment implements  View.OnClickListener, 
         toolTable = (TableLayout) v.findViewById(R.id.tl_toolbox_table);
         optionsFrameLayout = (FrameLayout) v.findViewById(R.id.fl_container_tool_options);
 
+        // Sets up sliding animations
+        setupAnimation(toolboxLayout, toolTable, optionsFrameLayout);
+
         // OnClickListeners
         penButton.setOnClickListener(this);
         eraserButton.setOnClickListener(this);
@@ -251,7 +257,7 @@ public class ToolboxFragment extends Fragment implements  View.OnClickListener, 
     @Override
     public void onClick(View v) {
         // Can't change tool while animating
-        if (slideAnimator.animationStarted()) {
+        if (animationStarted()) {
             return;
         }
 
@@ -433,14 +439,6 @@ public class ToolboxFragment extends Fragment implements  View.OnClickListener, 
             restoredColour = colour;
         } else {
             selectedTool.getToolAttributes().getPaint().setColor(colour);
-        }
-    }
-
-    public void startAnimation(boolean forward, int height) {
-        if (forward) {
-            slideAnimator.start(height);
-        } else {
-            slideAnimator.reverse(height);
         }
     }
 }

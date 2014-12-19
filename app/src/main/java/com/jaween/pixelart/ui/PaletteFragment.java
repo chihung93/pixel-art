@@ -32,7 +32,7 @@ import java.util.ArrayList;
 /**
  * Created by ween on 10/24/14.
  */
-public class PaletteFragment extends Fragment implements
+public class PaletteFragment extends PanelFragment implements
         View.OnClickListener,
         View.OnTouchListener,
         ColourPickerFragment.OnColourUpdateListener,
@@ -72,11 +72,6 @@ public class PaletteFragment extends Fragment implements
     private View primaryColourView;
     private Drawable[] primaryColourViewLayers = new Drawable[2];
 
-    // Animation
-    private SlideAnimator slideAnimator;
-    private SlidingLinearLayout container;
-    private LinearLayout buttonBar;
-
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -111,10 +106,6 @@ public class PaletteFragment extends Fragment implements
 
         onRestoreInstanceState(savedInstanceState);
 
-        if (this.container != null) {
-            slideAnimator = new SlideAnimator(this.container, paletteTable, buttonBar, ((PanelManagerFragment) getParentFragment()), this);
-        }
-
         return view;
     }
 
@@ -122,15 +113,24 @@ public class PaletteFragment extends Fragment implements
         customisePaletteButton = (Button) v.findViewById(R.id.bt_customise_palette);
         nextPaletteButton = (Button) v.findViewById(R.id.bt_next_palette);
         primaryColourView = v.findViewById(R.id.vw_primary_colour);
-        container = (SlidingLinearLayout) v.findViewById(R.id.sll_palette_content);
+
+        SlidingLinearLayout container = (SlidingLinearLayout) v.findViewById(R.id.sll_palette_content);
         paletteTable = (TableLayout) v.findViewById(R.id.tl_palette_grid);
-        buttonBar = (LinearLayout) v.findViewById(R.id.ll_button_bar);
+        View buttonBar = v.findViewById(R.id.ll_button_bar);
 
         v.setOnTouchListener(this);
         customisePaletteButton.setOnClickListener(this);
         nextPaletteButton.setOnClickListener(this);
 
+        // Fills the palette and sets up the sliding animation
         initialisePalette(paletteTable);
+        setupAnimation(container, paletteTable, buttonBar);
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        this.getView().setVisibility(View.INVISIBLE);
     }
 
     @Override
@@ -259,10 +259,6 @@ public class PaletteFragment extends Fragment implements
         }
     }
 
-    public int getHeight() {
-        return container.getHeight();
-    }
-
     @Override
     public void onClick(View view) {
         if (view instanceof ColourButton) {
@@ -381,13 +377,5 @@ public class PaletteFragment extends Fragment implements
         public void onToggleColourPalette(boolean visible);
 
         public void onColourPaletteAnimationEnd();
-    }
-
-    public void startAnimation(boolean forward, int height) {
-        if (forward) {
-            slideAnimator.start(height);
-        } else {
-            slideAnimator.reverse(height);
-        }
     }
 }

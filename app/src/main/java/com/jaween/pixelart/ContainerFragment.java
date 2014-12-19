@@ -438,7 +438,7 @@ public class ContainerFragment extends Fragment implements
         // Hides the panels on narrow and wide layouts and updates the menu item
         getActivity().supportInvalidateOptionsMenu();
         if (done) {
-            panelManagerFragment.hidePanel(paletteFragment);
+            panelManagerFragment.onClearPanels();
         }
     }
 
