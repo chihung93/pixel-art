@@ -5,7 +5,7 @@ import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.AttributeSet;
 import android.view.LayoutInflater;
-import android.view.View;
+import android.view.ViewGroup;
 import android.widget.EditText;
 import android.widget.SeekBar;
 
@@ -38,19 +38,19 @@ public class MagicWandOptionsView extends ToolOptionsView implements
 
     private void initialiseViews(Context context) {
         LayoutInflater inflater = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-        View view = inflater.inflate(R.layout.tool_options_magic_wand, null);
+        viewGroup = (ViewGroup) inflater.inflate(R.layout.tool_options_magic_wand, null);
 
         initialThreshold = context.getResources().getInteger(R.integer.magic_wand_initial_threshold);
 
-        thresholdEditText = (EditText) view.findViewById(R.id.et_threshold);
+        thresholdEditText = (EditText) viewGroup.findViewById(R.id.et_threshold);
         thresholdEditText.setText(Integer.toString(initialThreshold));
         addTextWatchers();
 
-        thresholdSeekBar = (SeekBar) view.findViewById(R.id.sb_threshold);
+        thresholdSeekBar = (SeekBar) viewGroup.findViewById(R.id.sb_threshold);
         thresholdSeekBar.setProgress(initialThreshold);
         thresholdSeekBar.setOnSeekBarChangeListener(this);
 
-        addView(view);
+        addView(viewGroup);
     }
 
     @Override

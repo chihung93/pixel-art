@@ -100,12 +100,10 @@ public class PaletteFragment extends PanelFragment implements
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-
         View view = inflater.inflate(R.layout.palette_fragment, null, false);
         initialiseViews(view);
 
         onRestoreInstanceState(savedInstanceState);
-
         return view;
     }
 
@@ -125,12 +123,6 @@ public class PaletteFragment extends PanelFragment implements
         // Fills the palette and sets up the sliding animation
         initialisePalette(paletteTable);
         setupAnimation(container, paletteTable, buttonBar);
-    }
-
-    @Override
-    public void onResume() {
-        super.onResume();
-        this.getView().setVisibility(View.INVISIBLE);
     }
 
     @Override

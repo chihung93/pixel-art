@@ -3,7 +3,7 @@ package com.jaween.pixelart.tools.options;
 import android.content.Context;
 import android.util.AttributeSet;
 import android.view.LayoutInflater;
-import android.view.View;
+import android.view.ViewGroup;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
 import android.widget.SeekBar;
@@ -35,15 +35,15 @@ public class EraserOptionsView extends ToolOptionsView implements
 
     private void initialiseViews(Context context) {
         LayoutInflater inflater = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-        View view = inflater.inflate(R.layout.tool_options_eraser, null);
+        viewGroup = (ViewGroup) inflater.inflate(R.layout.tool_options_eraser, null);
 
-        CheckBox antiAliasCheckBox = (CheckBox) view.findViewById(R.id.cb_option_aa);
+        CheckBox antiAliasCheckBox = (CheckBox) viewGroup.findViewById(R.id.cb_option_aa);
         antiAliasCheckBox.setOnCheckedChangeListener(this);
 
-        SeekBar thicknessSeekBar = (SeekBar) view.findViewById(R.id.sb_option_thickness);
+        SeekBar thicknessSeekBar = (SeekBar) viewGroup.findViewById(R.id.sb_option_thickness);
         thicknessSeekBar.setOnSeekBarChangeListener(this);
 
-        addView(view);
+        addView(viewGroup);
     }
 
     @Override

@@ -5,7 +5,7 @@ A work in progress pixel art drawing app for Android.
 Features
 --------
 This app currently includes:
- * Tools (pen, eraser, oval, flood fill, colour dropper and magic wand)
+ * Tools (pen, eraser, oval, flood fill, colour dropper, selection and magic wand)
  * Smooth zooming and panning
  * UI controls (colour palette, undo/redo system, pixel grid, thumbnail)
  * Basic tablet support
@@ -15,6 +15,6 @@ This app currently includes:
 TODO
 ----
 Features that are currently lacking:
- * Standard tools (selection, text, etc.)
+ * Text tool
  * Layer support (partially complete)
  * Animation support (partially complete)

@@ -2,7 +2,6 @@
     android:id="@+id/sll_toolbox_content"
     android:layout_width="fill_parent"
     android:layout_height="wrap_content"
-    android:animateLayoutChanges="true"
     android:background="@drawable/panel_shadow_horizontal"
     android:orientation="vertical">
 
@@ -10,5 +9,5 @@
 
     <View
         android:layout_width="match_parent"
-        android:layout_height="8dp" />
+        android:layout_height="7dp" />
 </com.jaween.pixelart.util.SlidingLinearLayout>

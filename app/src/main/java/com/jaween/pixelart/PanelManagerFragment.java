@@ -42,6 +42,9 @@ public class PanelManagerFragment extends Fragment implements
     private static final String KEY_PALETTE_VISIBILITY = "key_palette_visibility";
     private static final String KEY_TOOLBOX_VISIBILITY = "key_toolbox_visibility";
     private static final String KEY_LAYER_VISIBILITY = "key_layer_visibility";
+    private boolean paletteRestoredVisiblilty = false;
+    private boolean toolboxRestoredVisiblilty = false;
+    private boolean layerRestoredVisiblilty = false;
 
     // Layout dimensions
     // TODO: Ensure these are same as layout directories before publishing
@@ -56,6 +59,7 @@ public class PanelManagerFragment extends Fragment implements
     private int slideOutAnimation = R.anim.slide_up;
     private RelativeLayout combinedPanel;
     private boolean combinedPanelVisible = true;
+
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -131,39 +135,46 @@ public class PanelManagerFragment extends Fragment implements
     private void onRestoreInstanceState(Bundle savedInstanceState) {
         if (savedInstanceState != null) {
             // Restores the visibility of panels
-            boolean paletteVisible = savedInstanceState.getBoolean(KEY_PALETTE_VISIBILITY, false);
-            boolean toolboxVisible = savedInstanceState.getBoolean(KEY_TOOLBOX_VISIBILITY, false);
-            boolean layerVisible = savedInstanceState.getBoolean(KEY_LAYER_VISIBILITY, false);
+            paletteRestoredVisiblilty = savedInstanceState.getBoolean(KEY_PALETTE_VISIBILITY, false);
+            toolboxRestoredVisiblilty = savedInstanceState.getBoolean(KEY_TOOLBOX_VISIBILITY, false);
+            layerRestoredVisiblilty = savedInstanceState.getBoolean(KEY_LAYER_VISIBILITY, false);
+        }
+    }
 
-            if (layoutWidthDp == NARROW_LAYOUT_WIDTH_DP || layoutWidthDp == WIDE_LAYOUT_WIDTH_DP) {
-                // The narrow and wide layouts have independent panels that can be shown
+    @Override
+    public void onResume() {
+        super.onResume();
 
-                // Palette visibility
-                if (paletteVisible) {
-                    paletteFragment.getView().setVisibility(View.VISIBLE);
-                } else {
-                    paletteFragment.getView().setVisibility(View.INVISIBLE);
-                }
+        // Restores the visibility of the panels (done after restoreInstanceState as Fragment
+        // views are now initialised)
+        if (layoutWidthDp == NARROW_LAYOUT_WIDTH_DP || layoutWidthDp == WIDE_LAYOUT_WIDTH_DP) {
+            // The narrow and wide layouts have independent panels that can be shown
 
-                // Toolbox visibility
-                if (toolboxVisible) {
-                    toolboxFragment.getView().setVisibility(View.VISIBLE);
-                } else {
-                    toolboxFragment.getView().setVisibility(View.INVISIBLE);
-                }
+            // Palette visibility
+            if (paletteRestoredVisiblilty) {
+                paletteFragment.getView().setVisibility(View.VISIBLE);
+            } else {
+                paletteFragment.getView().setVisibility(View.INVISIBLE);
+            }
 
-                // Layer visibility
-                if (layerVisible) {
-                    layerFragment.getView().setVisibility(View.VISIBLE);
-                } else {
-                    layerFragment.getView().setVisibility(View.INVISIBLE);
-                }
-            } else if (layoutHeightDp == TALL_LAYOUT_HEIGHT_DP) {
-                // The tall layout has a single combined panel that can be shown if a panel was visible prior
-                if (paletteVisible || toolboxVisible || layerVisible) {
-                    combinedPanelVisible = true;
-                    toggleCombinedPanel(true);
-                }
+            // Toolbox visibility
+            if (toolboxRestoredVisiblilty) {
+                toolboxFragment.getView().setVisibility(View.VISIBLE);
+            } else {
+                toolboxFragment.getView().setVisibility(View.INVISIBLE);
+            }
+
+            // Layer visibility
+            if (layerRestoredVisiblilty) {
+                layerFragment.getView().setVisibility(View.VISIBLE);
+            } else {
+                layerFragment.getView().setVisibility(View.INVISIBLE);
+            }
+        } else if (layoutHeightDp == TALL_LAYOUT_HEIGHT_DP) {
+            // The tall layout has a single combined panel that can be shown if a panel was visible prior
+            if (paletteRestoredVisiblilty || toolboxRestoredVisiblilty || layerRestoredVisiblilty) {
+                combinedPanelVisible = true;
+                toggleCombinedPanel(true);
             }
         }
     }

@@ -1,18 +1,16 @@
 package com.jaween.pixelart.ui;
 
+import android.animation.LayoutTransition;
 import android.os.Bundle;
-import android.support.v4.app.Fragment;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.ViewTreeObserver;
 import android.widget.FrameLayout;
 import android.widget.TableLayout;
 import android.widget.TextView;
 
-import com.jaween.pixelart.PanelManagerFragment;
 import com.jaween.pixelart.R;
 import com.jaween.pixelart.tools.Dropper;
 import com.jaween.pixelart.tools.Eraser;
@@ -30,7 +28,6 @@ import com.jaween.pixelart.tools.options.OvalOptionsView;
 import com.jaween.pixelart.tools.options.PenOptionsView;
 import com.jaween.pixelart.tools.options.RectOptionsView;
 import com.jaween.pixelart.tools.options.ToolOptionsView;
-import com.jaween.pixelart.util.SlideAnimator;
 import com.jaween.pixelart.util.SlidingLinearLayout;
 
 import java.util.ArrayList;
@@ -41,6 +38,10 @@ import java.util.ArrayList;
 public class ToolboxFragment extends PanelFragment implements
         View.OnClickListener,
         View.OnTouchListener {
+
+    private static final String KEY_TOOL = "key_tool";
+    private static final int NULL_TOOL_ID = -1;
+    private static final int ANIM_OPTIONS_FADE_DURATION = 150;
 
     private ToolButton selectedToolButton;
     private ToolButton penButton;
@@ -83,8 +84,7 @@ public class ToolboxFragment extends PanelFragment implements
 
     private int restoredColour;
 
-    private static final String KEY_TOOL = "key_tool";
-    private static final int NULL_TOOL_ID = -1;
+    private Tool newTool;
 
 
     @Override
@@ -144,12 +144,6 @@ public class ToolboxFragment extends PanelFragment implements
         }
 
         return view;
-    }
-
-    @Override
-    public void onResume() {
-        super.onResume();
-        this.getView().setVisibility(View.INVISIBLE);
     }
 
     @Override
@@ -219,6 +213,10 @@ public class ToolboxFragment extends PanelFragment implements
         // Sets up sliding animations
         setupAnimation(toolboxLayout, toolTable, optionsFrameLayout);
 
+        // Sets up option transitions animations
+        LayoutTransition layoutTransition = optionsFrameLayout.getLayoutTransition();
+        layoutTransition.setDuration(ANIM_OPTIONS_FADE_DURATION);
+
         // OnClickListeners
         penButton.setOnClickListener(this);
         eraserButton.setOnClickListener(this);
@@ -252,6 +250,18 @@ public class ToolboxFragment extends PanelFragment implements
         rectOptions = new RectOptionsView(getActivity());
         ovalOptions = new OvalOptionsView(getActivity());
         magicWandOptions = new MagicWandOptionsView(getActivity());
+
+        setupLayoutTransitions();
+    }
+
+    private void setupLayoutTransitions() {
+        LayoutTransition layoutTransition;
+
+        layoutTransition = penOptions.getChildLayoutTransition();
+        layoutTransition.setDuration(ANIM_OPTIONS_FADE_DURATION);
+
+        layoutTransition = rectOptions.getChildLayoutTransition();
+        layoutTransition.setDuration(ANIM_OPTIONS_FADE_DURATION);
     }
 
     @Override
@@ -261,80 +271,67 @@ public class ToolboxFragment extends PanelFragment implements
             return;
         }
 
-        if (v instanceof ToolButton) {
-            optionsFrameLayout.removeAllViews();
-        }
-
-        Tool clickedTool = null;
         switch (v.getId()) {
             case R.id.ib_tool_pen:
-                clickedTool = penTool;
-                currentToolOptions = penOptions;
+                newTool = penTool;
                 break;
             case R.id.ib_tool_eraser:
-                clickedTool = eraserTool;
-                currentToolOptions = eraserOptions;
+                newTool = eraserTool;
                 break;
             case R.id.ib_tool_rect:
-                clickedTool = rectTool;
-                currentToolOptions = rectOptions;
+                newTool = rectTool;
                 break;
             case R.id.ib_tool_oval:
-                clickedTool = ovalTool;
-                currentToolOptions = ovalOptions;
+                newTool = ovalTool;
                 break;
             case R.id.ib_tool_rect_select:
-                clickedTool = rectSelectTool;
-                currentToolOptions = null;
+                newTool = rectSelectTool;
                 break;
             case R.id.ib_tool_flood_fill:
-                clickedTool = floodFillTool;
-                currentToolOptions = null;
+                newTool = floodFillTool;
                 break;
             case R.id.ib_tool_dropper:
-                clickedTool = dropperTool;
-                currentToolOptions = null;
+                newTool = dropperTool;
                 break;
             case R.id.ib_tool_text:
                 // No implementation
                 return;
             case R.id.ib_tool_magic_wand:
-                clickedTool = magicWandTool;
-                currentToolOptions = magicWandOptions;
+                newTool = magicWandTool;
                 break;
             case R.id.ib_tool_free_select:
-                clickedTool = freeSelectTool;
-                currentToolOptions = null;
+                newTool = freeSelectTool;
                 break;
             default:
                 return;
         }
-
-        // User tapped the selected tool again, hides the panel if possible
-        boolean dismissPanel = false;
-        if (clickedTool == selectedTool) {
-            dismissPanel = true;
-        }
-        selectedTool = clickedTool;
 
         // Sets the item button background
         if (v instanceof ToolButton) {
             changeSelectedToolButton((ToolButton) v);
         }
 
-        // On screen options
-        if (currentToolOptions != null) {
-            optionsFrameLayout.addView(currentToolOptions);
+        //if (currentToolOptions != null) {
+            //toolSelectionAnimation.setTarget(currentToolOptions);
+            //toolSelectionAnimation.start();
+        //} else {
+            selectTool(newTool);
+        //}
+    }
+
+    private void selectTool(Tool tool) {
+        // User tapped the selected tool again, hides the panel if possible
+        boolean dismissPanel = false;
+        if (tool == selectedTool) {
+            dismissPanel = true;
         }
+        setToolOptions(tool);
 
         // Notifies of the DrawingFragment of a change in tool
+        selectedTool = newTool;
         if (onToolSelectListener != null) {
             onToolSelectListener.onToolSelected(selectedTool, dismissPanel);
         }
-    }
-
-    public int getHeight() {
-        return toolboxLayout.getHeight();
     }
 
     private void changeSelectedTool(Tool tool) {
@@ -377,7 +374,8 @@ public class ToolboxFragment extends PanelFragment implements
     }
 
     /**
-     * Updates the Tool options UI given a Tool
+     * Removes the current ToolOptionsView, sets a new currentToolOptions and adds a new,
+     * ToolOptionsView (if any).
      * @param tool The tool whose ToolOptionsView is to be added to the UI
      */
     private void setToolOptions(Tool tool) {
