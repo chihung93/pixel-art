@@ -3,7 +3,7 @@
     <!-- Base application theme. -->
     <style name="AppTheme" parent="Theme.AppCompat.NoActionBar">
         <item name="android:windowBackground">@color/surface_background_colour</item>
-        <item name="android:alertDialogTheme">@android:style/Theme.Holo.Light.Dialog</item>
+        <item name="android:alertDialogTheme">@style/MyDialog</item>
         <item name="android:seekBarStyle">@style/MySeekBar</item>
 
         <!-- Support library compatibility -->
@@ -23,11 +23,11 @@
         <item name="displayOptions">showHome|useLogo</item>
     </style>
 
-    <style name="MyActionBarTextStyle" parent="@style/TextAppearance.AppCompat.Widget.ActionBar.Title">
-        <item name="android:textColor">@color/actionbar_text_colour</item>
-    </style>
+    <style name="MyPopupMenu" parent="ThemeOverlay.AppCompat.Light"></style>
 
-    <style name="MyPopupMenu" parent="Widget.AppCompat.Light.PopupMenu"></style>
+    <style name="MyDialog" parent="@style/Theme.AppCompat.Light.Dialog">
+        <item name="android:windowBackground">@android:color/transparent</item>
+    </style>
 
     <!-- View Styles -->
     <style name="TextLight">

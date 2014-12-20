@@ -70,4 +70,12 @@ public class UndoManager {
         }
         return redoItem;
     }
+
+    /**
+     * Clears the both the undo and redo stacks, a fresh start.
+     */
+    public void clear() {
+        undoItems.clear();
+        redoItems.clear();
+    }
 }

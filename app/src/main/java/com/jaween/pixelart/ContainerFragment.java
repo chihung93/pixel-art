@@ -619,6 +619,9 @@ public class ContainerFragment extends Fragment implements
             drawingFragment.setFrames(animationFile.getFrames());
             layerFragment.setFrames(animationFile.getFrames());
 
+            // Clears the undo manager (that is, the undo stack isn't saved when the user changes
+            // files)
+            undoManager.clear();
         }
     }
 
