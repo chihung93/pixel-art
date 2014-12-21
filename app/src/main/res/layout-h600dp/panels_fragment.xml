@@ -20,7 +20,7 @@
             android:id="@+id/vw_palette_toolbox_divider"
             android:layout_width="@dimen/panel_width"
             android:layout_height="1dp"
-            android:background="?attr/dividerHorizontal" />
+            android:background="@color/divider_dark_background" />
 
         <FrameLayout
             android:id="@+id/fl_container_toolbox"

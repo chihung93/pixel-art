@@ -10,5 +10,5 @@
 
     <integer name="anim_drawer_slide_duration">300</integer>
 
-    <integer name="load_dialog_columns">3</integer>
+    <integer name="load_dialog_columns">2</integer>
 </resources>
