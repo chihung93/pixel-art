@@ -72,8 +72,8 @@ public class ContainerFragment extends Fragment implements
     private static final String TAG_PANEL_MANAGER_FRAGMENT = "tag_panel_manager_fragment";
 
     // Drawing dimensions
-    private static final int layerWidth = 128;
-    private static final int layerHeight = 128;
+    private static final int layerWidth = 64;
+    private static final int layerHeight = 64;
 
     // Saving
     private static final String KEY_FILENAME = "key_filename";

@@ -131,6 +131,8 @@ public class DrawingSurface extends SurfaceView implements SurfaceHolder.Callbac
     private int[] pixelArray;
     private PointF dragPoint = new PointF();
     private boolean draggingSelection = false;
+    private TransparencyCheckerboard transparencyCheckerboard;
+    private Rect surfaceRect = new Rect();
 
     public DrawingSurface(Context context, Tool tool) {
         super(context);
@@ -151,6 +153,7 @@ public class DrawingSurface extends SurfaceView implements SurfaceHolder.Callbac
         Bitmap bitmap = BitmapFactory.decodeResource(context.getResources(), R.drawable.checkerboard);
         checkerboardTile = new BitmapDrawable(getResources(), bitmap);
         checkerboardTile.setTileModeXY(Shader.TileMode.REPEAT, Shader.TileMode.REPEAT);
+        transparencyCheckerboard = new TransparencyCheckerboard(context);
 
         this.context = context;
         this.tool = tool;
@@ -250,6 +253,8 @@ public class DrawingSurface extends SurfaceView implements SurfaceHolder.Callbac
         selectAllPathInverse.lineTo(layerWidth, layerHeight);
         selectAllPathInverse.lineTo(0, layerHeight);
         selectAllPathInverse.close();
+
+        surfaceRect.set(0, 0, width, height);
     }
 
     @Override
@@ -562,13 +567,14 @@ public class DrawingSurface extends SurfaceView implements SurfaceHolder.Callbac
             canvas.drawRect(transformedBitmapRectF, shadowPaint);
 
             // Transparency checkerboard
-            transformedBitmapRect.set(
+            /*transformedBitmapRect.set(
                     (int) transformedBitmapRectF.left,
                     (int) transformedBitmapRectF.top,
                     (int) transformedBitmapRectF.right,
                     (int) transformedBitmapRectF.bottom);
             checkerboardTile.setBounds(transformedBitmapRect);
-            checkerboardTile.draw(canvas);
+            checkerboardTile.draw(canvas);*/
+            transparencyCheckerboard.draw(canvas, transformedBitmapRectF, surfaceRect);
 
             // Draws the user's image (no selection to be drawn)
             compositeLayers();
