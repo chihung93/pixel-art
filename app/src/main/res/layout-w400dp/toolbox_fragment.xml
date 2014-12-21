@@ -10,8 +10,16 @@
         android:layout_toLeftOf="@+id/incl_temp_toolbox"
         android:background="@drawable/panel_shadow_vertical" />
 
-    <include
-        android:id="@+id/incl_temp_toolbox"
-        layout="@layout/toolbox_fragment_base" />
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_toRightOf="@id/incl_temp"
+        android:background="@color/drawer_background_colour">
+
+        <include
+            android:id="@+id/incl_temp_toolbox"
+            layout="@layout/toolbox_fragment_base" />
+
+    </FrameLayout>
 
 </LinearLayout>

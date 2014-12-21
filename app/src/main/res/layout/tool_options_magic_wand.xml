@@ -40,7 +40,7 @@
         android:layout_marginTop="@dimen/view_margin"
         android:layout_toLeftOf="@id/et_threshold"
         android:layout_weight="1"
-        android:max="@integer/max_tool_threshold"
+        android:max="@integer/tool_max_threshold"
         android:textColor="@color/panel_content_colour" />
 
 

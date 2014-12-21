@@ -13,6 +13,7 @@ import android.view.ViewGroup;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
 import android.widget.RelativeLayout;
+import android.widget.TableRow;
 
 import com.jaween.pixelart.ui.DrawingFragment;
 import com.jaween.pixelart.ui.PaletteFragment;
@@ -107,6 +108,10 @@ public class PanelManagerFragment extends Fragment implements
 
             // TODO: Layers disabled until issues resolved
             FragmentTransaction fragmentTransaction = getChildFragmentManager().beginTransaction();
+            if (layoutWidthDp == WIDE_LAYOUT_WIDTH_DP) {
+                fragmentTransaction.hide(paletteFragment);
+                fragmentTransaction.hide(toolboxFragment);
+            }
             fragmentTransaction.hide(layerFragment);
             fragmentTransaction.commit();
         }
@@ -147,8 +152,8 @@ public class PanelManagerFragment extends Fragment implements
 
         // Restores the visibility of the panels (done after restoreInstanceState as Fragment
         // views are now initialised)
-        if (layoutWidthDp == NARROW_LAYOUT_WIDTH_DP || layoutWidthDp == WIDE_LAYOUT_WIDTH_DP) {
-            // The narrow and wide layouts have independent panels that can be shown
+        if (layoutWidthDp == NARROW_LAYOUT_WIDTH_DP) {
+            // The narrow layout has independent panels that can be shown
 
             // Palette visibility
             if (paletteRestoredVisiblilty) {
@@ -170,8 +175,20 @@ public class PanelManagerFragment extends Fragment implements
             } else {
                 layerFragment.getView().setVisibility(View.INVISIBLE);
             }
+        } else if (layoutWidthDp == WIDE_LAYOUT_WIDTH_DP) {
+            // The wide layout also has independent panels that can be shown
+            FragmentManager fragmentManager = getChildFragmentManager();
+            FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
+            if (paletteRestoredVisiblilty) {
+                fragmentTransaction.show(paletteFragment);
+            } else if (toolboxRestoredVisiblilty) {
+                fragmentTransaction.show(toolboxFragment);
+            } else if (layerRestoredVisiblilty) {
+                fragmentTransaction.show(layerFragment);
+            }
+            fragmentTransaction.commit();
         } else if (layoutHeightDp == TALL_LAYOUT_HEIGHT_DP) {
-            // The tall layout has a single combined panel that can be shown if a panel was visible prior
+            // The tall layout has a single combined panel
             if (paletteRestoredVisiblilty || toolboxRestoredVisiblilty || layerRestoredVisiblilty) {
                 combinedPanelVisible = true;
                 toggleCombinedPanel(true);
@@ -216,6 +233,9 @@ public class PanelManagerFragment extends Fragment implements
         if (panel.getView().getVisibility() == View.VISIBLE) {
             slidePanel(panel, false);
             return false;
+        } else if (layoutWidthDp == LARGE_LAYOUT_WIDTH_DP && !panel.isHidden()) {
+            slidePanel(panel, false);
+            return false;
         }
 
         // No other panels in the way, slides fragment in
@@ -230,24 +250,46 @@ public class PanelManagerFragment extends Fragment implements
     }
 
     private void slidePanel(PanelFragment panel, boolean forward) {
-        if (animationStarted()) {
-            return;
-        }
+        if (layoutWidthDp == NARROW_LAYOUT_WIDTH_DP) {
+            if (animationStarted()) {
+                return;
+            }
 
-        int height = 0;
-        panel.slide(forward, height);
+            int height = 0;
+            panel.slide(forward, height);
+        } else if (layoutWidthDp == WIDE_LAYOUT_WIDTH_DP || layoutHeightDp == TALL_LAYOUT_HEIGHT_DP) {
+            FragmentManager fragmentManager = getChildFragmentManager();
+            FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
+            fragmentTransaction.setCustomAnimations(R.anim.slide_left, R.anim.slide_right);
+
+            if (forward) {
+                fragmentTransaction.show(panel);
+            } else {
+                fragmentTransaction.hide(panel);
+            }
+            fragmentTransaction.commit();
+        }
     }
 
     private void slidePanels(PanelFragment inPanel, PanelFragment outPanel) {
-        if (animationStarted()) {
-            return;
+        if (layoutWidthDp == NARROW_LAYOUT_WIDTH_DP) {
+            if (animationStarted()) {
+                return;
+            }
+
+            boolean forward = true;
+            inPanel.slide(forward, outPanel.getView().getHeight());
+
+            boolean backward = false;
+            outPanel.slide(backward, inPanel.getView().getHeight());
+        } else if (layoutWidthDp == WIDE_LAYOUT_WIDTH_DP) {
+            FragmentManager fragmentManager = getChildFragmentManager();
+            FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
+            fragmentTransaction.setCustomAnimations(R.anim.slide_left, R.anim.slide_right);
+            fragmentTransaction.show(inPanel);
+            fragmentTransaction.hide(outPanel);
+            fragmentTransaction.commit();
         }
-
-        boolean forward = true;
-        inPanel.slide(forward, outPanel.getView().getHeight());
-
-        boolean backward = false;
-        outPanel.slide(backward, inPanel.getView().getHeight());
     }
 
     private boolean animationStarted() {
@@ -257,19 +299,36 @@ public class PanelManagerFragment extends Fragment implements
     }
 
     private PanelFragment getVisiblePanel() {
-        if (toolboxFragment.getView().getVisibility() == View.VISIBLE) {
-            return toolboxFragment;
-        } else if (paletteFragment.getView().getVisibility() == View.VISIBLE) {
-            return paletteFragment;
-        /*} else if (layerFragment.getView().getVisibility() == View.VISIBLE) {
-            return layerFragment;*/
+        if (layoutWidthDp == NARROW_LAYOUT_WIDTH_DP) {
+            if (toolboxFragment.getView().getVisibility() == View.VISIBLE) {
+                return toolboxFragment;
+            } else if (paletteFragment.getView().getVisibility() == View.VISIBLE) {
+                return paletteFragment;
+           // } else if (layerFragment.getView().getVisibility() == View.VISIBLE) {
+                //return layerFragment;
+            } else {
+                return null;
+            }
         } else {
-            return null;
+            if (!toolboxFragment.isHidden()) {
+                return toolboxFragment;
+            } else if (!paletteFragment.isHidden()) {
+                return paletteFragment;
+            //} else if (!layerFragment.isHidden()) {
+                //return layerFragment;
+            } else {
+                return null;
+            }
         }
     }
 
     @Override
     public boolean onClearPanels() {
+        if (layoutHeightDp == TALL_LAYOUT_HEIGHT_DP) {
+            boolean show = false;
+            return toggleCombinedPanel(show);
+        }
+
         PanelFragment outPanel = getVisiblePanel();
         if (outPanel != null) {
             slidePanel(outPanel, false);

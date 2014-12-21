@@ -10,7 +10,7 @@
         android:layout_height="@dimen/load_dialog_height"
         android:choiceMode="multipleChoice"
         android:clipToPadding="false"
-        android:numColumns="2"
+        android:numColumns="@integer/load_dialog_columns"
         android:scrollbarStyle="outsideOverlay"
         tools:listitem="@layout/file_item" />
 

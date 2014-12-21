@@ -40,7 +40,7 @@ public class MagicWandOptionsView extends ToolOptionsView implements
         LayoutInflater inflater = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
         viewGroup = (ViewGroup) inflater.inflate(R.layout.tool_options_magic_wand, null);
 
-        initialThreshold = context.getResources().getInteger(R.integer.magic_wand_initial_threshold);
+        initialThreshold = context.getResources().getInteger(R.integer.tool_magic_wand_initial_threshold);
 
         thresholdEditText = (EditText) viewGroup.findViewById(R.id.et_threshold);
         thresholdEditText.setText(Integer.toString(initialThreshold));

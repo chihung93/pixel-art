@@ -47,7 +47,7 @@
         android:layout_toLeftOf="@id/iv_option_thickness_right"
         android:layout_toRightOf="@id/iv_option_thickness_left"
         android:layout_weight="1"
-        android:max="@integer/max_tool_thickness" />
+        android:max="@integer/tool_max_thickness" />
 
 
 </RelativeLayout>

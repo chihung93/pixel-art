@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
+    <!-- Colour palette -->
     <integer-array name="default_palette">
         <!-- Top row -->
         <item>0xFFFF3030</item>
@@ -38,7 +39,7 @@
     <color name="selectable_item_background">#444444</color>
     <color name="panel_background">@color/primary</color>
     <color name="panel_content_colour">#FFFFFF</color>
-    <color name="drawer_background_colour">#FAFAFA</color>
+    <color name="drawer_background_colour">@color/grey_600</color>
     <color name="drawer_content_colour">@android:color/primary_text_light</color>
     <color name="surface_background_colour">#F5F5F5</color>
     <color name="divider_dark_background">#1FFFFFFF</color>
@@ -56,5 +57,9 @@
     <color name="purple_700">#7B1FA2</color>
     <color name="deep_purple_500">#673AB7</color>
     <color name="palette_icon_grey_border">#CCCCCC</color>
+    <color name="grey_50">#FAFAFA</color>
+    <color name="grey_600">#757575</color>
+    <color name="grey_800">#424242</color>
+    <color name="grey_900">#212121</color>
 
 </resources>

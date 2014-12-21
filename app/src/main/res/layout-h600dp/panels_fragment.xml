@@ -3,38 +3,42 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-    <FrameLayout
-        android:id="@+id/fl_container_palette"
-        android:layout_width="@dimen/panel_width"
-        android:layout_height="wrap_content"
-        android:layout_alignParentRight="true" />
-
-    <View
-        android:id="@+id/vw_palette_toolbox_divider"
-        android:layout_width="@dimen/panel_width"
-        android:layout_height="1dp"
-        android:layout_alignParentRight="true"
-        android:layout_below="@id/fl_container_palette"
-        android:background="?attr/dividerHorizontal" />
-
-    <FrameLayout
-        android:id="@+id/fl_container_toolbox"
-        android:layout_width="@dimen/panel_width"
-        android:layout_height="wrap_content"
-        android:layout_alignParentRight="true"
-        android:layout_below="@id/vw_palette_toolbox_divider" />
-
-    <FrameLayout
-        android:id="@+id/fl_container_layers"
+    <LinearLayout
+        android:id="@+id/ll_panels"
         android:layout_width="@dimen/panel_width"
         android:layout_height="match_parent"
         android:layout_alignParentRight="true"
-        android:layout_below="@id/fl_container_toolbox" />
+        android:background="@color/drawer_background_colour"
+        android:orientation="vertical">
+
+        <FrameLayout
+            android:id="@+id/fl_container_palette"
+            android:layout_width="@dimen/panel_width"
+            android:layout_height="wrap_content" />
+
+        <View
+            android:id="@+id/vw_palette_toolbox_divider"
+            android:layout_width="@dimen/panel_width"
+            android:layout_height="1dp"
+            android:background="?attr/dividerHorizontal" />
+
+        <FrameLayout
+            android:id="@+id/fl_container_toolbox"
+            android:layout_width="@dimen/panel_width"
+            android:layout_height="wrap_content" />
+
+        <FrameLayout
+            android:id="@+id/fl_container_layers"
+            android:layout_width="@dimen/panel_width"
+            android:layout_height="wrap_content"
+            android:visibility="gone" />
+
+    </LinearLayout>
 
     <View
         android:layout_width="8dp"
         android:layout_height="match_parent"
-        android:layout_toLeftOf="@id/fl_container_palette"
+        android:layout_toLeftOf="@id/ll_panels"
         android:background="@drawable/panel_shadow_vertical" />
 
 </RelativeLayout>

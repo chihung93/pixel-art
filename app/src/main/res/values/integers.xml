@@ -1,11 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <integer name="max_tool_thickness">4</integer>
-    <integer name="max_tool_roundness">9</integer>
-    <integer name="max_tool_threshold">99</integer>
-
-    <integer name="magic_wand_initial_threshold">20</integer>
+    <integer name="tool_max_thickness">4</integer>
+    <integer name="tool_max_roundness">9</integer>
+    <integer name="tool_max_threshold">99</integer>
+    <integer name="tool_magic_wand_initial_threshold">20</integer>
 
     <integer name="min_bitmap_width">2</integer>
     <integer name="max_bitmap_width">128</integer>
+
+    <integer name="anim_drawer_slide_duration">300</integer>
+
+    <integer name="load_dialog_columns">3</integer>
 </resources>

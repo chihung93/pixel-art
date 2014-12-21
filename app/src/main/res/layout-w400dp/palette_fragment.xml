@@ -4,15 +4,21 @@
     android:orientation="horizontal">
 
     <View
+        android:id="@+id/incl_temp"
         android:layout_width="8dp"
         android:layout_height="match_parent"
-        android:id="@+id/incl_temp"
         android:background="@drawable/panel_shadow_vertical" />
 
-    <include
+    <FrameLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_toRightOf="@id/incl_temp"
-        layout="@layout/palette_fragment_base" />
+        android:background="@color/drawer_background_colour">
+
+        <include
+            layout="@layout/palette_fragment_base"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent" />
+    </FrameLayout>
 
 </RelativeLayout>
