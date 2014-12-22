@@ -1,12 +1,13 @@
 package com.jaween.pixelart.ui;
 
+import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Rect;
 import android.graphics.RectF;
-import android.graphics.drawable.BitmapDrawable;
+import android.util.Log;
 
 public class Thumbnail {
 
@@ -15,13 +16,13 @@ public class Thumbnail {
 
     // Thumbnail Metrics
     private RectF thumbnailRectF = new RectF();
-    private Rect thumbnailRect = new Rect();
-    private float dp;
 
     // View window
     private boolean viewWindowEnabled = true;
     private RectF viewWindowRect = new RectF();
-    private RectF scaledViewport = new RectF();
+
+    // Checkerboard
+    private TransparencyCheckerboard transparencyCheckerboard;
 
     // Paints
     private Paint viewWindowPaint;
@@ -30,15 +31,10 @@ public class Thumbnail {
     private static final int VIEW_WINDOW_COLOUR = Color.LTGRAY;
     private static final int VIEW_WINDOW_TRANSPARENCY = 130;
     
-    public Thumbnail(float left, float top, float width, float height, float dp) {
-        thumbnailRectF.left = left;
-        thumbnailRectF.top = top;
-        thumbnailRectF.right = left + width;
-        thumbnailRectF.bottom = top + height;
-
-        this.dp = dp;
-
+    public Thumbnail(Context context, RectF thumbnailRectF) {
+        transparencyCheckerboard = new TransparencyCheckerboard(context);
         initialisePaints();
+        this.thumbnailRectF = thumbnailRectF;
     }
 
     private void initialisePaints() {
@@ -51,23 +47,26 @@ public class Thumbnail {
         viewWindowPaint.setAntiAlias(false);
     }
 
-    // Draws thumbnail given a canvas to draw on to, the unscaled bitmap and the unscaled viewport
-    public void draw(Canvas canvas, Bitmap bitmap, RectF viewport, BitmapDrawable checkerboardTile, Paint bitmapPaint, Paint shadowPaint) {
-        // Border
+    /**
+     * Draws thumbnail given a canvas to draw on to, the unscaled bitmap and the unscaled viewport
+     * @param canvas The canvas to draw into
+     * @param bitmap The bitmap to be drawn as a thumbnail
+     * @param viewport The viewing area of the bitmap
+     * @param shadowPaint The paint to draw the shadow around the thumbnail
+     */
+    public void draw(Canvas canvas, Bitmap bitmap, RectF viewport, Paint shadowPaint) {
+        // Border shadow
         canvas.drawRect(thumbnailRectF, shadowPaint);
 
         // Transparency checkerboard
-        thumbnailRectF.round(thumbnailRect);
-        checkerboardTile.setBounds(thumbnailRect);
-        checkerboardTile.draw(canvas);
+        transparencyCheckerboard.draw(canvas, thumbnailRectF);
 
         // Thumbnail
-        canvas.drawBitmap(bitmap, null, thumbnailRectF, bitmapPaint);
+        canvas.drawBitmap(bitmap, null, thumbnailRectF, null);
 
         // View Window (portion of the image being viewed)
         if (viewWindowEnabled) {
-            scaledViewport.set(viewport.left * dp, viewport.top * dp, viewport.right * dp, viewport.bottom * dp);
-            constrainViewWindow(scaledViewport);
+            calculateViewWindow(viewport, bitmap.getWidth(), bitmap.getHeight());
             drawViewWindow(canvas);
         }
     }
@@ -108,43 +107,47 @@ public class Thumbnail {
                 viewWindowPaint);
     }
 
-    // Determines the viewing area on the thumbnail (viewWindowRect) based on the area displayed on
-    // the screen (viewportRect) and the location of the thumbnail (thumbnailRectF)
-    private void constrainViewWindow(RectF viewport) {
+    // Determines the edges of the scaled viewport, the viewWindowRect
+    private void calculateViewWindow(RectF viewport, int bitmapWidth, int bitmapHeight) {
         // Left
         if (viewport.left < 0) {
             viewWindowRect.left = thumbnailRectF.left;
-        } else if (viewport.left > thumbnailRectF.width()) {
+        } else if (viewport.left > bitmapWidth) {
             viewWindowRect.left = thumbnailRectF.right;
         } else {
-            viewWindowRect.left = thumbnailRectF.left + viewport.left;
+            // In
+            viewWindowRect.left = thumbnailRectF.left + (viewport.left / bitmapWidth)
+                    * thumbnailRectF.width();
         }
 
         // Top
         if (viewport.top < 0) {
             viewWindowRect.top = thumbnailRectF.top;
-        } else if (viewport.top > thumbnailRectF.height()) {
+        } else if (viewport.top > bitmapHeight) {
             viewWindowRect.top = thumbnailRectF.bottom;
-        } else if (viewport.top < thumbnailRectF.height()) {
-            viewWindowRect.top = thumbnailRectF.top + viewport.top;
+        } else {
+            viewWindowRect.top = thumbnailRectF.top + (viewport.top / bitmapHeight)
+                    * thumbnailRectF.height();
         }
 
         // Right
-        if (viewport.right > thumbnailRectF.width()) {
+        if (viewport.right > bitmapWidth) {
             viewWindowRect.right = thumbnailRectF.right;
         } else if (viewport.right < 0) {
             viewWindowRect.right = thumbnailRectF.left;
         } else {
-            viewWindowRect.right = thumbnailRectF.left + viewport.right;
+            viewWindowRect.right = thumbnailRectF.left + (viewport.right / bitmapWidth)
+                    * thumbnailRectF.width();
         }
 
         // Bottom
-        if (viewport.bottom > thumbnailRectF.height()) {
+        if (viewport.bottom > bitmapHeight) {
             viewWindowRect.bottom = thumbnailRectF.bottom;
         } else if (viewport.bottom < 0) {
             viewWindowRect.bottom = thumbnailRectF.top;
         } else {
-            viewWindowRect.bottom = thumbnailRectF.top + viewport.bottom;
+            viewWindowRect.bottom = thumbnailRectF.top + (viewport.bottom / bitmapHeight)
+                    * thumbnailRectF.height();
         }
     }
 

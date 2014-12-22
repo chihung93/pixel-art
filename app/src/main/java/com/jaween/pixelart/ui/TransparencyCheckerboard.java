@@ -33,30 +33,57 @@ public class TransparencyCheckerboard {
         length = (32 * dp);
     }
 
-    public void draw(Canvas canvas, RectF bitmapRect, Rect surfaceRect) {
+    /**
+     * Draws checkerboard tiles within the intersection of two rectangles.
+     * @param canvas The canvas to draw into
+     * @param tileRegion The area to be tiled
+     * @param visibleRegion The user visible area
+     */
+    public void draw(Canvas canvas, RectF tileRegion, Rect visibleRegion) {
         // Determines the bounds of the viewable area to draw fewer checkerboards tiles
 
         float left;
-        if (bitmapRect.left > surfaceRect.left) {
-            left = bitmapRect.left;
+        if (tileRegion.left > visibleRegion.left) {
+            left = tileRegion.left;
         } else {
             // Adds offset to compensate for being locked to the corner of the surface
-            float offsetX = (bitmapRect.left) % length;
-            left = surfaceRect.left + offsetX;
+            float offsetX = (tileRegion.left) % length;
+            left = visibleRegion.left + offsetX;
         }
 
         float top;
-        if (bitmapRect.top > surfaceRect.top) {
-            top = bitmapRect.top;
+        if (tileRegion.top > visibleRegion.top) {
+            top = tileRegion.top;
         } else {
             // Adds offset to compensate for being locked to the corner of the surface
-            float offsetY = (bitmapRect.top) % length;
-            top = surfaceRect.top + offsetY;
+            float offsetY = (tileRegion.top) % length;
+            top = visibleRegion.top + offsetY;
         }
 
-        float right = bitmapRect.right < surfaceRect.right ? bitmapRect.right : surfaceRect.right;
-        float bottom = bitmapRect.bottom < surfaceRect.bottom ? bitmapRect.bottom : surfaceRect.bottom;
+        float right = tileRegion.right < visibleRegion.right ? tileRegion.right : visibleRegion.right;
+        float bottom = tileRegion.bottom < visibleRegion.bottom ? tileRegion.bottom : visibleRegion.bottom;
 
+        tile(canvas, left, top, right, bottom);
+    }
+
+    /**
+     * Draws checkerboard tiles within a specified rectangle.
+     * @param canvas The canvas to draw into
+     * @param tileRegion The area to be tiled
+     */
+    public void draw(Canvas canvas, RectF tileRegion) {
+        tile(canvas, tileRegion.left, tileRegion.top, tileRegion.right, tileRegion.bottom);
+    }
+
+    /**
+     * Performs the tiling, edges are clipped.
+     * @param canvas The canvas to draw into
+     * @param left The position of the left edge of the tiling area
+     * @param top The position of the top edge of the tiling area
+     * @param right The position of the right edge of the tiling area
+     * @param bottom The position of the bottom edge of the tiling area
+     */
+    private void tile(Canvas canvas, float left, float top, float right, float bottom) {
         // Iterates over the viewable area and draws checkerboard tiles
         for (float x = left; x < right; x += length) {
             for (float y = top; y < bottom; y += length) {
@@ -65,21 +92,21 @@ public class TransparencyCheckerboard {
                 tileDestinationRect.top = y;
 
                 // The rightmost column of tiles may be cut off
-                if (x + length > bitmapRect.right) {
+                if (x + length > right) {
                     // Clips the tile
                     // TODO: Wrong source edge on odd-density-screens which leads to tile stretching
-                    tileDestinationRect.right = bitmapRect.right;
-                    tileSourceRect.right = (int) (bitmapRect.right - x);
+                    tileDestinationRect.right = right;
+                    tileSourceRect.right = (int) (right - x);
                 } else {
                     tileDestinationRect.right = x + length;
                     tileSourceRect.right = tile.getWidth();
                 }
 
                 // The bottommost row of tiles may be cut off
-                if (y + length > bitmapRect.bottom) {
+                if (y + length > bottom) {
                     // Clips the tile
-                    tileDestinationRect.bottom = bitmapRect.bottom;
-                    tileSourceRect.bottom = (int) (bitmapRect.bottom - y);
+                    tileDestinationRect.bottom = bottom;
+                    tileSourceRect.bottom = (int) (bottom - y);
                 } else {
                     tileDestinationRect.bottom = y + length;
                     tileSourceRect.bottom = tile.getHeight();

@@ -48,10 +48,11 @@ public class DrawingSurface extends SurfaceView implements SurfaceHolder.Callbac
     private boolean surfaceCreated = false;
 
     // Drawing canvas
+    private static final int MILLIS_PER_FRAME = 1000 / 30;
     public static final float DEFAULT_SCALE = 4;
     private int surfaceBackgroundColour;
     private float thumbnailScaleThreshold;
-    private Rect displayRect = new Rect();
+    private Rect surfaceRect = new Rect();
     private RectF transformedBitmapRectF = new RectF();
     private Matrix transformation = new Matrix();
     private ScaleGestureDetector scaleGestureDetector;
@@ -60,6 +61,7 @@ public class DrawingSurface extends SurfaceView implements SurfaceHolder.Callbac
     private Paint thumbnailShadowPaint = new Paint();
     private float shadowWidthDp;
     private float thumbnailShadowWidthDp;
+    private TransparencyCheckerboard transparencyCheckerboard;
 
     // Selection
     private static final int SELECTION_BORDER_ALPHA = 240;
@@ -71,7 +73,6 @@ public class DrawingSurface extends SurfaceView implements SurfaceHolder.Callbac
 
     // Tool and drawing variables
     private Tool tool;
-    private Paint bitmapPaint;
     private PointF displayTouch = new PointF();
     private float dp;
     private Canvas reusableCanvas = new Canvas();
@@ -125,14 +126,13 @@ public class DrawingSurface extends SurfaceView implements SurfaceHolder.Callbac
     // Temporary UI variables
     private Paint tempTextPaint = new Paint();
     private BitmapDrawable checkerboardTile;
-    private Rect transformedBitmapRect = new Rect();
     private boolean compositeDirty = true;
     private Bitmap selectionBitmap;
     private int[] pixelArray;
     private PointF dragPoint = new PointF();
     private boolean draggingSelection = false;
-    private TransparencyCheckerboard transparencyCheckerboard;
-    private Rect surfaceRect = new Rect();
+
+
 
     public DrawingSurface(Context context, Tool tool) {
         super(context);
@@ -160,10 +160,6 @@ public class DrawingSurface extends SurfaceView implements SurfaceHolder.Callbac
     }
 
     private void initialisePaints() {
-        // Purely used to blit bitmaps
-        bitmapPaint = new Paint();
-        bitmapPaint.setStyle(Paint.Style.STROKE);
-
         // Shadow around canvas and thumbnail
         shadowWidthDp = 4 * dp;
         thumbnailShadowWidthDp = 8 * dp;
@@ -204,6 +200,7 @@ public class DrawingSurface extends SurfaceView implements SurfaceHolder.Callbac
 
     @Override
     public void surfaceCreated(SurfaceHolder holder) {
+        surfaceRect.set(0, 0, getWidth(), getHeight());
 
         initialiseViewport();
 
@@ -212,16 +209,16 @@ public class DrawingSurface extends SurfaceView implements SurfaceHolder.Callbac
         // Thumbnail
         // To avoid the pixels lose their aspect ratio, we round the thumbnail scale
         // We round up as we don' want pixels smaller than 1dp
-        float thumnbnailScale = (float) Math.ceil(dp);
-        float thumbnailLeft = getResources().getDimension(R.dimen.canvas_margin);
-        float thumbnailTop = getHeight() - layerHeight * thumnbnailScale
-                - getResources().getDimension(R.dimen.canvas_margin);
-        thumbnail = new Thumbnail(
-                thumbnailLeft,
-                thumbnailTop,
-                layerWidth * thumnbnailScale,
-                layerHeight * thumnbnailScale,
-                thumnbnailScale);
+        float thumbnailDp = (float) Math.ceil(dp);
+        float thumbnailLength = 160 * thumbnailDp;
+        float margin = getResources().getDimension(R.dimen.canvas_margin);
+
+        RectF thumbnailRectF = new RectF();
+        thumbnailRectF.left = margin;
+        thumbnailRectF.top = getHeight() - thumbnailLength - getResources().getDimension(R.dimen.canvas_margin);
+        thumbnailRectF.right = thumbnailRectF.left + thumbnailLength;
+        thumbnailRectF.bottom = thumbnailRectF.top + thumbnailLength;
+        thumbnail = new Thumbnail(context, thumbnailRectF);
 
         // Grid
         int majorPixelSpacing = 8;
@@ -229,10 +226,6 @@ public class DrawingSurface extends SurfaceView implements SurfaceHolder.Callbac
         if (configurationChanged) {
             pixelGrid.setEnabled(restoredGridState);
         }
-
-        Bitmap bitmap = BitmapFactory.decodeResource(context.getResources(), R.drawable.checkerboard);
-        checkerboardTile = new BitmapDrawable(context.getResources(), bitmap);
-        checkerboardTile.setTileModeXY(Shader.TileMode.REPEAT, Shader.TileMode.REPEAT);
 
         surfaceCreated = true;
     }
@@ -314,19 +307,31 @@ public class DrawingSurface extends SurfaceView implements SurfaceHolder.Callbac
         final float pixelsAlongSmallerDimension = 4;
         final float maxScale =  smallerDimensionPixels / pixelsAlongSmallerDimension;
 
-        displayRect.set(0, 0, getWidth(), getHeight());
-        scaleListener = new ScaleListener(context, minScale, maxScale, viewport, displayRect);
+        scaleListener = new ScaleListener(context, minScale, maxScale, viewport, surfaceRect);
         scaleGestureDetector = new ScaleGestureDetector(context, scaleListener);
     }
 
+    int count = 100;
     @Override
     public void run() {
+        long lastTime = System.currentTimeMillis();
+        long runningTime = System.currentTimeMillis();
 
         // Performs the draw loop
         while (running) {
-            if (!holder.getSurface().isValid())
-                continue;
+            // Maintains frame rate
+            /*long elapsedTime = System.currentTimeMillis() - lastTime;
+            if (elapsedTime < MILLIS_PER_FRAME) {
+                try {
+                    Thread.sleep(MILLIS_PER_FRAME - elapsedTime);
+                } catch (InterruptedException e) {
+                    // TODO: Handle exception
+                }
+            }*/
 
+            if (!holder.getSurface().isValid()) {
+                continue;
+            }
             Canvas canvas = null;
 
             try {
@@ -345,6 +350,14 @@ public class DrawingSurface extends SurfaceView implements SurfaceHolder.Callbac
                     }
                 }
             }
+
+            /*lastTime = System.currentTimeMillis();
+            count--;
+            if (count == 0) {
+                count = 30;
+                Log.d("DrawingSurface", "FPS is " + (1000f / ((System.currentTimeMillis() - runningTime) / (float) count)));
+                runningTime = System.currentTimeMillis();
+            }*/
         }
     }
 
@@ -552,7 +565,7 @@ public class DrawingSurface extends SurfaceView implements SurfaceHolder.Callbac
     public void draw(Canvas canvas) {
         if (surfaceCreated) {
             // Background
-            //canvas.drawBitmap(checkerboardTile.getFrames(), 0, 0, bitmapPaint);
+            //canvas.drawBitmap(checkerboardTile.getFrames(), 0, 0, null);
             canvas.drawColor(surfaceBackgroundColour);
 
             // Calculates the zoom and pan transformation
@@ -567,18 +580,11 @@ public class DrawingSurface extends SurfaceView implements SurfaceHolder.Callbac
             canvas.drawRect(transformedBitmapRectF, shadowPaint);
 
             // Transparency checkerboard
-            /*transformedBitmapRect.set(
-                    (int) transformedBitmapRectF.left,
-                    (int) transformedBitmapRectF.top,
-                    (int) transformedBitmapRectF.right,
-                    (int) transformedBitmapRectF.bottom);
-            checkerboardTile.setBounds(transformedBitmapRect);
-            checkerboardTile.draw(canvas);*/
             transparencyCheckerboard.draw(canvas, transformedBitmapRectF, surfaceRect);
 
             // Draws the user's image (no selection to be drawn)
             compositeLayers();
-            canvas.drawBitmap(compositeBitmap, transformation, bitmapPaint);
+            canvas.drawBitmap(compositeBitmap, transformation, null);
 
             // Selection
             if (toolReport != null && !toolReport.getPath().isEmpty() && tool.getToolAttributes().isSelector()) {
@@ -593,11 +599,11 @@ public class DrawingSurface extends SurfaceView implements SurfaceHolder.Callbac
                 regionMatrix.set(selectionRotationMatrix);
                 regionMatrix.postTranslate(-viewport.left + selectionDragOffsetX, -viewport.top + selectionDragOffsetY);
                 regionMatrix.postScale(scaleListener.getScale(), scaleListener.getScale());
-                canvas.drawBitmap(selectionBitmap, regionMatrix, bitmapPaint);
+                canvas.drawBitmap(selectionBitmap, regionMatrix, null);
 
                 // Draws the clip on the thumbnail
                 /*reusableCanvas.setBitmap(ongoingOperationBitmap);
-                reusableCanvas.drawBitmap(selectionBitmap, selectionDragOffsetX, selectionDragOffsetY, bitmapPaint);
+                reusableCanvas.drawBitmap(selectionBitmap, selectionDragOffsetX, selectionDragOffsetY, null);
                 compositeLayers();
                 resetOngoingBitmap();*/
 
@@ -617,8 +623,8 @@ public class DrawingSurface extends SurfaceView implements SurfaceHolder.Callbac
                 // Draws only when zoomed in
                 float scale = scaleListener.getScale();
                 if (scale > thumbnailScaleThreshold) {
-                    thumbnail.draw(canvas, compositeBitmap, scaleListener.getViewport(),
-                            checkerboardTile, bitmapPaint, thumbnailShadowPaint);
+                    thumbnail.draw(canvas, compositeBitmap, scaleListener.getViewport()
+                            , thumbnailShadowPaint);
                 }
             }
         }
@@ -660,7 +666,7 @@ public class DrawingSurface extends SurfaceView implements SurfaceHolder.Callbac
                     } else {
                         layer = layers.get(i).getImage();
                     }
-                    reusableCanvas.drawBitmap(layer, 0, 0, bitmapPaint);
+                    reusableCanvas.drawBitmap(layer, 0, 0, null);
                 }
             }
 
@@ -672,7 +678,7 @@ public class DrawingSurface extends SurfaceView implements SurfaceHolder.Callbac
         // Erases the ongoing operation, then blits the current layer onto it
         ongoingOperationBitmap.eraseColor(blankOutPaint.getColor());
         reusableCanvas.setBitmap(ongoingOperationBitmap);
-        reusableCanvas.drawBitmap(frames.get(currentFrameIndex).getLayers().get(currentLayerIndex).getImage(), 0, 0, bitmapPaint);
+        reusableCanvas.drawBitmap(frames.get(currentFrameIndex).getLayers().get(currentLayerIndex).getImage(), 0, 0, null);
 
         compositeDirty = true;
     }
@@ -682,7 +688,7 @@ public class DrawingSurface extends SurfaceView implements SurfaceHolder.Callbac
         // Erases the current layer, then blits the ongoing operation onto it
         frames.get(currentFrameIndex).getLayers().get(currentLayerIndex).getImage().eraseColor(blankOutPaint.getColor());
         reusableCanvas.setBitmap(frames.get(currentFrameIndex).getLayers().get(currentLayerIndex).getImage());
-        reusableCanvas.drawBitmap(ongoingOperationBitmap, 0, 0, bitmapPaint);
+        reusableCanvas.drawBitmap(ongoingOperationBitmap, 0, 0, null);
 
         compositeDirty = true;
     }
@@ -783,7 +789,7 @@ public class DrawingSurface extends SurfaceView implements SurfaceHolder.Callbac
         // TODO: May not be necessary
         resetOngoingBitmap();
         reusableCanvas.setBitmap(ongoingOperationBitmap);
-        reusableCanvas.drawBitmap(selectionBitmap, selectionDragOffsetX, selectionDragOffsetY, bitmapPaint);
+        reusableCanvas.drawBitmap(selectionBitmap, selectionDragOffsetX, selectionDragOffsetY, null);
         commitOngoingOperation();
 
         Layer layer = frames.get(currentFrameIndex).getLayers().get(currentLayerIndex);
