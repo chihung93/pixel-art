@@ -4,7 +4,6 @@ import android.content.Context;
 import android.graphics.PointF;
 import android.graphics.Rect;
 import android.graphics.RectF;
-import android.util.Log;
 import android.view.GestureDetector;
 import android.view.MotionEvent;
 import android.view.ScaleGestureDetector;
@@ -21,6 +20,10 @@ public class ScaleListener extends ScaleGestureDetector.SimpleOnScaleGestureList
 
     private final float minScale;
     private final float maxScale;
+
+    // Two finger drag
+    float lastDragFocusX;
+    float lastDragFocusY;
 
     private PointF viewportFocus = new PointF();
     private RectF viewport = new RectF();
@@ -145,6 +148,28 @@ public class ScaleListener extends ScaleGestureDetector.SimpleOnScaleGestureList
 
         viewport.set(x, y, x + currentWidth, y + currentHeight);
     }
+
+    public void dragBegin(float x1, float y1, float x2, float y2) {
+        lastDragFocusX = (x1 + x2) / 2f;
+        lastDragFocusY = (y1 + y2) / 2f;
+    }
+
+    public void drag(float x1, float y1, float x2, float y2) {
+        float width = viewport.width();
+        float height = viewport.height();
+
+        float dragFocusX = (x1 + x2) / 2f;
+        float dragFocusY = (y1 + y2) / 2f;
+
+        viewport.left -= (dragFocusX - lastDragFocusX) / scale;
+        viewport.top -= (dragFocusY - lastDragFocusY) / scale;
+        viewport.right = viewport.left + width;
+        viewport.bottom = viewport.top + height;
+
+        lastDragFocusX = dragFocusX;
+        lastDragFocusY = dragFocusY;
+    }
+
 
     // TODO: Remove this from being inline
     private final GestureDetector.SimpleOnGestureListener gestureListener = new GestureDetector.SimpleOnGestureListener() {

@@ -5,9 +5,11 @@ import android.graphics.Path;
 import android.graphics.Point;
 import android.graphics.PointF;
 import android.graphics.drawable.Drawable;
+import android.util.Log;
 
 import com.jaween.pixelart.tools.attributes.MagicWandToolAttributes;
 import com.jaween.pixelart.util.Color;
+import com.jaween.pixelart.util.Debug;
 
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -116,9 +118,16 @@ public class MagicWand extends Selection {
     }
 
     private void performSelection(Bitmap bitmap, PointF event) {
+        long startTime = System.currentTimeMillis();
+
         createMask(bitmap, event);
         generateLineSegmentsMap(mask);
         generatePathMap(dictionary);
+
+        // Debug log
+        if (Debug.ON) {
+            Log.d("MagicWand", "Selection took " + (System.currentTimeMillis() - startTime) + "ms");
+        }
     }
 
     /** Uses a modified flood-fill algorithm to create a mask of pixels to be selected. **/

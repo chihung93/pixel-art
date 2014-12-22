@@ -6,6 +6,7 @@ import android.graphics.drawable.Drawable;
 import android.util.Log;
 
 import com.jaween.pixelart.tools.attributes.ToolAttributes;
+import com.jaween.pixelart.util.Debug;
 
 /**
  * Created by ween on 9/28/14.
@@ -146,6 +147,9 @@ public class FloodFill extends Tool {
             }
         }
 
-        Log.d("FloodFill", "Flooding took " + (System.currentTimeMillis() - startTime) + "ms");
+        // Debug log
+        if (Debug.ON) {
+            Log.d("FloodFill", "Flooding took " + (System.currentTimeMillis() - startTime) + "ms");
+        }
     }
 }
