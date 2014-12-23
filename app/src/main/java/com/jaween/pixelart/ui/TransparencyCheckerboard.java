@@ -6,6 +6,8 @@ import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Rect;
 import android.graphics.RectF;
+import android.graphics.Shader;
+import android.graphics.drawable.BitmapDrawable;
 
 import com.jaween.pixelart.R;
 
@@ -21,16 +23,34 @@ public class TransparencyCheckerboard {
     private RectF tileDestinationRect = new RectF();
     private float dp;
 
+    private Rect tileRegionRect = new Rect();
+    private BitmapDrawable checkerboardTile;
+
     public TransparencyCheckerboard(Context context) {
 
         tile = BitmapFactory.decodeResource(context.getResources(), R.drawable.checkerboard);
         tileSourceRect.set(0, 0, tile.getWidth(), tile.getHeight());
+
+        Bitmap bitmap = BitmapFactory.decodeResource(context.getResources(), R.drawable.checkerboard);
+        checkerboardTile = new BitmapDrawable(context.getResources(), bitmap);
+        checkerboardTile.setTileModeXY(Shader.TileMode.REPEAT, Shader.TileMode.REPEAT);
 
         // The side length of a tile, made up of four squares
         // Rounds up the value as there is an odd stretching of the tile at the edges of the tiled
         // surface on devices with odd densities (Nexus 7 2012 where 1px is about 1.3dp)
         dp = (float) (Math.ceil(context.getResources().getDisplayMetrics().density));
         length = (32 * dp);
+    }
+
+    /**
+     * Draws checkerboard tiles in within the bitmap rectangle.
+     * @param canvas The canvas to draw into
+     * @param tileRegionRectF The area to be tiled
+     */
+    public void drawTile(Canvas canvas, RectF tileRegionRectF) {
+        tileRegionRectF.round(tileRegionRect);
+        checkerboardTile.setBounds(tileRegionRect);
+        checkerboardTile.draw(canvas);
     }
 
     /**

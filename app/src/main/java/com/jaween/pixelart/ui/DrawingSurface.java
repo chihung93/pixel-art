@@ -2,6 +2,7 @@ package com.jaween.pixelart.ui;
 
 import android.content.Context;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Matrix;
@@ -12,6 +13,8 @@ import android.graphics.PorterDuff;
 import android.graphics.PorterDuffXfermode;
 import android.graphics.Rect;
 import android.graphics.RectF;
+import android.graphics.Shader;
+import android.graphics.drawable.BitmapDrawable;
 import android.util.Log;
 import android.view.MotionEvent;
 import android.view.ScaleGestureDetector;
@@ -134,8 +137,6 @@ public class DrawingSurface extends SurfaceView implements SurfaceHolder.Callbac
     private int frameCount = 0;
     private long lastFrameTime = System.currentTimeMillis();
     private float fps = 0;
-
-
 
     public DrawingSurface(Context context, Tool tool) {
         super(context);
@@ -321,7 +322,7 @@ public class DrawingSurface extends SurfaceView implements SurfaceHolder.Callbac
             long elapsedTime = System.currentTimeMillis() - lastTime;
             if (elapsedTime < MILLIS_PER_FRAME) {
                 try {
-                    Thread.sleep(MILLIS_PER_FRAME - elapsedTime);
+                    Thread.sleep((MILLIS_PER_FRAME - elapsedTime) % MILLIS_PER_FRAME);
                 } catch (InterruptedException e) {
                     continue;
                 }
@@ -343,11 +344,14 @@ public class DrawingSurface extends SurfaceView implements SurfaceHolder.Callbac
             } finally {
                 if (canvas != null) {
                     try {
+                        // TODO: Exception caught, then entire app freeze on this line, backing out of app doesn't fix
+                        // This happened on the Galaxy Nexus
                         holder.unlockCanvasAndPost(canvas);
                     } catch (IllegalArgumentException e) {
                         // Fixes occasional crash on Galaxy Nexus during Fragment startup
                         Log.e("DrawingSurface", "unlockCanvasAndPost error caught!");
                         e.printStackTrace();
+                        continue;
                     }
                 }
             }
@@ -598,7 +602,7 @@ public class DrawingSurface extends SurfaceView implements SurfaceHolder.Callbac
             canvas.drawRect(transformedBitmapRectF, shadowPaint);
 
             // Transparency checkerboard
-            transparencyCheckerboard.draw(canvas, transformedBitmapRectF, surfaceRect);
+            transparencyCheckerboard.drawTile(canvas, transformedBitmapRectF);
 
             // Draws the user's image (no selection to be drawn)
             compositeLayers();
