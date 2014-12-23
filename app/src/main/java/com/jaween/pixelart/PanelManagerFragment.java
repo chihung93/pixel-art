@@ -5,15 +5,16 @@ import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
 import android.util.DisplayMetrics;
-import android.util.Log;
 import android.view.Display;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
 import android.widget.RelativeLayout;
-import android.widget.TableRow;
 
 import com.jaween.pixelart.ui.DrawingFragment;
 import com.jaween.pixelart.ui.PaletteFragment;
@@ -76,6 +77,8 @@ public class PanelManagerFragment extends Fragment implements
             slideInAnimation = R.anim.slide_left;
             slideOutAnimation = R.anim.slide_right;
         }
+
+        setHasOptionsMenu(true);
     }
 
     @Override
@@ -87,7 +90,7 @@ public class PanelManagerFragment extends Fragment implements
         toolboxFragment = (ToolboxFragment) fragmentManager.findFragmentByTag(TAG_TOOLBOX_FRAGMENT);
         layerFragment = (LayerFragment) fragmentManager.findFragmentByTag(TAG_LAYER_FRAGMENT);
 
-        if (paletteFragment == null | toolboxFragment == null | layerFragment == null) {
+        if (paletteFragment == null || toolboxFragment == null || layerFragment == null) {
             paletteFragment = new PaletteFragment();
             toolboxFragment = new ToolboxFragment();
             layerFragment = new LayerFragment();
@@ -143,6 +146,21 @@ public class PanelManagerFragment extends Fragment implements
             paletteRestoredVisiblilty = savedInstanceState.getBoolean(KEY_PALETTE_VISIBILITY, false);
             toolboxRestoredVisiblilty = savedInstanceState.getBoolean(KEY_TOOLBOX_VISIBILITY, false);
             layerRestoredVisiblilty = savedInstanceState.getBoolean(KEY_LAYER_VISIBILITY, false);
+        }
+    }
+
+    @Override
+    public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
+        super.onCreateOptionsMenu(menu, inflater);
+
+        // Hides the tool menu item when in a layout that has a static side panel
+        MenuItem toolMenuItem = menu.findItem(R.id.action_tool);
+        if (toolMenuItem != null) {
+            if (layoutWidthDp == LARGE_LAYOUT_WIDTH_DP) {
+                toolMenuItem.setVisible(false);
+            } else {
+                toolMenuItem.setVisible(true);
+            }
         }
     }
 

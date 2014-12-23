@@ -126,14 +126,16 @@ public class ColourPickerView extends View {
         selectedPoint.set(bounds.centerX(), bounds.centerY());
 
         // Fills out the colour picker
-        colourWheel = Bitmap.createBitmap(smallerDimension, smallerDimension, Bitmap.Config.ARGB_8888);
-        ArrayList<Object> data = new ArrayList<Object>();
-        data.add(colourWheel);
-        data.add(radius);
-        data.add(saturation);
-        data.add(this);
-        ColourPickerGenerator colourPickerGenerator = new ColourPickerGenerator();
-        colourPickerGenerator.execute(data);
+        if (smallerDimension > 0) {
+            colourWheel = Bitmap.createBitmap(smallerDimension, smallerDimension, Bitmap.Config.ARGB_8888);
+            ArrayList<Object> data = new ArrayList<Object>();
+            data.add(colourWheel);
+            data.add(radius);
+            data.add(saturation);
+            data.add(this);
+            ColourPickerGenerator colourPickerGenerator = new ColourPickerGenerator();
+            colourPickerGenerator.execute(data);
+        }
     }
 
     // Outputs the colour (in HSL) that these coordinates represent on a colour rectangle

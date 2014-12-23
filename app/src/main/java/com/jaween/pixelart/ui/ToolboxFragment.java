@@ -4,12 +4,15 @@ import android.animation.LayoutTransition;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.FrameLayout;
 import android.widget.TableLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.jaween.pixelart.R;
 import com.jaween.pixelart.tools.Dropper;
@@ -191,6 +194,9 @@ public class ToolboxFragment extends PanelFragment implements
 
         // Highlight the selected tool's button
         changeSelectedTool(selectedTool);
+
+        // Updates the tool menu icon
+        getActivity().supportInvalidateOptionsMenu();
     }
 
     private void initialiseViews(View v) {
@@ -294,7 +300,7 @@ public class ToolboxFragment extends PanelFragment implements
                 newTool = dropperTool;
                 break;
             case R.id.ib_tool_text:
-                // No implementation
+                Toast.makeText(getActivity(), "TODO: Text tool", Toast.LENGTH_SHORT).show();
                 return;
             case R.id.ib_tool_magic_wand:
                 newTool = magicWandTool;
@@ -332,6 +338,9 @@ public class ToolboxFragment extends PanelFragment implements
         if (onToolSelectListener != null) {
             onToolSelectListener.onToolSelected(selectedTool, dismissPanel);
         }
+
+        // Updates the menu item
+        getActivity().supportInvalidateOptionsMenu();
     }
 
     private void changeSelectedTool(Tool tool) {

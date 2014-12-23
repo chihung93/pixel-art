@@ -3,7 +3,6 @@ package com.jaween.pixelart;
 import android.content.res.Configuration;
 import android.graphics.Bitmap;
 import android.graphics.drawable.Drawable;
-import android.graphics.drawable.LayerDrawable;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
@@ -13,7 +12,6 @@ import android.support.v7.app.ActionBarActivity;
 import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.view.ActionMode;
 import android.support.v7.widget.Toolbar;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -36,7 +34,6 @@ import com.jaween.pixelart.ui.layer.LayerFragment;
 import com.jaween.pixelart.ui.undo.UndoItem;
 import com.jaween.pixelart.ui.undo.UndoManager;
 import com.jaween.pixelart.util.AutoSaver;
-import com.jaween.pixelart.util.Color;
 import com.jaween.pixelart.util.ConfigChangeFragment;
 import com.jaween.pixelart.util.PreferenceManager;
 
@@ -93,9 +90,6 @@ public class ContainerFragment extends Fragment implements
     private View animationDrawerView;
     private DrawerLayout drawerLayout;
 
-    // Colour menu item
-    private LayerDrawable layerDrawable;
-
     // Settings
     private PreferenceManager preferenceManager;
 
@@ -115,6 +109,8 @@ public class ContainerFragment extends Fragment implements
         }
 
         preferenceManager = new PreferenceManager(getActivity());
+
+        setHasOptionsMenu(true);
 
         onRestoreInstanceState(savedInstanceState);
     }
@@ -300,18 +296,15 @@ public class ContainerFragment extends Fragment implements
         super.onCreateOptionsMenu(menu, inflater);
 
         // TODO: Load state menu items ONLY when dynamic panels are around
-        inflater.inflate(R.menu.state_menu, menu);
+        //inflater.inflate(R.menu.state_menu, menu);
 
         // Inflates the main actions menu (undo, layers, settings, etc.)
         inflater.inflate(R.menu.main_actions_menu, menu);
-
-        updateStateMenuIcons(menu);
     }
 
     @Override
     public void onPrepareOptionsMenu(Menu menu) {
         super.onPrepareOptionsMenu(menu);
-
         // TODO: Animation disabled until issues resolved
         /*if (drawerLayout.isDrawerOpen(animationDrawerView)) {
             menu.setGroupVisible(R.id.menu_group_state, false);
@@ -320,15 +313,20 @@ public class ContainerFragment extends Fragment implements
             menu.setGroupVisible(R.id.menu_group_animation, false);
         }*/
 
-        updateStateMenuIcons(menu);
-    }
+        // Updates state icons here as when Fragments are hidden they don't receive calls to
+        // onPrepareOptionsMenu() (and we want icons regardless of child Fragment visibility)
 
-    private void updateStateMenuIcons(Menu menu) {
-        // Updates the state icons
-        MenuItem item = menu.findItem(R.id.action_tool);
+        // Updates the tool icon
+        MenuItem toolItem = menu.findItem(R.id.action_tool);
+        if (toolItem != null) {
+            toolItem.setIcon(toolboxFragment.getTool().getIcon());
+        }
+
+        // Updates the palette icon
         MenuItem paletteItem = menu.findItem(R.id.action_palette);
-        item.setIcon(toolboxFragment.getTool().getIcon());
-        paletteItem.setIcon(layerDrawable);
+        if (paletteItem != null) {
+            paletteItem.setIcon(paletteFragment.getMenuItemDrawable());
+        }
     }
 
     @Override
@@ -408,9 +406,6 @@ public class ContainerFragment extends Fragment implements
             case R.id.action_export:
                 exportAnimation();
                 break;
-            case android.R.id.home:
-                Log.d("ContainerFragment", "Home clicked");
-                break;
             default:
                 return false;
         }
@@ -432,11 +427,7 @@ public class ContainerFragment extends Fragment implements
             paletteFragment.setColourButton(colour);
         }
 
-        // Recolours the palette menu item
-        updateColourMenuItem();
-
-        // Hides the panels on narrow and wide layouts and updates the menu item
-        getActivity().supportInvalidateOptionsMenu();
+        // Hides the panels on narrow and wide layouts
         if (done) {
             panelManagerFragment.onClearPanels();
         }
@@ -448,8 +439,6 @@ public class ContainerFragment extends Fragment implements
 
         // When we switch tools, we must inform it of the current colour
         toolboxFragment.setColour(paletteFragment.getPrimaryColour());
-
-        getActivity().supportInvalidateOptionsMenu();
 
         // Dismisses the toolbox panel
         if (done) {
@@ -494,16 +483,6 @@ public class ContainerFragment extends Fragment implements
 
     public UndoManager getUndoManager() {
         return undoManager;
-    }
-
-    private void updateColourMenuItem() {
-            // Tints the inner square to the selected colour
-            Drawable colouredInner = getResources().getDrawable(R.drawable.palette_menu_item);
-            Drawable border = getResources().getDrawable(R.drawable.palette_menu_item_border);
-            int colour = paletteFragment.getPrimaryColour();
-            layerDrawable = Color.tintAndLayerDrawable(colouredInner, border, colour);
-
-            getActivity().supportInvalidateOptionsMenu();
     }
 
     private void exportAnimation() {
@@ -551,6 +530,7 @@ public class ContainerFragment extends Fragment implements
         toolbar.setTitle(filename);
     }
 
+    // TODO: Move into PaletteFragment
     @Override
     public boolean onCreateActionMode(ActionMode actionMode, Menu menu) {
         MenuInflater inflater = getActivity().getMenuInflater();
@@ -569,9 +549,11 @@ public class ContainerFragment extends Fragment implements
         switch (menuItem.getItemId()) {
             case R.id.action_add:
                 // TODO: Adding palettes
+                Toast.makeText(getActivity(), "TODO: Multiple palettes", Toast.LENGTH_SHORT).show();
                 break;
             case R.id.action_delete:
                 // TODO: Deleting palettes
+                Toast.makeText(getActivity(), "TODO: Palette deletion", Toast.LENGTH_SHORT).show();
                 break;
             default:
                 return false;

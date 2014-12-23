@@ -7,7 +7,7 @@
     <GridView xmlns:tools="http://schemas.android.com/tools"
         android:id="@+id/gv_file_grid"
         android:layout_width="wrap_content"
-        android:layout_height="@dimen/load_dialog_height"
+        android:layout_height="wrap_content"
         android:choiceMode="multipleChoice"
         android:clipToPadding="false"
         android:numColumns="@integer/load_dialog_columns"

@@ -3,17 +3,6 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content">
 
-    <!--<Button
-         android:id="@+id/button"
-         android:layout_width="fill_parent"
-         android:layout_height="fill_parent"
-         android:layout_above="@+id/cp_colour_picker"
-         android:layout_alignParentLeft="true"
-         android:layout_alignParentStart="true"
-         android:layout_gravity="center"
-         android:text="SCROLL" />-->
-
     <include layout="@layout/colour_picker_fragment" />
-
 
 </RelativeLayout>

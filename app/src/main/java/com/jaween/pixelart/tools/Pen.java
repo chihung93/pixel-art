@@ -24,8 +24,8 @@ public class Pen extends Tool {
 
     @Override
     protected void onStart(Bitmap bitmap, PointF event) {
-        start.x = event.x;
-        start.y = event.y;
+        start.x = (int) event.x;
+        start.y = (int) event.y;
 
         draw(bitmap, event);
     }

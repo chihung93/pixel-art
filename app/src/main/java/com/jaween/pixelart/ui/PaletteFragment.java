@@ -7,6 +7,9 @@ import android.os.Bundle;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
@@ -65,9 +68,10 @@ public class PaletteFragment extends PanelFragment implements
     // A single use flag used in setting the initial primaryColour button (should be a better way of achieving this)
     private boolean colourSetPriorToInitialDraw = false;
 
-    // Static sidebar specific variables
+    // Primary colour UI inidicators
     private View primaryColourView;
     private Drawable[] primaryColourViewLayers = new Drawable[2];
+    private LayerDrawable menuLayerDrawable;
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -88,7 +92,10 @@ public class PaletteFragment extends PanelFragment implements
             fragmentTransaction.commit();
         }
 
+        setHasOptionsMenu(true);
+
         onRestoreInstanceState(savedInstanceState);
+
         return view;
     }
 
@@ -146,9 +153,23 @@ public class PaletteFragment extends PanelFragment implements
             }
         }
 
-
         if (onPrimaryColourSelectedListener != null) {
             onPrimaryColourSelectedListener.onPrimaryColourSelected(primaryColour, false, true);
+        }
+    }
+
+    @Override
+    public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
+        super.onCreateOptionsMenu(menu, inflater);
+
+        // Hides the colour menu item when in a layout that has a primary colour view
+        MenuItem paletteMenuItem = menu.findItem(R.id.action_palette);
+        if (paletteMenuItem != null) {
+            if (primaryColourView == null) {
+                paletteMenuItem.setVisible(true);
+            } else {
+                paletteMenuItem.setVisible(false);
+            }
         }
     }
 
@@ -164,6 +185,7 @@ public class PaletteFragment extends PanelFragment implements
         primaryColour = colour;
 
         updatePrimaryColourView();
+        updateColourMenuItem();
 
         // Iterates through all the ColourButtons of all the palettes until it finds one with our new primaryColour
         for (int i = 0; i < palettes.size(); i++) {
@@ -232,7 +254,8 @@ public class PaletteFragment extends PanelFragment implements
     }
 
     /**
-     * UI indicator of the primary colour when there is no menu item (used in static panel layouts for tablets)
+     * UI indicator of the primary colour when there is no menu item (used in static panel layouts
+     * for tablets)
      */
     private void updatePrimaryColourView() {
         if (primaryColourView != null) {
@@ -250,6 +273,15 @@ public class PaletteFragment extends PanelFragment implements
         }
     }
 
+    private void updateColourMenuItem() {
+        // Tints the inner square to the selected colour
+        Drawable colouredInner = getResources().getDrawable(R.drawable.palette_menu_item);
+        Drawable border = getResources().getDrawable(R.drawable.palette_menu_item_border);
+        menuLayerDrawable = Color.tintAndLayerDrawable(colouredInner, border, primaryColour);
+
+        getActivity().supportInvalidateOptionsMenu();
+    }
+
     @Override
     public void onClick(View view) {
         if (view instanceof ColourButton) {
@@ -264,11 +296,12 @@ public class PaletteFragment extends PanelFragment implements
             // Sets the Palette's own primaryColour
             primaryColour = clickedColourButton.getColour();
             updatePrimaryColourView();
+            updateColourMenuItem();
 
             // Notifies the selected button
             invalidateSelectedColourButton(clickedColourButton);
 
-            // Sets the menu item primaryColour
+            // Sets the colour of the tool
             onPrimaryColourSelectedListener.onPrimaryColourSelected(primaryColour, dismissPanel, true);
 
             // Sets the primaryColour of the primaryColour picker
@@ -337,6 +370,7 @@ public class PaletteFragment extends PanelFragment implements
         primaryColour = colour;
 
         updatePrimaryColourView();
+        updateColourMenuItem();
 
         // Updates the UI ColourButton
         if (selectedColourButton != null) {
@@ -347,6 +381,10 @@ public class PaletteFragment extends PanelFragment implements
         if (onPrimaryColourSelectedListener != null) {
             onPrimaryColourSelectedListener.onPrimaryColourSelected(colour, false, true);
         }
+    }
+
+    public Drawable getMenuItemDrawable() {
+        return menuLayerDrawable;
     }
 
     public void setOnPrimaryColourSelectedListener(OnPrimaryColourSelectedListener onPrimaryColourSelectedListener) {

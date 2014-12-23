@@ -2,6 +2,7 @@ package com.jaween.pixelart.util;
 
 import android.os.Handler;
 import android.os.Looper;
+import android.util.Log;
 
 import com.jaween.pixelart.ContainerFragment;
 
@@ -35,10 +36,13 @@ public class AutoSaver {
         this.intervalMillis = intervalMillis;
     }
 
+    /** Starts running performSave() at regular intervals. **/
     public void begin() {
-        new Thread(runnable).start();
+        new Thread(runnable);
+        handler.postDelayed(runnable, intervalMillis);
     }
 
+    /** Stops the automatic saving timer. **/
     public void stop() {
         handler.removeCallbacks(runnable);
     }

@@ -5,9 +5,7 @@ import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
-import android.graphics.Rect;
 import android.graphics.RectF;
-import android.util.Log;
 
 public class Thumbnail {
 
@@ -29,7 +27,7 @@ public class Thumbnail {
 
     // Colour preferences
     private static final int VIEW_WINDOW_COLOUR = Color.LTGRAY;
-    private static final int VIEW_WINDOW_TRANSPARENCY = 130;
+    private static final int VIEW_WINDOW_OPACITY = 170;
     
     public Thumbnail(Context context, RectF thumbnailRectF) {
         transparencyCheckerboard = new TransparencyCheckerboard(context);
@@ -42,7 +40,7 @@ public class Thumbnail {
         viewWindowPaint = new Paint();
         viewWindowPaint.setStyle(Paint.Style.STROKE);
         viewWindowPaint.setColor(VIEW_WINDOW_COLOUR);
-        viewWindowPaint.setAlpha(VIEW_WINDOW_TRANSPARENCY);
+        viewWindowPaint.setAlpha(VIEW_WINDOW_OPACITY);
         viewWindowPaint.setStyle(Paint.Style.FILL);
         viewWindowPaint.setAntiAlias(false);
     }
