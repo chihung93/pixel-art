@@ -4,33 +4,27 @@ import android.graphics.drawable.Drawable;
 import android.graphics.drawable.LayerDrawable;
 import android.os.Build;
 import android.os.Bundle;
-import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.FrameLayout;
-import android.widget.LinearLayout;
-import android.widget.RelativeLayout;
 import android.widget.TableLayout;
 import android.widget.TableRow;
 import android.widget.Toast;
 
-import com.jaween.pixelart.PanelManagerFragment;
 import com.jaween.pixelart.R;
-import com.jaween.pixelart.util.Color;
 import com.jaween.pixelart.ui.colourpicker.ColourPickerFragment;
-import com.jaween.pixelart.util.SlideAnimator;
+import com.jaween.pixelart.util.Color;
 import com.jaween.pixelart.util.SlidingLinearLayout;
 
 import java.util.ArrayList;
 
 /**
- * Created by ween on 10/24/14.
+ * Holds the colour palettes, the colour picker and callbacks for changing colours.
  */
 public class PaletteFragment extends PanelFragment implements
         View.OnClickListener,
@@ -38,9 +32,15 @@ public class PaletteFragment extends PanelFragment implements
         ColourPickerFragment.OnColourUpdateListener,
         ColourPickerFragment.OnColourPickerAnimationEndListener {
 
+    // Child Fragment tags
+    private static final String TAG_COLOUR_PICKER_FRAGMENT = "tag_colour_picker_fragment";
+
+    // Saved instance state
+    private static final String KEY_PRIMARY_COLOUR = "key_primary_colour";
+    private static final String KEY_COLOUR_PICKER_VISIBLE = "key_colour_picker_visible";
+
     // Child Fragments
     private ColourPickerFragment colourPickerFragment;
-    private static final String TAG_COLOUR_PICKER_FRAGMENT = "tag_colour_picker_fragment";
 
     // Palette grid
     private TableLayout paletteTable;
@@ -62,9 +62,6 @@ public class PaletteFragment extends PanelFragment implements
     private int currentPalette = 0;
     private int primaryColour;
 
-    // Saved instance state
-    private static final String KEY_PRIMARY_COLOUR = "key_primary_colour";
-
     // A single use flag used in setting the initial primaryColour button (should be a better way of achieving this)
     private boolean colourSetPriorToInitialDraw = false;
 
@@ -73,13 +70,12 @@ public class PaletteFragment extends PanelFragment implements
     private Drawable[] primaryColourViewLayers = new Drawable[2];
 
     @Override
-    public void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
+    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+        View view = inflater.inflate(R.layout.palette_fragment, null, false);
+        initialiseViews(view);
 
         FragmentManager fragmentManager = getChildFragmentManager();
-        if (getArguments() != null) {
-            colourPickerFragment = (ColourPickerFragment) fragmentManager.findFragmentByTag(TAG_COLOUR_PICKER_FRAGMENT);
-        }
+        colourPickerFragment = (ColourPickerFragment) fragmentManager.findFragmentByTag(TAG_COLOUR_PICKER_FRAGMENT);
 
         if (colourPickerFragment == null) {
             colourPickerFragment = new ColourPickerFragment();
@@ -91,17 +87,6 @@ public class PaletteFragment extends PanelFragment implements
             fragmentTransaction.add(R.id.fl_container_colour_picker, colourPickerFragment, TAG_COLOUR_PICKER_FRAGMENT);
             fragmentTransaction.commit();
         }
-
-        // Immediately hides the primaryColour picker so that we can show it later when it's needed
-        FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
-        fragmentTransaction.hide(colourPickerFragment);
-        fragmentTransaction.commit();
-    }
-
-    @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        View view = inflater.inflate(R.layout.palette_fragment, null, false);
-        initialiseViews(view);
 
         onRestoreInstanceState(savedInstanceState);
         return view;
@@ -129,24 +114,38 @@ public class PaletteFragment extends PanelFragment implements
     public void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
 
-        // TODO: Ponder, if we don't remove the fragment here it automatically shows itself on config change, why?
-        FragmentManager fragmentManager = getChildFragmentManager();
-        FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
-        fragmentTransaction.remove(colourPickerFragment);
-        fragmentTransaction.commit();
-
         // Saves the current primaryColour
         outState.putInt(KEY_PRIMARY_COLOUR, primaryColour);
+
+        // Saves the visibility of the colour palette
+        outState.putBoolean(KEY_COLOUR_PICKER_VISIBLE, !colourPickerFragment.isHidden());
     }
 
     private void onRestoreInstanceState(Bundle savedInstanceState) {
-        // Restores the primary colour
+        boolean colourPickerVisible = false;
         if (savedInstanceState != null) {
+            // Restores the primary colour
             primaryColour = savedInstanceState.getInt(KEY_PRIMARY_COLOUR);
+
+            // Restores the visibility of the colour picker
+            colourPickerVisible = savedInstanceState.getBoolean(KEY_COLOUR_PICKER_VISIBLE, false);
         } else {
-            primaryColour = palettes.get(0).get(0).getColour();
+            // Selects the final colour in the first row as the initial colour (black)
+            int paletteIndex = 0;
+            int colourIndex = palettes.get(paletteIndex).size() / 2 - 1;
+            primaryColour = palettes.get(paletteIndex).get(colourIndex).getColour();
         }
         setColourButton(primaryColour);
+
+        // Restore the state visibility of the colour picker and Contextual ActionBar
+        if (!colourPickerVisible) {
+            hideColourPicker();
+        } else {
+            if (onShowPaletteListener != null) {
+                onShowPaletteListener.onToggleColourPalette(true);
+            }
+        }
+
 
         if (onPrimaryColourSelectedListener != null) {
             onPrimaryColourSelectedListener.onPrimaryColourSelected(primaryColour, false, true);
@@ -281,6 +280,8 @@ public class PaletteFragment extends PanelFragment implements
         switch (view.getId()) {
             case R.id.bt_customise_palette:
                 if (onShowPaletteListener != null) {
+                    // TODO: Manage Contextual ActionBar from PaletteFragment instead!
+                    // HOWEVER still let the ContainerFragment know to hide the DrawingFragment
                     onShowPaletteListener.onToggleColourPalette(true);
                     if (colourPickerFragment.isHidden()) {
                         FragmentManager fragmentManager = getChildFragmentManager();
@@ -320,14 +321,11 @@ public class PaletteFragment extends PanelFragment implements
     }
 
     public void hideColourPicker() {
-        if (!colourPickerFragment.isHidden()) {
-            FragmentManager fragmentManager = getChildFragmentManager();
-            FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
-            fragmentTransaction.setCustomAnimations(R.anim.slide_up, R.anim.slide_down);
-
-            fragmentTransaction.hide(colourPickerFragment);
-            fragmentTransaction.commit();
-        }
+        FragmentManager fragmentManager = getChildFragmentManager();
+        FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
+        fragmentTransaction.setCustomAnimations(R.anim.slide_up, R.anim.slide_down);
+        fragmentTransaction.hide(colourPickerFragment);
+        fragmentTransaction.commit();
     }
 
     public void setOnShowPaletteListener(OnShowPaletteListener onShowPaletteListener) {
