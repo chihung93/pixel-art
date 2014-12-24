@@ -6,11 +6,11 @@
         <item name="android:alertDialogTheme">@style/MyDialog</item>
         <item name="android:seekBarStyle">@style/MySeekBar</item>
 
-        <!-- Support library compatibility -->
+        <item name="windowActionBarOverlay">true</item>
+        <item name="windowActionModeOverlay">true</item>
         <item name="colorPrimary">@color/primary</item>
         <item name="colorPrimaryDark">@color/primary_dark</item>
         <item name="colorAccent">@color/accent_colour</item>
-        <item name="windowActionModeOverlay">true</item>
     </style>
 
     <!-- ActionBar theme -->
@@ -52,7 +52,7 @@
         <item name="android:textSize">14sp</item>
     </style>
 
-
+    <!-- Pre-lollipop tinted view style -->
     <style name="MySeekBar" parent="android:Widget.SeekBar">
         <item name="android:progressDrawable">@drawable/seekbar_progress_selector</item>
         <item name="android:indeterminateDrawable">@drawable/seekbar_progress_selector</item>
@@ -63,6 +63,5 @@
         <item name="android:paddingLeft">16dip</item>
         <item name="android:paddingRight">16dip</item>
     </style>
-
 
 </resources>

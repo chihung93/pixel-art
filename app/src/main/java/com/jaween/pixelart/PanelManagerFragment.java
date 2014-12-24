@@ -53,7 +53,7 @@ public class PanelManagerFragment extends Fragment implements
     private static final int LARGE_LAYOUT_WIDTH_DP = 720;
     private static final int WIDE_LAYOUT_WIDTH_DP = 400;
     private static final int NARROW_LAYOUT_WIDTH_DP = 300;
-    private static final int TALL_LAYOUT_HEIGHT_DP = 600;
+    private static final int TALL_LAYOUT_HEIGHT_DP = 800;
     private int layoutWidthDp, layoutHeightDp;
 
     // Panel slide animations
