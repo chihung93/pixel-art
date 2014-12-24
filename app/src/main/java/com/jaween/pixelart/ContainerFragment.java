@@ -148,7 +148,7 @@ public class ContainerFragment extends Fragment implements
     private void setupDrawer(View v) {
         // Sets up the animation drawer
         Toolbar toolbar = ((ContainerActivity) getActivity()).getToolbar();
-        drawerLayout = (DrawerLayout) v.findViewById(R.id.drawer_layout);
+        //drawerLayout = (DrawerLayout) v.findViewById(R.id.drawer_layout);
         drawerLayout.setStatusBarBackground(R.color.primary_dark);
         drawerToggle = new ActionBarDrawerToggle(getActivity(), drawerLayout, toolbar, 0, 0) {
             public void onDrawerClosed(View view) {
